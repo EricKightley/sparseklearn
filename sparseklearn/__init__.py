@@ -1,2 +1,1 @@
-def joke():
-    return ('test function')
+from .sparsifier import Sparsifier
