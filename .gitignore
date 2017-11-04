@@ -5,6 +5,7 @@
 *.swp
 *.so
 *.pyc
+*.pk
 /dist/
 /*.egg-info
 

@@ -45,7 +45,7 @@ class Sparsifier():
         if type(self.gamma) is float:
             self.M = int(np.floor(self.P * self.gamma))
         # if gamma is given as an integer, find gamma
-        if type(self.gamma) is int:
+        if type(self.gamma) is int or type(self.gamma) is np.int64:
             self.M = self.gamma
         # overwrite gamma (either because it was an int or to account for
         # rounding from floor function above)
@@ -134,12 +134,19 @@ class Sparsifier():
 
     def subsample(self, X):
         """ Given an n x p array ::X (each row is a datapoint of dimension p) and an integer
-        ::m <= p, (uniformly) randomly keeps m entries for each of the n datapoints.
+        ::m <= p, (uniformly) randomly keeps m entries for each of the n datapoints. If
+        ::self.constant_subsample then each row has the same columns extracted. This latter
+        method is currently inefficient and is for comparison purposes only. 
         """
-        col_inds = np.array([np.sort(np.random.choice(self.P,self.M, replace = False))
-                            for i in range(self.N)]).flatten()
+        if self.constant_subsample:
+            col_inds_single = np.random.choice(self.P,self.M,replace=False)
+            col_inds = np.array([col_inds_single for i in range(self.N)]).flatten()
+        else:
+            col_inds = np.array([np.sort(np.random.choice(
+                                 self.P,self.M, replace = False))
+                                 for i in range(self.N)]).flatten()
         row_inds = [i for i in range(self.N) for j in range(self.M)]
-        X_sub = np.take(X.flatten(), [self.P * r + c 
+        X_sub = np.take(X[:].flatten(), [self.P * r + c 
                         for (r,c) in zip(row_inds,col_inds)])
         X_sub = X_sub.reshape(self.N,self.M)
         col_inds = col_inds.reshape(self.N,self.M)
@@ -147,7 +154,7 @@ class Sparsifier():
 
 
     def __init__(self, gamma, verbose, fROS, write_permission,
-                 use_ROS, compute_ROS, dense_subsample):
+                 use_ROS, compute_ROS, dense_subsample, constant_subsample):
 
         # assign constants
         self.gamma = gamma
@@ -157,6 +164,7 @@ class Sparsifier():
         self.use_ROS = use_ROS
         self.compute_ROS = compute_ROS
         self.dense_subsample = dense_subsample
+        self.constant_subsample = constant_subsample
 
 
 

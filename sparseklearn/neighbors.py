@@ -50,9 +50,11 @@ class KNeighborsClassifier(Sparsifier):
         return score
 
     def __init__(self, gamma, verbose, fROS, write_permission,
-                 use_ROS, compute_ROS, dense_subsample, n_neighbors):
+                 use_ROS, compute_ROS, dense_subsample, n_neighbors,
+                 constant_subsample):
 
         Sparsifier.__init__(self, gamma, verbose, fROS, write_permission,
-                             use_ROS, compute_ROS, dense_subsample)
+                             use_ROS, compute_ROS, dense_subsample,
+                             constant_subsample)
 
         self.n_neighbors = n_neighbors
