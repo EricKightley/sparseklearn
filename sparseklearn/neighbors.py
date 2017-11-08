@@ -11,10 +11,25 @@ class KNeighborsClassifier(Sparsifier):
         self.classes_ = list(set(y))
         
 
-    def kneighbors(self, X, return_distances = True):
+    def kneighbors(self, Xi, return_distances = True):
+        Xicopy = np.copy(Xi)
+        Xros = self.apply_ROS(Xi, self.D_indices)
+        Xm = self.apply_mask(Xros, self.mask)
+
+        dist = self.pairwise_distances(Xm, Y = self.HDX_sub)
+
+        #neigh = dist.argsort(axis=1)#[:,:self.n_neighbors]
+        #dist = np.sort(dist, axis=1)#[:,:self.n_neighbors]
+        #if return_distances:
+        #    d = np.array([dist[neighbors[:,k],k] for k in range(dist.shape[1])])
+        #    return [d, neighbors.T]
+        #else:
+        #    return neighbors.T
 
         # apply HD to X
-        X = self.ROS_test(X)
+        X = self.ROS_test(Xicopy)
+        
+        test = np.array([X[n][self.mask[n]] for n in range(X.shape[0])] )
 
         kneighborsV = []
         kdistancesV = []
@@ -25,20 +40,22 @@ class KNeighborsClassifier(Sparsifier):
                 distances[n] = np.linalg.norm(self.HDX_sub[n] - x[self.mask[n]])
 
             neighbors = np.argsort(distances)
-            distances = distances[neighbors]
+            #distances = distances[neighbors]
 
-            kneighborsV.append(neighbors[:self.n_neighbors])
-            kdistancesV.append(distances[:self.n_neighbors])
+            kneighborsV.append(neighbors)#[:self.n_neighbors])
+            kdistancesV.append(distances)#[:self.n_neighbors])
 
         kneighborsV = np.array(kneighborsV)
         kdistancesV = np.array(kdistancesV)
+        print(np.all(kdistancesV==dist))
+        import pdb; pdb.set_trace()
 
-        if return_distances:
-            return[kdistancesV, kneighborsV]
-        else:
-            return kneighborsV
+        return 0
+        #if return_distances:
+        #    return[kdistancesV, kneighborsV]
+        #else:
+        #    return kneighborsV
 
-        
     def predict(self, X):
         neigh_dist, neigh_ind = self.kneighbors(X)
         y_pred = stats.mode(self._y[neigh_ind], axis = 1).mode.flatten()
@@ -49,12 +66,8 @@ class KNeighborsClassifier(Sparsifier):
         score = np.sum(y_pred == y) / len(y_pred)
         return score
 
-    def __init__(self, gamma, verbose, fROS, write_permission,
-                 use_ROS, compute_ROS, dense_subsample, n_neighbors,
-                 constant_subsample):
+    def __init__(self, n_neighbors, **kwargs):
 
-        Sparsifier.__init__(self, gamma, verbose, fROS, write_permission,
-                             use_ROS, compute_ROS, dense_subsample,
-                             constant_subsample)
+        super(KNeighborsClassifier, self).__init__(**kwargs)
 
         self.n_neighbors = n_neighbors

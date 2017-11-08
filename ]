@@ -2,7 +2,7 @@ import numpy as np
 import h5py
 from scipy import sparse
 from scipy.fftpack import dct, idct
-from sklearn.metrics.pairwise import pairwise_distances as skpd
+
 
 class Sparsifier():
 
@@ -59,8 +59,7 @@ class Sparsifier():
         if self.use_ROS:
             # if we're told to compute it, do so
             if self.compute_ROS == True:
-                D_indices = self.generate_ROS(self.P)
-                HDX = self.apply_ROS(self.X[:], D_indices)
+                HDX, D_indices = self.ROS(self.X[:])
                 # ... but write it if we're allowed to so
                 if self.write_permission == True:
                     self.write_ROS(self.fROS, HDX, D_indices)
@@ -79,33 +78,28 @@ class Sparsifier():
         """ Assign the subsampled data once the ROS has been applied. Needs
         to be updated to work with C functions. 
         """
-        if self.constant_subsample:
-            N = 1
-        else:
-            N = self.N
-        mask = self.generate_mask(self.P, self.M, N)
-        HDX_sub = self.apply_mask(self.HDX, mask)
+        HDX_sub, col_inds = self.subsample(self.HDX)
         if self.dense_subsample:
             row_inds = [i for i in range(self.N) for j in range(self.M)]
             HDX_sub = sparse.coo_matrix( ( HDX_sub.flatten(), 
-                      (row_inds, list(mask.flatten())) ) , 
+                      (row_inds, list(col_inds.flatten())) ) , 
                       shape = (self.N,self.P))
             HDX_sub = np.asarray(HDX_sub.todense())
         self.HDX_sub = HDX_sub
-        self.mask = mask
+        self.mask = col_inds
 
 
     # ROS functions
-    def generate_ROS(self, P):
-        D_indices = np.array([i for i in range(P) if np.random.choice([0,1])])
-        return D_indices
-
-    def apply_ROS(self, X, D):
-        # apply D matrix
-        X[:,D] *= -1
-        # apply H matrix
-        X = dct(X, norm = 'ortho', axis = 1, overwrite_x = False) 
-        return X
+    def ROS(self, X_dense):
+        """ Apply the random orthogonal system transform to the full dataset, i.e.,
+        compute HDX. D is diagonal +=1 so we just flip column signs, and for now H 
+        is a discrete cosine transform."""
+        if self.verbose:
+            print('Computing ROS.')
+        D_indices = [i for i in range(self.P) if np.random.choice([0,1])]
+        X_dense[:,D_indices] *= -1
+        X_dense = dct(X_dense, norm = 'ortho', axis = 1, overwrite_x = False) 
+        return [X_dense, D_indices]
 
     def ROS_test(self, X_test):
         """ Apply the ROS used on the dense dataset to another test dataset. """
@@ -138,64 +132,57 @@ class Sparsifier():
         fROS.create_dataset('HDX', data = HDX, dtype = 'd')
         fROS.create_dataset('D_indices', data = D_indices, dtype = 'int')
 
-
-    # masking functions
-
-    def generate_mask(self, P, M, N):
+    def subsample(self, X):
         """ Given an n x p array ::X (each row is a datapoint of dimension p) and an integer
         ::m <= p, (uniformly) randomly keeps m entries for each of the n datapoints. If
         ::self.constant_subsample then each row has the same columns extracted. This latter
         method is currently inefficient and is for comparison purposes only. 
         """
-
-        if N == 1:
-            mask = np.sort(np.random.choice(P,M,replace=False))
+        if self.constant_subsample:
+            col_inds_single = np.random.choice(self.P,self.M,replace=False)
+            col_inds = np.array([col_inds_single for i in range(self.N)]).flatten()
         else:
-            mask = np.array([np.sort(np.random.choice(
-                                 P, M, replace = False))
-                                 for i in range(N)])
+            col_inds = np.array([np.sort(np.random.choice(
+                                 self.P,self.M, replace = False))
+                                 for i in range(self.N)]).flatten()
+        row_inds = [i for i in range(self.N) for j in range(self.M)]
+        X_sub = np.take(X[:].flatten(), [self.P * r + c 
+                        for (r,c) in zip(row_inds,col_inds)])
+        X_sub = X_sub.reshape(self.N,self.M)
+        col_inds = col_inds.reshape(self.N,self.M)
+        return [X_sub, col_inds]
 
-        return mask
 
-    def apply_mask(self,X,mask, cross_terms = True):
-        """ Apply mask to X. 
-        """
-        if X.ndim == 1:
-            X = X[np.newaxis,:]
-        if mask.ndim ==1:
-            mask = mask[np.newaxis,:]
-        N,P = X.shape
-        K,M = mask.shape
-
-        if cross_terms:
-            X_masked = np.array([[X[n][mask[k]] for n in range(N)] for k in range(K)])
+    def apply_mask(self,X,mask):
+        if X.ndim ==1:
+            raise Exception("Array to mask must be 2-dimensional.")
+        N = X.shape[0]
+        if mask.ndim == 2:
+            X = np.array([X[n][mask[n]] for n in range(N)])
         else:
-            if N != K:
-                raise Exception('If no cross-terms are desired, number of mask 
-                rows must equal number of X rows')
-            X_masked = np.array([X[n][mask[n]] for n in range(N)])
-        return X_masked
+            X = np.array([X[n][mask] for n in range(N)])
+        return X
 
-    def pairwise_distances(self, X, Y = None, mask = None, D = None, 
-                           transform_X = "", transform_Y = ""):
+    def distance_masked(self, Y, mask = None, X = None, mask_X = False):
+        """ 
         """
-        """
-        if "HD" in transform_X:
-            X = self.apply_ROS(X, D)
-        if "R" in transform_X:
-            X = self.apply_mask(X, mask,cross_terms = False)
-        if "HD" in transform_Y:
-            Y = self.apply_ROS(Y, D)
+        if Y.ndim == 1:
+            raise Exception("Y must be 2-dimensional.")
 
-        K = np.shape(Y)[0]
-        for k in range(K):
-            if "R" in transform_Y:
-                y = self.apply_mask([Y[k]], mask)
-
-        dist = skpd(X,Y)
-        print(X.shape)
-        #dist = [np.linalg.norm(X - Y[k], axis = 1) for k in range(Y.shape[0])]
-        return dist
+        # use self's mask if not given
+        if mask==None:
+            mask = self.mask
+        # use self's X.HDX_sub if X isn't given
+        if type(X) is type(None):
+            X = self.HDX_sub
+        # apply the mask to X if we need to
+        if mask_X:
+            X = self.apply_mask(X, mask)
+        # apply the mask to Y
+        Y = self.apply_mask(Y, mask)
+        # compute the distance matrix
+        dist = [np.linalg.norm(X - Y[k], axis = 1) for k in range(K)]
+        return np.array(dist)
 
 
 
