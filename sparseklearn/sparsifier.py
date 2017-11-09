@@ -109,11 +109,12 @@ class Sparsifier():
         X = dct(X, norm = 'ortho', axis = 1, overwrite_x = False) 
         return X
 
-    def ROS_test(self, X_test):
-        """ Apply the ROS used on the dense dataset to another test dataset. """
-        X_test[:,self.D_indices] *= -1
-        X_test = dct(X_test, norm = 'ortho', axis = 1, overwrite_x = False) 
-        return X_test
+    def invert_ROS(self, X, D):
+        # copy it for now
+        X = np.copy(X)
+        X = idct(X, norm = 'ortho', axis = 1, overwrite_x = False)
+        X[:,D] *= -1
+        return X
 
     def read_ROS(self, fROS):
         HDX = fROS['HDX']
@@ -185,6 +186,7 @@ class Sparsifier():
         # perform some error checks
         if ("HD" in transform_X or "HD" in transform_Y) and type(D) == type(None):
             raise Exception("Cannot apply ROS without indices D")
+
         if "HD" in transform_X:
             X = self.apply_ROS(X, D)
         if "R" in transform_X:
@@ -192,9 +194,13 @@ class Sparsifier():
         if "HD" in transform_Y:
             Y = self.apply_ROS(Y, D)
 
+        if X.ndim == 1:
+            X = X[np.newaxis,:]
+        if Y.ndim == 1:
+            Y = Y[np.newaxis,:]
+
         K = np.shape(Y)[0]
         N = np.shape(X)[0]
-
         dist = np.zeros((K,N))
         for k in range(K):
             if "R" in transform_Y:

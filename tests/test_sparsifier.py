@@ -4,6 +4,7 @@ import h5py
 from sparseklearn import Sparsifier
 from sparseklearn import generate_mnist_dataset
 from sparseklearn import KNeighborsClassifier
+from sparseklearn import KMeans
 
 np.random.seed(17)
 
@@ -17,11 +18,15 @@ nte = 50
 n_train = {'0': ntr, '3' : ntr, '9' : ntr}
 n_test = {'0': nte, '3' : nte, '9' : nte}
 
-X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
-XT1 = np.copy(X_test)
-XT2 = np.copy(X_test)
-XT3 = np.copy(X_test)
-knn = KNeighborsClassifier(gamma = 12, verbose = False, fROS = None, 
+#X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
+X_train, y_train =  generate_mnist_dataset(f, n_train)
+
+kmc = KMeans(gamma = 12, n_clusters = 3)
+kmc.fit(X_train)
+
+
+"""
+knn = KNeighborsClassifier(gamma = 5, verbose = False, fROS = None, 
                            write_permission = False, use_ROS = True, 
                            compute_ROS = True, dense_subsample = False,
                            constant_subsample = False,
@@ -30,7 +35,6 @@ knn.fit(X_train, y_train)
 score = knn.score(X_test, y_test)
 print(score)
 
-"""
 #T1 = knn.ROS_test(XT1)
 #T2 = knn.apply_ROS(XT2, knn.D_indices)
 X = np.random.rand(2,4)
@@ -49,8 +53,6 @@ d1 = knn.pairwise_distances(X_ROSdmasked,Y, mask = mask, D = D,
 d2 = knn.pairwise_distances(X, Y, mask = mask, D = D, 
         transform_Y = "RHD", transform_X = "RHD")
 
-"""
-"""
 
 nruns = 30
 n_neighbors = 3
