@@ -11,23 +11,22 @@ class KNeighborsClassifier(Sparsifier):
         self.classes_ = list(set(y))
         
 
-    def kneighbors(self, Xi, return_distances = True):
-        Xicopy = np.copy(Xi)
-        Xros = self.apply_ROS(Xi, self.D_indices)
-        Xm = self.apply_mask(Xros, self.mask)
+    def kneighbors(self, Y, return_distances = True):
 
-        dist = self.pairwise_distances(Xm, Y = self.HDX_sub)
+        dist = self.pairwise_distances(self.HDX_sub, Y = Y, mask = self.mask,
+                   D = self.D_indices, transform_Y = "RHD")
+        neigh = dist.argsort(axis=0)[:self.n_neighbors]
+        dist = np.sort(dist, axis=0)[:self.n_neighbors]
+        if return_distances:
+            return [dist.T, neigh.T]
+        else:
+            return neigh.T
 
-        #neigh = dist.argsort(axis=1)#[:,:self.n_neighbors]
-        #dist = np.sort(dist, axis=1)#[:,:self.n_neighbors]
-        #if return_distances:
-        #    d = np.array([dist[neighbors[:,k],k] for k in range(dist.shape[1])])
-        #    return [d, neighbors.T]
-        #else:
-        #    return neighbors.T
+        
+        """
 
         # apply HD to X
-        X = self.ROS_test(Xicopy)
+        X = self.apply_ROS(Xicopy, self.D_indices)
         
         test = np.array([X[n][self.mask[n]] for n in range(X.shape[0])] )
 
@@ -50,11 +49,11 @@ class KNeighborsClassifier(Sparsifier):
         print(np.all(kdistancesV==dist))
         import pdb; pdb.set_trace()
 
-        return 0
-        #if return_distances:
-        #    return[kdistancesV, kneighborsV]
-        #else:
-        #    return kneighborsV
+        if return_distances:
+            return[kdistancesV, kneighborsV]
+        else:
+            return kneighborsV
+        """
 
     def predict(self, X):
         neigh_dist, neigh_ind = self.kneighbors(X)

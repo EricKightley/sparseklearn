@@ -27,17 +27,29 @@ knn = KNeighborsClassifier(gamma = 12, verbose = False, fROS = None,
                            constant_subsample = False,
                            n_neighbors = 3)
 knn.fit(X_train, y_train)
-
-#T1 = knn.ROS_test(XT1)
-#T2 = knn.apply_ROS(XT2, knn.D_indices)
-#X = np.random.rand(2,4)
-#mask = np.array([[1,3],[0,2]])
-#X_masked = knn.apply_mask(X,mask)
-#distances = knn.pairwise_distances(X_test, X_train)
-
 score = knn.score(X_test, y_test)
 print(score)
 
+"""
+#T1 = knn.ROS_test(XT1)
+#T2 = knn.apply_ROS(XT2, knn.D_indices)
+X = np.random.rand(2,4)
+Y = np.random.rand(2,4)
+
+mask = np.array([[1,3],[0,2]])
+#X_masked = knn.apply_mask(X,mask)
+#Y_masked = knn.apply_mask(Y,mask)
+D = np.array([-1,1])
+X_ROSd = knn.apply_ROS(X, D)
+Y_ROSd = knn.apply_ROS(Y, D)
+X_ROSdmasked = knn.apply_mask(X_ROSd, mask)
+d1 = knn.pairwise_distances(X_ROSdmasked,Y, mask = mask, D = D,
+        transform_X = "", transform_Y = "RHD")
+
+d2 = knn.pairwise_distances(X, Y, mask = mask, D = D, 
+        transform_Y = "RHD", transform_X = "RHD")
+
+"""
 """
 
 nruns = 30

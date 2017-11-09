@@ -101,6 +101,8 @@ class Sparsifier():
         return D_indices
 
     def apply_ROS(self, X, D):
+        # copy it for now 
+        X = np.copy(X)
         # apply D matrix
         X[:,D] *= -1
         # apply H matrix
@@ -157,7 +159,7 @@ class Sparsifier():
 
         return mask
 
-    def apply_mask(self,X,mask, cross_terms = True):
+    def apply_mask(self, X, mask, cross_terms = False):
         """ Apply mask to X. 
         """
         if X.ndim == 1:
@@ -168,11 +170,11 @@ class Sparsifier():
         K,M = mask.shape
 
         if cross_terms:
-            X_masked = np.array([[X[n][mask[k]] for n in range(N)] for k in range(K)])
+            X_masked = np.array([X[n][mask[k]] for n in range(N) for k in range(K)])
         else:
             if N != K:
-                raise Exception('If no cross-terms are desired, number of mask 
-                rows must equal number of X rows')
+                raise Exception('If no cross-terms are desired, number of mask' + \
+                'rows must equal number of X rows')
             X_masked = np.array([X[n][mask[n]] for n in range(N)])
         return X_masked
 
@@ -180,6 +182,9 @@ class Sparsifier():
                            transform_X = "", transform_Y = ""):
         """
         """
+        # perform some error checks
+        if ("HD" in transform_X or "HD" in transform_Y) and type(D) == type(None):
+            raise Exception("Cannot apply ROS without indices D")
         if "HD" in transform_X:
             X = self.apply_ROS(X, D)
         if "R" in transform_X:
@@ -188,14 +193,18 @@ class Sparsifier():
             Y = self.apply_ROS(Y, D)
 
         K = np.shape(Y)[0]
+        N = np.shape(X)[0]
+
+        dist = np.zeros((K,N))
         for k in range(K):
             if "R" in transform_Y:
-                y = self.apply_mask([Y[k]], mask)
-
-        dist = skpd(X,Y)
-        print(X.shape)
+                y = self.apply_mask(Y[k], mask, cross_terms = True)
+            else:
+                y = Y[k]
+            dist[k] = np.linalg.norm(y - X, axis = 1)
+        #dist = skpd(X,Y)
         #dist = [np.linalg.norm(X - Y[k], axis = 1) for k in range(Y.shape[0])]
-        return dist
+        return dist.T
 
 
 
