@@ -47,12 +47,31 @@ class Sparsifier():
         # if gamma is given as an integer, find gamma
         if type(self.gamma) is int or type(self.gamma) is np.int64:
             self.M = self.gamma
-        # overwrite gamma (either because it was an int or to account for
-        # rounding from floor function above)
+        # compute number of shared and random subsampling
+        if type(self.alpha) is float:
+            # then alpha is the ratio of shared indices
+            Ms = np.floor(self.M * self.alpha)
+        elif type(self.alpha) is int or type(self.alpha) is np.int64:
+            # then alpha is the number of shared indices
+            if self.alpha > self.M:
+                raise Exception("Number of common subsamples" +
+                    "alpha = {}".format(self.alpha) +
+                    "exceeds total number of subsamples M = {}".format(self.M))
+            else:
+                Ms = self.alpha
+       
+        self.Ms = Ms
+        self.Mr = self.M - Ms
+        # overwrite alpha nad gamma (either because they were ints or to 
+        # account for rounding from floor function above)
         self.gamma = self.M/self.P
+        self.alpha = self.Ms/self.M
         if self.verbose:
-            print('Latent dimension will be reduced to {} from'.format(self.M),
-                '{} for a compression factor of {}.'.format(self.P, self.gamma))
+            print('Latent dimension will be reduced to',
+            '{} ({} shared) from {}'.format(self.M, self.Ms, self.P), 
+            'for a compression factor of',
+            '{:.5} (alpha of {:.5}).'.format(self.gamma, self.alpha))
+
 
     def set_ROS(self):
         """ Assigns the ROS and indices."""
@@ -79,11 +98,7 @@ class Sparsifier():
         """ Assign the subsampled data once the ROS has been applied. Needs
         to be updated to work with C functions. 
         """
-        if self.constant_subsample:
-            N = 1
-        else:
-            N = self.N
-        mask = self.generate_mask(self.P, self.M, N)
+        mask, shared = self.generate_mask(self.P, self.Ms, self.Mr, self.N)
         HDX_sub = self.apply_mask(self.HDX, mask)
         if self.dense_subsample:
             row_inds = [i for i in range(self.N) for j in range(self.M)]
@@ -93,6 +108,7 @@ class Sparsifier():
             HDX_sub = np.asarray(HDX_sub.todense())
         self.HDX_sub = HDX_sub
         self.mask = mask
+        self.shared = shared
 
 
     # ROS functions
@@ -144,21 +160,22 @@ class Sparsifier():
 
     # masking functions
 
-    def generate_mask(self, P, M, N):
-        """ Given an n x p array ::X (each row is a datapoint of dimension p) and an integer
-        ::m <= p, (uniformly) randomly keeps m entries for each of the n datapoints. If
-        ::self.constant_subsample then each row has the same columns extracted. This latter
-        method is currently inefficient and is for comparison purposes only. 
+    def generate_mask(self, P, Ms, Mr, N):
         """
+        """
+        inds = [p for p in range(P)]
+        np.random.shuffle(inds)
+        shared_mask = inds[:Ms]
+        inds = inds[Ms:]
 
-        if N == 1:
-            mask = np.sort(np.random.choice(P,M,replace=False))
-        else:
-            mask = np.array([np.sort(np.random.choice(
-                                 P, M, replace = False))
-                                 for i in range(N)])
+        random_masks = [np.random.choice(inds, Mr, replace=False)
+                        for n in range(N)]
 
-        return mask
+        mask = np.hstack((random_masks, np.tile(shared_mask, (N,1))))
+
+        mask.sort(axis=1)
+
+        return [mask, np.sort(shared_mask)]
 
     def apply_mask(self, X, mask, cross_terms = False):
         """ Apply mask to X. 
@@ -214,12 +231,13 @@ class Sparsifier():
 
 
 
-    def __init__(self, gamma = 1.0, verbose = False, fROS = None, write_permission = False,
-                 use_ROS = True, compute_ROS = True, 
+    def __init__(self, gamma = 1.0, alpha = 0.0, verbose = False, fROS = None, 
+                 write_permission = False, use_ROS = True, compute_ROS = True, 
                  dense_subsample = False, constant_subsample = False):
 
         # assign constants
         self.gamma = gamma
+        self.alpha = alpha
         self.verbose = verbose
         self.fROS = fROS
         self.write_permission = write_permission

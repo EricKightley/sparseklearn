@@ -18,11 +18,14 @@ nte = 50
 n_train = {'0': ntr, '3' : ntr, '9' : ntr}
 n_test = {'0': nte, '3' : nte, '9' : nte}
 
-#X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
-X_train, y_train =  generate_mnist_dataset(f, n_train)
+X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
+spa = Sparsifier(gamma=12, alpha = 4, verbose = True)
+spa.initialize(X_train)
 
-kmc = KMeans(gamma = 12, n_clusters = 3)
-kmc.fit(X_train)
+#X_train, y_train =  generate_mnist_dataset(f, n_train)
+
+#kmc = KMeans(gamma = 12, n_clusters = 3)
+#kmc.fit(X_train)
 
 
 """

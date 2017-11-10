@@ -14,6 +14,7 @@ class KMeans(Sparsifier):
         if self.init == 'k-means++':
             centroids, centroid_indices = self.initialize_centroids_kmpp()
         elif self.init == 'random':
+            centoids_, centroid_indices = self.initialize_centroids_random()
         elif type(self.init) is np.ndarray:
             centroids = self.init
             centroid_indices = []
@@ -59,7 +60,8 @@ class KMeans(Sparsifier):
             centroids[0][self.mask[centroid_indices[0]]] = \
                 self.HDX_sub[centroid_indices[0]]
 
-        # initialize the previous distance counter to be larger than anything
+        # initialize the previous distance counter to max float
+        # (so it's guaranteed to be overwritten in the loop)
         d_prev = np.ones(self.N) * float_info.max
 
         # now pick the remaining k-1 centroids
