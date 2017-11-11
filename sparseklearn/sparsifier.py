@@ -40,17 +40,17 @@ class Sparsifier():
                 'and is {} '.format(self.N) + 'by {} '.format(self.P) +
                 '(data points by latent dimension).')
 
-        # compute compression factor
-        # if gamma is given as a float, find M
+        ## compression factor gamma and common subsampling ratio alpha
+        # if gamma is given as a float, find the number of dimensions
         if type(self.gamma) is float:
             self.M = int(np.floor(self.P * self.gamma))
-        # if gamma is given as an integer, find gamma
+        # if gamma is given as the num dimensions, find the ratio
         if type(self.gamma) is int or type(self.gamma) is np.int64:
             self.M = self.gamma
         # compute number of shared and random subsampling
         if type(self.alpha) is float:
             # then alpha is the ratio of shared indices
-            Ms = np.floor(self.M * self.alpha)
+            Ms = int(np.floor(self.M * self.alpha))
         elif type(self.alpha) is int or type(self.alpha) is np.int64:
             # then alpha is the number of shared indices
             if self.alpha > self.M:
@@ -62,7 +62,7 @@ class Sparsifier():
        
         self.Ms = Ms
         self.Mr = self.M - Ms
-        # overwrite alpha nad gamma (either because they were ints or to 
+        # overwrite alpha and gamma (either because they were ints or to 
         # account for rounding from floor function above)
         self.gamma = self.M/self.P
         self.alpha = self.Ms/self.M
@@ -171,29 +171,24 @@ class Sparsifier():
         random_masks = [np.random.choice(inds, Mr, replace=False)
                         for n in range(N)]
 
-        mask = np.hstack((random_masks, np.tile(shared_mask, (N,1))))
-
+        mask = np.concatenate((random_masks, 
+               np.tile(shared_mask, (N,1)).astype(int)), axis = 1)
         mask.sort(axis=1)
 
         return [mask, np.sort(shared_mask)]
 
-    def apply_mask(self, X, mask, cross_terms = False):
+    def apply_mask(self, X, mask):
         """ Apply mask to X. 
         """
-        if X.ndim == 1:
-            X = X[np.newaxis,:]
-        if mask.ndim ==1:
-            mask = mask[np.newaxis,:]
-        N,P = X.shape
-        K,M = mask.shape
-
-        if cross_terms:
-            X_masked = np.array([X[n][mask[k]] for n in range(N) for k in range(K)])
+        if X.ndim == 2:
+            if X.shape[0] != mask.shape[0]:
+                raise Exception('Number of rows in mask must agree with number',
+                        'of rows in X')
+            X_masked = np.array([X[n][mask[n]] for n in range(mask.shape[0])])
+        elif X.ndim == 1:
+            X_masked = np.array([X[mask[n]] for n in range(mask.shape[0])])
         else:
-            if N != K:
-                raise Exception('If no cross-terms are desired, number of mask' + \
-                'rows must equal number of X rows')
-            X_masked = np.array([X[n][mask[n]] for n in range(N)])
+            raise Exception('X must be 1 or 2-dimensional')
         return X_masked
 
     def pairwise_distances(self, X, Y = None, mask = None, D = None, 
@@ -207,7 +202,7 @@ class Sparsifier():
         if "HD" in transform_X:
             X = self.apply_ROS(X, D)
         if "R" in transform_X:
-            X = self.apply_mask(X, mask,cross_terms = False)
+            X = self.apply_mask(X, mask,cross_terms)
         if "HD" in transform_Y:
             Y = self.apply_ROS(Y, D)
 
@@ -221,12 +216,10 @@ class Sparsifier():
         dist = np.zeros((K,N))
         for k in range(K):
             if "R" in transform_Y:
-                y = self.apply_mask(Y[k], mask, cross_terms = True)
+                y = self.apply_mask(Y[k], mask)
             else:
                 y = Y[k]
             dist[k] = np.linalg.norm(y - X, axis = 1)
-        #dist = skpd(X,Y)
-        #dist = [np.linalg.norm(X - Y[k], axis = 1) for k in range(Y.shape[0])]
         return dist.T
 
 
