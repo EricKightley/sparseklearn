@@ -17,10 +17,20 @@ class KMeans(Sparsifier):
                 best_inertia = self.inertia_
                 centroids = self.centroids
                 labels_ = self.labels_
-            self.cluster_centers_ = centroids
+            self.centroids = centroids
             self.labels_ = labels_
             self.inertia_ = best_inertia
 
+        # postprocessing
+        if self.n_passes == 1:
+            self.centroids = self.invert_ROS(self.centroids, self.D_indices)
+        elif self.n_passes == 2:
+            for k in range(self.K):
+                centroid_members = np.where(self.labels_ == k)
+                self.centroids[k] = np.mean(self.X[centroid_members], axis = 0)
+
+        # rename for sklearn compatibility
+        self.cluster_centers_ = self.centroids
 
     # Initialization functions
 
@@ -95,6 +105,7 @@ class KMeans(Sparsifier):
             if d_curr_sum > 0:
                 centroid_indices[k] = np.random.choice(self.N, p = d_curr/d_curr_sum)
             else:
+                print("WAHHH")
                 # then the mask obliterated all distance information, so just
                 # pick one uniformly at random that's not already been chosen
                 available_indices = set(range(self.N)).difference(set(centroid_indices))
@@ -143,7 +154,10 @@ class KMeans(Sparsifier):
             previous_inertia = self.inertia_
             self.labels_, self.inertia_ = self.compute_labels()
             current_iter += 1
-            inertia_change = np.abs(self.inertia_ - previous_inertia)/self.inertia_
+            if self.inertia_ > 0:
+                inertia_change = np.abs(self.inertia_ - previous_inertia)/self.inertia_
+            else:
+                inertia_change = 0
         
         # assign convergence results
         self.iterations_ = current_iter
@@ -151,9 +165,8 @@ class KMeans(Sparsifier):
             self.converged = True
         else:
             self.converged = False
+
             
-
-
     def __init__(self, n_clusters = 8, init = 'k-means++', tol = 1e-4, 
                  full_init = True, n_init = 10, max_iter = 300, 
                  n_passes = 1, **kwargs):
@@ -161,6 +174,8 @@ class KMeans(Sparsifier):
         super(KMeans, self).__init__(**kwargs)
 
         self.K = n_clusters
+        # for compatibility with sklearn.cluster.KMeans
+        self.n_clusters = n_clusters
         self.init = init
         self.full_init = full_init
         self.n_init = n_init

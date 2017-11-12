@@ -1,4 +1,5 @@
 import numpy as np
+import h5py
 
 def generate_mnist_dataset(f, n_train, n_test = None):
 
@@ -49,3 +50,28 @@ def generate_mnist_dataset(f, n_train, n_test = None):
         return [X_train, y_train, X_test, y_test]
 
     return[X_train, y_train]
+
+
+def write_intdataset_h5py(ff, X_train, y_train, X_test, y_test):
+    ff.create_dataset('X_train', data = X_train, dtype='i4', scaleoffset=0, 
+            compression="gzip", compression_opts=9)
+    ff.create_dataset('X_test', data = X_test, dtype='i4', scaleoffset=0, 
+            compression="gzip", compression_opts=9)
+    ff.create_dataset('y_train', data = y_train, dtype='i4', scaleoffset=0, 
+            compression="gzip", compression_opts=9)
+    ff.create_dataset('y_test', data = y_test, dtype='i4', scaleoffset=0, 
+            compression="gzip", compression_opts=9)
+
+def load_mnist_dataset():
+    ff = h5py.File('sample_mnist.h5py', 'r')
+    X_train = ff['X_train'][:]
+    X_test = ff['X_test'][:]
+    y_train = ff['y_train'][:]
+    y_test = ff['y_test'][:]
+    return [X_train, y_train, X_test, y_test]
+
+
+
+
+
+

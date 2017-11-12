@@ -5,6 +5,7 @@ from sparseklearn import Sparsifier
 from sparseklearn import generate_mnist_dataset
 from sparseklearn import KNeighborsClassifier
 from sparseklearn import KMeans
+from sklearn.cluster import KMeans as KMeansDefault
 
 np.random.seed(17)
 
@@ -14,8 +15,9 @@ f = h5py.File('/home/eric/kmeansdata/mnistreduced.hdf5','r')
 fROS = h5py.File('/home/eric/kmeansdata/fROS_temp.hdf5','a')
 
 ntr = 500
-nte = 50
+#nsmall = 100
 n_train = {'0': ntr, '3' : ntr, '9' : ntr}
+nte = 100
 n_test = {'0': nte, '3' : nte, '9' : nte}
 
 #X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
@@ -26,10 +28,38 @@ n_test = {'0': nte, '3' : nte, '9' : nte}
 #spa = Sparsifier(gamma=12, alpha = 4, verbose = True)
 #spa.initialize(X_train)
 
-X_train, y_train =  generate_mnist_dataset(f, n_train)
+#X_train, y_train, X_test, y_test = generate_mnist_dataset(f, n_train, n_test)
+X_train, y_train, X_test, y_test = load_mnist_dataset()
 
-kmc = KMeans(gamma = .01, n_clusters = 3, init='k-means++', max_iter = 0)
-kmc.fit(X_train)
+#kmc = KMeans(gamma = 0.03, alpha = 0.5, verbose = True,
+#        n_clusters = 3, init='k-means++', n_passes = 2, n_init = 30)
+#kmc.fit(X_train)
+
+#kmc = KMeansDefault(n_clusters = 3, init='k-means++', n_init = 100)
+#kmc.fit(X_train)
+
+#n_per_cluster = np.zeros(kmc.n_clusters, dtype = int)
+
+#for k in range(kmc.n_clusters):
+#    n_per_cluster[k] = sum(kmc.labels_==k)
+    
+#np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/means.npy', kmc.cluster_centers_)
+#np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/counts.npy', n_per_cluster)
+
+
+
+"""
+ff = h5py.File('/home/eric/Dropbox/EricStephenShare/sparseklearn/tests/sample_mnist.h5py', 'a')
+ff.create_dataset('X_train', data = X_train, dtype='i4', scaleoffset=0, 
+        compression="gzip", compression_opts=9)
+ff.create_dataset('X_test', data = X_test, dtype='i4', scaleoffset=0, 
+        compression="gzip", compression_opts=9)
+ff.create_dataset('y_train', data = y_train, dtype='i4', scaleoffset=0, 
+        compression="gzip", compression_opts=9)
+ff.create_dataset('y_test', data = y_test, dtype='i4', scaleoffset=0, 
+        compression="gzip", compression_opts=9)
+ff.close()
+"""
 
 
 """
