@@ -18,3 +18,15 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+$sparseklearn
+=============
+
+$sparseklearn is a suite of machine learning tools built on the concept of
+dimensionality reduction.
+
+License
+-------
+
+This project is licensed under the MIT license. 
