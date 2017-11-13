@@ -2,7 +2,6 @@ import numpy as np
 import h5py
 from scipy import sparse
 from scipy.fftpack import dct, idct
-from sklearn.metrics.pairwise import pairwise_distances as skpd
 
 class Sparsifier():
 
