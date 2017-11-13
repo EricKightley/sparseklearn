@@ -52,7 +52,7 @@ def generate_mnist_dataset(f, n_train, n_test = None):
     return[X_train, y_train]
 
 
-def write_intdataset_h5py(ff, X_train, y_train, X_test, y_test):
+def write_mnist_dataset(ff, X_train, y_train, X_test, y_test):
     ff.create_dataset('X_train', data = X_train, dtype='i4', scaleoffset=0, 
             compression="gzip", compression_opts=9)
     ff.create_dataset('X_test', data = X_test, dtype='i4', scaleoffset=0, 
@@ -69,7 +69,6 @@ def load_mnist_dataset():
     y_train = ff['y_train'][:]
     y_test = ff['y_test'][:]
     return [X_train, y_train, X_test, y_test]
-
 
 
 

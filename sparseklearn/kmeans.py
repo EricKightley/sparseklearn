@@ -32,6 +32,12 @@ class KMeans(Sparsifier):
         # rename for sklearn compatibility
         self.cluster_centers_ = self.centroids
 
+        # set how many of each example belong to each mean
+        self.n_per_cluster = np.zeros(self.n_clusters, dtype = int)
+        for k in range(self.n_clusters):
+            self.n_per_cluster[k] = sum(self.labels_==k)
+
+
     # Initialization functions
 
     def initialize_centroids(self):

@@ -2,7 +2,7 @@ import numpy as np
 import h5py
 
 from sparseklearn import Sparsifier
-from sparseklearn import generate_mnist_dataset
+from sparseklearn import generate_mnist_dataset, load_mnist_dataset
 from sparseklearn import KNeighborsClassifier
 from sparseklearn import KMeans
 from sklearn.cluster import KMeans as KMeansDefault
@@ -20,7 +20,7 @@ n_train = {'0': ntr, '3' : ntr, '9' : ntr}
 nte = 100
 n_test = {'0': nte, '3' : nte, '9' : nte}
 
-#X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
+X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
 #knn = KNeighborsClassifier(gamma = 24, n_neighbors = 3, verbose = True)
 #knn.fit(X_train, y_train)
 #score = knn.score(X_test, y_test)
@@ -29,7 +29,7 @@ n_test = {'0': nte, '3' : nte, '9' : nte}
 #spa.initialize(X_train)
 
 #X_train, y_train, X_test, y_test = generate_mnist_dataset(f, n_train, n_test)
-X_train, y_train, X_test, y_test = load_mnist_dataset()
+#X_train, y_train, X_test, y_test = load_mnist_dataset()
 
 #kmc = KMeans(gamma = 0.03, alpha = 0.5, verbose = True,
 #        n_clusters = 3, init='k-means++', n_passes = 2, n_init = 30)
@@ -46,7 +46,11 @@ X_train, y_train, X_test, y_test = load_mnist_dataset()
 #np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/means.npy', kmc.cluster_centers_)
 #np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/counts.npy', n_per_cluster)
 
+from sparseklearn import write_mnist_dataset
 
+ff = h5py.File('/home/eric/Dropbox/EricStephenShare/sparseklearn/tests/sample_mnist.h5py', 'a')
+write_mnist_dataset(ff, X_train, y_train, X_test, y_test)
+ff.close()
 
 """
 ff = h5py.File('/home/eric/Dropbox/EricStephenShare/sparseklearn/tests/sample_mnist.h5py', 'a')
