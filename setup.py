@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='sparseklearn',
-      version='0.1.1',
+      version='0.1.2',
       url='http://github.com/EricKightley/sparseklearn',
       author='Eric Kightley',
       author_email='kightley.1@gmail.com',
