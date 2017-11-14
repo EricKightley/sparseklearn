@@ -6,7 +6,7 @@ class KNeighborsClassifier(Sparsifier):
 
 
     def fit(self, X, y):
-        self.initialize(X)
+        self.fit_sparsifier(X)
         self._y = y
         self.classes_ = list(set(y))
         

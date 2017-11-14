@@ -8,7 +8,7 @@ class Sparsifier():
 
     # assignment functions
 
-    def initialize(self, data):
+    def fit_sparsifier(self, data):
         self.set_data(data)
         self.set_ROS()
         self.set_subsample()
@@ -89,7 +89,7 @@ class Sparsifier():
         else:
             # if we're not using the ROS just set HDX to be X
             HDX = self.X[:].astype(float)
-            D_indices = []
+            D_indices = np.ones(self.N)
         self.HDX, self.D_indices = HDX, D_indices
 
 

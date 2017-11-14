@@ -8,7 +8,7 @@ class KMeans(Sparsifier):
     def fit(self, X, y = None):
         # y included for compatibility with sklearn.cluster.KMeans,
         # which also doesn't use it for anything...
-        self.initialize(X)
+        self.fit_sparsifier(X)
         best_inertia = float_info.max
 
         for i in range(self.n_init):
@@ -22,7 +22,7 @@ class KMeans(Sparsifier):
             self.inertia_ = best_inertia
 
         # postprocessing
-        if self.n_passes == 1:
+        if self.n_passes == 1 and self.use_ROS:
             self.centroids = self.invert_ROS(self.centroids, self.D_indices)
         elif self.n_passes == 2:
             for k in range(self.K):
