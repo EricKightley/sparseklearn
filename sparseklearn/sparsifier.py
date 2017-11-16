@@ -98,13 +98,16 @@ class Sparsifier():
         to be updated to work with C functions. 
         """
         mask, shared = self.generate_mask(self.P, self.Ms, self.Mr, self.N)
+        # the mask returns HDX_sub in compact form
         HDX_sub = self.apply_mask(self.HDX, mask)
-        if self.dense_subsample:
+        # convert it if we need it in dense or sparse form
+        if self.sparsity_format == 'dense' or self.sparsity_format == 'sparse':
             row_inds = [i for i in range(self.N) for j in range(self.M)]
             HDX_sub = sparse.coo_matrix( ( HDX_sub.flatten(), 
                       (row_inds, list(mask.flatten())) ) , 
                       shape = (self.N,self.P))
-            HDX_sub = np.asarray(HDX_sub.todense())
+            if self.sparsity_format == 'dense':
+                HDX_sub = np.asarray(HDX_sub.todense())
         self.HDX_sub = HDX_sub
         self.mask = mask
         self.shared = shared
@@ -201,7 +204,7 @@ class Sparsifier():
         if "HD" in transform_X:
             X = self.apply_ROS(X, D)
         if "R" in transform_X:
-            X = self.apply_mask(X, mask,cross_terms)
+            X = self.apply_mask(X, mask)
         if "HD" in transform_Y:
             Y = self.apply_ROS(Y, D)
 
@@ -225,7 +228,7 @@ class Sparsifier():
 
     def __init__(self, gamma = 1.0, alpha = 0.0, verbose = False, fROS = None, 
                  write_permission = False, use_ROS = True, compute_ROS = True, 
-                 dense_subsample = False, constant_subsample = False):
+                 sparsity_format = 'compact'):
 
         # assign constants
         self.gamma = gamma
@@ -235,8 +238,6 @@ class Sparsifier():
         self.write_permission = write_permission
         self.use_ROS = use_ROS
         self.compute_ROS = compute_ROS
-        self.dense_subsample = dense_subsample
-        self.constant_subsample = constant_subsample
-
+        self.sparsity_format = sparsity_format
 
 

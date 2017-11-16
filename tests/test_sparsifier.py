@@ -46,11 +46,6 @@ X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
 #np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/means.npy', kmc.cluster_centers_)
 #np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/counts.npy', n_per_cluster)
 
-from sparseklearn import write_mnist_dataset
-
-ff = h5py.File('/home/eric/Dropbox/EricStephenShare/sparseklearn/tests/sample_mnist.h5py', 'a')
-write_mnist_dataset(ff, X_train, y_train, X_test, y_test)
-ff.close()
 
 """
 ff = h5py.File('/home/eric/Dropbox/EricStephenShare/sparseklearn/tests/sample_mnist.h5py', 'a')
