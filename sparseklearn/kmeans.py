@@ -98,8 +98,7 @@ class KMeans(Sparsifier):
         # now pick the remaining k-1 cluster_centers
         for k in range(1,self.K):
             # distance from all the data points to the last cluster added
-            d_curr = self.pairwise_distances(self.HDX_sub, Y = self.cluster_centers_[k-1], 
-                    mask = self.mask, transform_Y = "R")[:,0]
+            d_curr = self.pairwise_distances(Y = self.cluster_centers_[k-1])[:,0]
             # ||x - U|| is either this distance or the current minimum
             d_curr = np.min((d_prev, d_curr), axis = 0)
             # overwrite previous distances with new closest
@@ -136,8 +135,7 @@ class KMeans(Sparsifier):
     # Core algorithms
 
     def compute_labels(self):
-        d = self.pairwise_distances(self.HDX_sub, self.cluster_centers_, self.mask, 
-                                    transform_Y = 'R')
+        d = self.pairwise_distances(Y=self.cluster_centers_)
         labels_ = d.argsort(axis=1)[:,0]
         inertia_ = np.sum([d[n,labels_[n]] for n in range(self.N)])
         return [labels_, inertia_]

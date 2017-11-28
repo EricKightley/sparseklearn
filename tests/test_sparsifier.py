@@ -5,6 +5,7 @@ from sparseklearn import Sparsifier
 from sparseklearn import generate_mnist_dataset, load_mnist_dataset
 from sparseklearn import KNeighborsClassifier
 from sparseklearn import KMeans
+from sparseklearn import GaussianMixture
 from sklearn.cluster import KMeans as KMeansDefault
 
 np.random.seed(17)
@@ -21,30 +22,38 @@ nte = 100
 n_test = {'0': nte, '3' : nte, '9' : nte}
 
 X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
+
+#gmm = GaussianMixture(gamma = 12, alpha = 4, n_components = 3)
+#gmm.fit(X_train)
+
+#s = Sparsifier(gamma = .03, alpha = 0.01)
+#s.fit_sparsifier(X_train)
+
 #knn = KNeighborsClassifier(gamma = 24, n_neighbors = 3, verbose = True)
 #knn.fit(X_train, y_train)
 #score = knn.score(X_test, y_test)
 #print(score)
+
+
+kmc = KMeans(gamma = 0.03, alpha = 0.5, n_clusters = 3)
+kmc.fit(X_train)
+
 #spa = Sparsifier(gamma=12, alpha = 4, verbose = True)
-#spa.initialize(X_train)
+#spa.fit_sparsifier(X_train)
 
-#X_train, y_train, X_test, y_test = generate_mnist_dataset(f, n_train, n_test)
-#X_train, y_train, X_test, y_test = load_mnist_dataset()
-
-#kmc = KMeans(gamma = 0.03, alpha = 0.5, verbose = True,
-#        n_clusters = 3, init='k-means++', n_passes = 2, n_init = 30)
-#kmc.fit(X_train)
 
 #kmc = KMeansDefault(n_clusters = 3, init='k-means++', n_init = 100)
 #kmc.fit(X_train)
 
 #n_per_cluster = np.zeros(kmc.n_clusters, dtype = int)
-
+#
 #for k in range(kmc.n_clusters):
 #    n_per_cluster[k] = sum(kmc.labels_==k)
     
 #np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/means.npy', kmc.cluster_centers_)
 #np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/counts.npy', n_per_cluster)
+
+
 
 
 """
@@ -58,10 +67,8 @@ ff.create_dataset('y_train', data = y_train, dtype='i4', scaleoffset=0,
 ff.create_dataset('y_test', data = y_test, dtype='i4', scaleoffset=0, 
         compression="gzip", compression_opts=9)
 ff.close()
-"""
 
 
-"""
 knn = KNeighborsClassifier(gamma = 5, verbose = False, fROS = None, 
                            write_permission = False, use_ROS = True, 
                            compute_ROS = True, dense_subsample = False,

@@ -8,10 +8,24 @@ class Sparsifier():
 
     # assignment functions
 
-    def fit_sparsifier(self, data):
-        self.set_data(data)
-        self.set_ROS()
-        self.set_subsample()
+    def fit_sparsifier(self, data, override = False):
+        # if we passed this object a sparsifier or 
+        # a superclass of a sparsifier, 
+        # just copy its attributes. This is probably a very bad idea.
+        # This exists now because we need to fit a KMeans classifier
+        # in the intialization of the GaussianMixture classifier
+        if data.__class__.__bases__[0] is Sparsifier or \
+            data.__class__ is Sparsifier:
+            [setattr(self,key,data.__dict__[key]) for key in 
+                    data.__dict__.keys()]
+
+        # only fit it if it hasn't been fit, or if we explicitly override this
+        if not self.sparsifier_is_fit or override:
+            self.set_data(data)
+            self.set_ROS()
+            self.set_subsample()
+            self.sparsifier_is_fit = True
+
 
     def set_data(self, data):
         """ Assigns the data as an attribute. data can either be a numpy ndarray
@@ -77,11 +91,11 @@ class Sparsifier():
         if self.use_ROS:
             # if we're told to compute it, do so
             if self.compute_ROS == True:
-                D_indices = self.generate_ROS(self.P)
-                HDX = self.apply_ROS(self.X[:], D_indices)
+                self.D_indices = self.generate_ROS(self.P)
+                HDX = self.apply_ROS(self.X[:])
                 # ... but write it if we're allowed to so
                 if self.write_permission == True:
-                    self.write_ROS(self.fROS, HDX, D_indices)
+                    self.write_ROS(self.fROS, HDX, self.D_indices)
             # otherwise load it
             elif self.fROS != None:
                 HDX, D_indices = self.read_ROS(self.fROS)
@@ -89,8 +103,8 @@ class Sparsifier():
         else:
             # if we're not using the ROS just set HDX to be X
             HDX = self.X[:].astype(float)
-            D_indices = np.ones(self.N)
-        self.HDX, self.D_indices = HDX, D_indices
+            self.D_indices = np.ones(self.N)
+        self.HDX = HDX
 
 
     def set_subsample(self):
@@ -118,11 +132,11 @@ class Sparsifier():
         D_indices = np.array([i for i in range(P) if np.random.choice([0,1])])
         return D_indices
 
-    def apply_ROS(self, X, D):
+    def apply_ROS(self, X):
         # copy it for now 
         X = np.copy(X)
         # apply D matrix
-        X[:,D] *= -1
+        X[:,self.D_indices] *= -1
         # apply H matrix
         X = dct(X, norm = 'ortho', axis = 1, overwrite_x = False) 
         return X
@@ -193,7 +207,88 @@ class Sparsifier():
             raise Exception('X must be 1 or 2-dimensional')
         return X_masked
 
-    def pairwise_distances(self, X, Y = None, mask = None, D = None, 
+
+    # distance functions
+
+    def pairwise_distances(self, Y = None, X = None, W = None, mask = None, D = None, 
+            transform_X = "", transform_Y = "R", transform_W = ""):
+
+        # assign X if we need to
+        if X is None:
+            X = self.HDX_sub
+        # augment X if we need to
+        if X.ndim == 1:
+            X = X[np.newaxis,:]
+
+        # set up preconditioning if we need it
+        if "HD" in transform_X + transform_Y + transform_W:
+            if D is None:
+                # then use the instance's D_indices
+                D = self.D_indices
+
+        # set up subsampling if we need it
+        if "R" in transform_X + transform_Y + transform_W:
+            if mask is None:
+                # then use the instance's mask
+                mask = self.mask
+        
+        # transform and subsample X if we need to
+        if "HD" in transform_X:
+            X = self.apply_ROS(X)
+        if "R" in transform_X:
+            X = self.apply_mask(X, mask)
+
+        # transform Y if we need to
+        if "HD" in transform_Y and Y is not None:
+            Y = self.apply_ROS(Y)
+        # assign Y to be X if we need to
+        elif Y is None:
+            Y = X
+        # augment Y if we need to
+        if Y.ndim == 1:
+            Y = Y[np.newaxis,:]
+        
+
+        # transform W if we need to
+        if "HD" in transform_W and W is not None:
+            W = self.apply_ROS(W)
+
+        # set up the distances output array
+        K, _ = np.shape(Y)
+        dist = np.zeros((K, self.N))
+
+        # don't check this every time we go through the loop
+        if "R" in transform_Y:
+            subsample_Y = True
+        else:
+            subsample_Y = False
+
+        if "R" in transform_W:
+            subsample_W = True
+        else:
+            subsample_W = False
+
+        # compute the distances
+
+        # ... in two cases. First, if no weights are given
+        if W is None:
+            for k in range(K):
+                if subsample_Y:
+                    y = self.apply_mask(Y[k], mask)
+                dist[k] = np.linalg.norm(y - X, axis = 1)
+        # ... or alternatively if they are given
+        else:
+            print(W)
+            for k in range(K):
+                if subsample_Y:
+                    y = self.apply_mask(Y[k], mask)
+                if subsample_W:
+                    w_masked = self.apply_mask(W[k], mask)
+                dist[k] = np.linalg.norm(w*(y-X)**2, axis = 1)
+
+        return dist.T
+
+    def pairwise_distances_a(self, X, Y = None, mask = None, D = None, 
                            transform_X = "", transform_Y = ""):
         """
         """
@@ -202,11 +297,11 @@ class Sparsifier():
             raise Exception("Cannot apply ROS without indices D")
 
         if "HD" in transform_X:
-            X = self.apply_ROS(X, D)
+            X = self.apply_ROS(X)
         if "R" in transform_X:
             X = self.apply_mask(X, mask)
         if "HD" in transform_Y:
-            Y = self.apply_ROS(Y, D)
+            Y = self.apply_ROS(Y)
 
         if X.ndim == 1:
             X = X[np.newaxis,:]
@@ -239,5 +334,6 @@ class Sparsifier():
         self.use_ROS = use_ROS
         self.compute_ROS = compute_ROS
         self.sparsity_format = sparsity_format
+        self.sparsifier_is_fit = False
 
 

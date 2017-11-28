@@ -11,10 +11,8 @@ class KNeighborsClassifier(Sparsifier):
         self.classes_ = list(set(y))
         
 
-    def kneighbors(self, Y, return_distances = True):
-
-        dist = self.pairwise_distances(self.HDX_sub, Y = Y, mask = self.mask,
-                   D = self.D_indices, transform_Y = "RHD")
+    def kneighbors(self, Y, return_distances = True, transform_Y = "RHD"):
+        dist = self.pairwise_distances(Y = Y, transform_Y = transform_Y)
         neigh = dist.argsort(axis=0)[:self.n_neighbors]
         dist = np.sort(dist, axis=0)[:self.n_neighbors]
         if return_distances:
