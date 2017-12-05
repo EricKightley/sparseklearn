@@ -40,6 +40,8 @@ class KMeans(Sparsifier):
             for k in range(self.K):
                 cluster_members = np.where(self.labels_ == k)
                 cluster_centers_[k] = np.mean(self.X[cluster_members], axis = 0)
+        else:
+            cluster_centers_ = self.cluster_centers_
         return cluster_centers_
 
     # Initialization functions
@@ -61,6 +63,8 @@ class KMeans(Sparsifier):
         self.labels_, self.inertia_ = self.compute_labels()
    
     def initialize_cluster_centers_random(self):
+        cluster_centers_, cluster_indices = self.pick_K_datapoints(self.K)
+        """
         # pick K data points at random uniformly
         cluster_indices = np.random.choice(self.N, self.K, replace = False)
         cluster_indices.sort()
@@ -73,7 +77,8 @@ class KMeans(Sparsifier):
             for k in range(K):
                 self.cluster_centers_[k][mask[cluster_indices[k]]] = \
                         self.HDX_sub[cluster_indices[k]]
-        return [self.cluster_centers_, cluster_indices]
+        """
+        return [cluster_centers_, cluster_indices]
 
 
     def initialize_cluster_centers_kmpp(self):

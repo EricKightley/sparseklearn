@@ -23,8 +23,37 @@ n_test = {'0': nte, '3' : nte, '9' : nte}
 
 X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
 
-#gmm = GaussianMixture(gamma = 12, alpha = 4, n_components = 3)
-#gmm.fit(X_train)
+
+#s = Sparsifier(gamma = .03, alpha = 0.01)
+#s.fit_sparsifier(X_train)
+
+
+gmm = GaussianMixture(gamma = 12, alpha = 4, n_components = 3, covariance_type = 'diag',
+                      init_params = 'random' )
+gmm.fit(X_train)
+#d = gmm._estimate_gaussian_prob_diag(gmm.means_, np.random.rand(gmm.n_components,gmm.P))
+
+#X = np.random.rand(10,5)
+#gmm = GaussianMixture(gamma = 1.0, n_components = 2, covariance_type = 'diag', use_ROS = False)
+#gmm.fit(X)
+#means = np.zeros((2,gmm.P))
+#means[1] = 1
+#sigmas = .7*np.ones((2,gmm.P))
+#f = gmm._estimate_gaussian_prob(means,sigmas)
+#resp = gmm._estimate_resp(f, np.ones(gmm.n_components))
+#f,resp = gmm._e_step(means,sigmas,gmm.weights_)
+#gmm._m_step(f,gmm.HDX_sub)
+
+"""
+correct = np.zeros((gmm.N, gmm.n_components))
+for n in range(gmm.N):
+    for k in range(gmm.n_components):
+        for d in range(gmm.P):
+            correct[n,k] += (X[n,d] - means[k,d])**2/sigmas[k,d]
+correct = np.sqrt(correct)
+
+print(np.max(np.abs(correct - dist)))
+"""
 
 #s = Sparsifier(gamma = .03, alpha = 0.01)
 #s.fit_sparsifier(X_train)
@@ -35,8 +64,8 @@ X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
 #print(score)
 
 
-kmc = KMeans(gamma = 0.03, alpha = 0.5, n_clusters = 3)
-kmc.fit(X_train)
+#kmc = KMeans(gamma = 0.03, alpha = 0.5, n_clusters = 3)
+#kmc.fit(X_train)
 
 #spa = Sparsifier(gamma=12, alpha = 4, verbose = True)
 #spa.fit_sparsifier(X_train)

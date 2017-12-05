@@ -208,10 +208,11 @@ class Sparsifier():
         return X_masked
 
 
-    # distance functions
+    # masked matrix operations
 
-    def pairwise_distances(self, Y = None, X = None, W = None, mask = None, D = None, 
-            transform_X = "", transform_Y = "R", transform_W = ""):
+
+    def pairwise_distances(self, Y = None, X = None, W = None, 
+            transform_X = "", transform_Y = "R", transform_W = "R"):
 
         # assign X if we need to
         if X is None:
@@ -219,24 +220,12 @@ class Sparsifier():
         # augment X if we need to
         if X.ndim == 1:
             X = X[np.newaxis,:]
-
-        # set up preconditioning if we need it
-        if "HD" in transform_X + transform_Y + transform_W:
-            if D is None:
-                # then use the instance's D_indices
-                D = self.D_indices
-
-        # set up subsampling if we need it
-        if "R" in transform_X + transform_Y + transform_W:
-            if mask is None:
-                # then use the instance's mask
-                mask = self.mask
         
         # transform and subsample X if we need to
         if "HD" in transform_X:
             X = self.apply_ROS(X)
         if "R" in transform_X:
-            X = self.apply_mask(X, mask)
+            X = self.apply_mask(X, self.mask)
 
         # transform Y if we need to
         if "HD" in transform_Y and Y is not None:
@@ -274,50 +263,41 @@ class Sparsifier():
         if W is None:
             for k in range(K):
                 if subsample_Y:
-                    y = self.apply_mask(Y[k], mask)
+                    y = self.apply_mask(Y[k], self.mask)
+                else:
+                    y = Y[k]
                 dist[k] = np.linalg.norm(y - X, axis = 1)
         # ... or alternatively if they are given
         else:
-            print(W)
             for k in range(K):
                 if subsample_Y:
-                    y = self.apply_mask(Y[k], mask)
+                    y = self.apply_mask(Y[k], self.mask)
+                else:
+                    y = Y[k]
                 if subsample_W:
-                    w_masked = self.apply_mask(W[k], mask)
-                dist[k] = np.linalg.norm(w*(y-X)**2, axis = 1)
-
+                    w = self.apply_mask(W[k], self.mask)
+                else:
+                    w = W[k]
+                Xmys = (X-y)**2
+                dist[k] = np.sqrt([np.dot(Xmys[n], w[n]) for n in range(self.N)])
+                #dist[k] = np.sqrt(np.dot((X-y)**2, w.T))
         return dist.T
 
-    def pairwise_distances_a(self, X, Y = None, mask = None, D = None, 
-                           transform_X = "", transform_Y = ""):
-        """
-        """
-        # perform some error checks
-        if ("HD" in transform_X or "HD" in transform_Y) and type(D) == type(None):
-            raise Exception("Cannot apply ROS without indices D")
+    def pick_K_datapoints(self, K):
+        # pick K data points at random uniformly
+        cluster_indices = np.random.choice(self.N, K, replace = False)
+        cluster_indices.sort()
+        # assign the cluster_centers as dense members of HDX ...
+        if self.full_init:
+            cluster_centers_ = np.array(self.HDX[cluster_indices])
+        # or assign just the M entries specified by the mask
+        else:
+            cluster_centers_ = np.zeros((self.K,self.P))
+            for k in range(K):
+                cluster_centers_[k][mask[cluster_indices[k]]] = \
+                        self.HDX_sub[cluster_indices[k]]
+        return [cluster_centers_, cluster_indices]
 
-        if "HD" in transform_X:
-            X = self.apply_ROS(X)
-        if "R" in transform_X:
-            X = self.apply_mask(X, mask)
-        if "HD" in transform_Y:
-            Y = self.apply_ROS(Y)
-
-        if X.ndim == 1:
-            X = X[np.newaxis,:]
-        if Y.ndim == 1:
-            Y = Y[np.newaxis,:]
-
-        K = np.shape(Y)[0]
-        N = np.shape(X)[0]
-        dist = np.zeros((K,N))
-        for k in range(K):
-            if "R" in transform_Y:
-                y = self.apply_mask(Y[k], mask)
-            else:
-                y = Y[k]
-            dist[k] = np.linalg.norm(y - X, axis = 1)
-        return dist.T
 
 
 
