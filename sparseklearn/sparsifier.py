@@ -25,7 +25,9 @@ class Sparsifier():
             self.set_ROS()
             self.set_subsample()
             self.sparsifier_is_fit = True
-
+            if self.normalize:
+                print('normalizing')
+                self.normalize_by_subsample()
 
     def set_data(self, data):
         """ Assigns the data as an attribute. data can either be a numpy ndarray
@@ -104,6 +106,8 @@ class Sparsifier():
             # if we're not using the ROS just set HDX to be X
             HDX = self.X[:].astype(float)
             self.D_indices = np.ones(self.N)
+
+
         self.HDX = HDX
 
 
@@ -172,6 +176,13 @@ class Sparsifier():
             print('Writing ROS and D_indices to hdf5 file {}'.format(fROS))
         fROS.create_dataset('HDX', data = HDX, dtype = 'd')
         fROS.create_dataset('D_indices', data = D_indices, dtype = 'int')
+
+
+    def normalize_by_subsample(self):
+        normalizer = np.mean(np.linalg.norm(self.HDX_sub,axis=1,ord=2))
+        self.HDX /= normalizer
+        self.HDX_sub /= normalizer
+        self.normalizer = normalizer
 
 
     # masking functions
@@ -303,7 +314,7 @@ class Sparsifier():
 
     def __init__(self, gamma = 1.0, alpha = 0.0, verbose = False, fROS = None, 
                  write_permission = False, use_ROS = True, compute_ROS = True, 
-                 sparsity_format = 'compact'):
+                 sparsity_format = 'compact', normalize = False):
 
         # assign constants
         self.gamma = gamma
@@ -315,5 +326,6 @@ class Sparsifier():
         self.compute_ROS = compute_ROS
         self.sparsity_format = sparsity_format
         self.sparsifier_is_fit = False
+        self.normalize = normalize
 
 

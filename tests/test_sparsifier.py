@@ -28,9 +28,17 @@ X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
 #s.fit_sparsifier(X_train)
 
 
-gmm = GaussianMixture(gamma = 12, alpha = 4, n_components = 3, covariance_type = 'diag',
-                      init_params = 'random' )
+gmm = GaussianMixture(gamma = 1.0, n_components = 3, covariance_type = 'diag',
+                      init_params = 'random', normalize = True )
 gmm.fit(X_train)
+np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/gmm_means.npy', gmm.means_)
+
+
+from sklearn.mixture import GaussianMixture as sklearnGaussianMixture
+clf = sklearnGaussianMixture(n_components=3, covariance_type='diag')
+clf.fit(X_train)
+
+np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/sklearn_gmm_means.npy', clf.means_)
 #d = gmm._estimate_gaussian_prob_diag(gmm.means_, np.random.rand(gmm.n_components,gmm.P))
 
 #X = np.random.rand(10,5)
@@ -79,7 +87,6 @@ print(np.max(np.abs(correct - dist)))
 #for k in range(kmc.n_clusters):
 #    n_per_cluster[k] = sum(kmc.labels_==k)
     
-#np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/means.npy', kmc.cluster_centers_)
 #np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/counts.npy', n_per_cluster)
 
 
