@@ -15,7 +15,7 @@ np.random.seed(17)
 f = h5py.File('/home/eric/kmeansdata/mnistreduced.hdf5','r')
 fROS = h5py.File('/home/eric/kmeansdata/fROS_temp.hdf5','a')
 
-ntr = 500
+ntr = 1000
 #nsmall = 100
 n_train = {'0': ntr, '3' : ntr, '9' : ntr}
 nte = 100
@@ -29,16 +29,16 @@ X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
 
 
 gmm = GaussianMixture(gamma = 1.0, n_components = 3, covariance_type = 'diag',
-                      init_params = 'random', normalize = True )
+                      init_params = 'random', normalize = False, max_iter = 2, use_ROS = False)
 gmm.fit(X_train)
 np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/gmm_means.npy', gmm.means_)
 
 
-from sklearn.mixture import GaussianMixture as sklearnGaussianMixture
-clf = sklearnGaussianMixture(n_components=3, covariance_type='diag')
-clf.fit(X_train)
+#from sklearn.mixture import GaussianMixture as sklearnGaussianMixture
+#clf = sklearnGaussianMixture(n_components=3, covariance_type='diag')
+#clf.fit(X_train)
 
-np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/sklearn_gmm_means.npy', clf.means_)
+#np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/sklearn_gmm_means.npy', clf.means_)
 #d = gmm._estimate_gaussian_prob_diag(gmm.means_, np.random.rand(gmm.n_components,gmm.P))
 
 #X = np.random.rand(10,5)

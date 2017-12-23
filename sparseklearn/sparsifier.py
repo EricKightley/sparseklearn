@@ -16,8 +16,12 @@ class Sparsifier():
         # in the intialization of the GaussianMixture classifier
         if data.__class__.__bases__[0] is Sparsifier or \
             data.__class__ is Sparsifier:
-            [setattr(self,key,data.__dict__[key]) for key in 
-                    data.__dict__.keys()]
+            #[setattr(self,key,data.__dict__[key]) for key in 
+            #        data.__dict__.keys()]
+            copy_these_attributes = ['sparsifier_is_fit','N','M','P','gamma',
+                'alpha','HDX_sub','HDX','X','D_indices','mask', 'use_ROS', 'apply_ROS']
+            for attr in copy_these_attributes:
+                setattr(self,attr,getattr(data,attr))
 
         # only fit it if it hasn't been fit, or if we explicitly override this
         if not self.sparsifier_is_fit or override:
@@ -88,7 +92,7 @@ class Sparsifier():
             '{:.5} (alpha of {:.5}).'.format(self.gamma, self.alpha))
 
 
-    def set_ROS(self):
+    def set_ROS(self, D_indices = None):
         """ Assigns the ROS and indices."""
         if self.use_ROS:
             # if we're told to compute it, do so
@@ -100,7 +104,8 @@ class Sparsifier():
                     self.write_ROS(self.fROS, HDX, self.D_indices)
             # otherwise load it
             elif self.fROS != None:
-                HDX, D_indices = self.read_ROS(self.fROS)
+                HDX, D_indices = self.set_ROS_from_input(self.fROS, D_indices)
+                self.D_indices = D_indices
 
         else:
             # if we're not using the ROS just set HDX to be X
@@ -152,9 +157,14 @@ class Sparsifier():
         X[:,D] *= -1
         return X
 
-    def read_ROS(self, fROS):
-        HDX = fROS['HDX']
-        D_indices = fROS['D_indices']
+    def set_ROS_from_input(self, fROS, D_indices):
+        if type(fROS) is h5py._hl.dataset.Dataset:
+            HDX_type = 'hdf5'
+            HDX = fROS['HDX']
+            D_indices = fROS['D_indices']
+        elif type(data) is np.ndarray:
+            HDX_type = 'array'
+            HDX = HDX
         return [HDX, D_indices]
 
     def write_ROS(self, fROS, HDX, D_indices):

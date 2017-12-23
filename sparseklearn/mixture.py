@@ -12,9 +12,11 @@ class GaussianMixture(Sparsifier):
         self.fit_sparsifier(X)
 
         best_lpn = -float_info.max
+        self.converged = False
         
         for n in range(self.n_init):
             log_prob_norm, converged, counter = self.fit_single_trial()
+            import pdb; pdb.set_trace()
             if log_prob_norm > best_lpn:
                 best_lpn = log_prob_norm
                 final_counter = counter
@@ -28,7 +30,8 @@ class GaussianMixture(Sparsifier):
         self.log_prob_norm = best_lpn
         self.counter = final_counter
 
-        self.means_, self.covariances_ = self.reconstruct_parameters(1)
+        #self.means_, self.covariances_ = self.reconstruct_parameters(self.n_passes)
+        self.means_, _ = self.reconstruct_parameters(self.n_passes)
 
     def reconstruct_parameters(self, n_passes):
         if n_passes == 1 and self.use_ROS:
@@ -42,10 +45,10 @@ class GaussianMixture(Sparsifier):
         while not self.converged and counter < self.max_iter:
             counter += 1
             log_prob_norm, log_resp = self._e_step()
-            print(log_prob_norm)
             self._convergence_check(log_prob_norm)
             self._m_step(log_resp)
             self.log_prob_norm = log_prob_norm
+        self.log_prob_norm, self.log_resp = self._e_step()
         return [self.log_prob_norm, self.converged, counter]
 
 
@@ -61,9 +64,13 @@ class GaussianMixture(Sparsifier):
                 kmc = KMeans(n_clusters = self.n_components, tol = self.tol,
                         init = 'k-means++',
                         full_init = self.full_init, max_iter = self.max_iter,
-                        n_passes = self.n_passes, n_init = 1)
+                        n_passes = 2, n_init = 10)
                 kmc.fit(self) 
-                self.means_ = kmc.cluster_centers_
+                print('fitting kmeans')
+                if self.use_ROS:
+                    self.means_ = kmc.apply_ROS(kmc.cluster_centers_)
+                else:
+                    self.means_ = kmc.cluster_centers_
                 self.kmc = kmc
         # if we did pass it initial means then use these
         else:
@@ -95,19 +102,19 @@ class GaussianMixture(Sparsifier):
                 #TODO : is there a better initialization?
                 self.covariances_ = np.ones((self.n_components, self.P))
                 #TODO : this uses the dense data, for testing only. This must be fixed!
-                datacov = np.diag(np.cov(self.HDX))
-                self.covariances_ = np.array([datacov for k in
-                        range(self.n_components)])
-
-        self.converged = False
-        self.log_prob_norm = 0.0
+                #datacov = np.diag(np.cov(self.HDX))
+                #self.covariances_ = np.array([datacov for k in
+                #        range(self.n_components)])
+        self.log_prob_norm = -float_info.max
+       
 
     # parameter and responsibiltiy computation
 
     def _estimate_log_gaussian_prob(self,means,covariances):
         if self.covariance_type == 'diag':
+            logdetSig = np.log(covariances).sum(axis=1)
             logprob = -.5*(self.P*np.log(2*np.pi) + \
-                      np.log(covariances).sum() + \
+                      logdetSig + \
                       self.pairwise_distances(Y=means, W = 1/covariances)**2)
         else:
             raise Exception('Currently can only handle diagonal covariances')
@@ -122,33 +129,12 @@ class GaussianMixture(Sparsifier):
         log_prob_norm = logsumexp(weighted_log_prob, axis = 1)
         with np.errstate(under='ignore'):
             log_resp = weighted_log_prob - log_prob_norm[:, np.newaxis]
-        return log_prob_norm, log_resp
+        return [log_prob_norm, log_resp]
 
     def _e_step(self):
         log_prob_norm, log_resp = self._estimate_log_prob_resp()
-        return np.mean(log_prob_norm), log_resp
+        return [np.mean(log_prob_norm), log_resp]
 
-
-
-
-
-
-    def _estimate_resp(self,prob,weights):
-        resp = np.zeros((self.N, self.n_components))
-        denoms = np.dot(prob,weights)
-        resp = (prob.T / denoms).T
-        resp *= weights
-        return resp
-
-
-    def _estimate_gaussian_prob(self, means, covariances):
-        if self.covariance_type == 'diag':
-            det_sigma = np.product(np.sqrt(covariances), axis = 1)
-            d = self.pairwise_distances(Y=means, W = 1/covariances)**2
-            prob = 1/(np.sqrt(2*self.P*np.pi) * det_sigma) * np.exp(-.5 * d)
-        else:
-            raise Exception('Currently can only handle diagonal covariances')
-        return prob
 
     def _estimate_gaussian_parameters(self, resp):
         nk = np.sum(resp,axis=0) + 10 * np.finfo(resp.dtype).eps
