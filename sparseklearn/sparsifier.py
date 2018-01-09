@@ -214,6 +214,33 @@ class Sparsifier():
 
         return [mask, np.sort(shared_mask)]
 
+    def invert_mask_nested_list(self, P, mask):
+        """ Given an N x M mask (N data points with reduced dimension M),
+        compute mask_inverse, a list of lists such that mask_inverse[p] is
+        the list of indices of the datapoints whose mask keeps the pth 
+        dimension. Cannot be an array because the lengths of the inner lists
+        is not a constant.
+        """
+        mask_inverse = []
+        N, M = mask.shape
+        inds = [n for n in range(N)]
+        for p in range(P):
+            mask_inverse.append([n for n in inds if p in mask[n]])
+        return mask_inverse
+
+    def invert_mask_bool(self):
+        """ Returns P by N binary sparse matrix. Each row indicates which
+        of the N data points has the pth dimension preserved in the mask.
+        """
+        col_inds = [n for n in range(self.N) for m in range(self.M)]
+        row_inds = list(self.mask.flatten())
+        data = np.ones_like(row_inds)
+        mask_binary = sparse.csr_matrix( (data, (row_inds, col_inds)), 
+                      shape = (self.P,self.N), dtype = bool)
+        return mask_binary
+
+
+
     def apply_mask(self, X, mask):
         """ Apply mask to X. 
         """
@@ -230,6 +257,31 @@ class Sparsifier():
 
 
     # masked matrix operations
+
+    def polynomial_combination(self, W, power = 1):
+        """
+
+        Computes sum_n (w[n,k] * (x[n] * iota[n] )**power
+
+        W is self.N by K, so that the output has K rows, each of which
+        is a sum above using a column of w. This seems backwards. 
+
+        """
+        if W.ndim != 2:
+            raise Exception('W must be a 2D array')
+        _, K = np.shape(W)
+        comb = np.zeros((K, self.P))
+
+        if power == 1:
+            for k in range(K):
+                for n in range(self.N):
+                    comb[k][self.mask[n]] += W[n,k] * self.HDX_sub[n]
+        else:
+            for k in range(K):
+                for n in range(self.N):
+                    comb[k][self.mask[n]] += W[n,k] * self.HDX_sub[n]**power
+
+        return comb
 
 
     def pairwise_distances(self, Y = None, X = None, W = None, 

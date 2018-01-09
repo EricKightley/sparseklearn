@@ -48,13 +48,15 @@ class KMeans(Sparsifier):
 
     def initialize_cluster_centers(self):
         """ Initialize the cluster guesses. """
-        if self.init == 'k-means++':
+        if type(self.init) is np.ndarray:
+            self.cluster_centers_ = \
+                (self.apply_ROS(self.init) if self.use_ROS else self.init)
+            #self.cluster_centers_ = self.init
+            cluster_indices = []
+        elif self.init == 'k-means++':
             self.cluster_centers_, cluster_indices = self.initialize_cluster_centers_kmpp()
         elif self.init == 'random':
             self.cluster_centers_, cluster_indices = self.initialize_cluster_centers_random()
-        elif type(self.init) is np.ndarray:
-            self.cluster_centers_ = self.init
-            cluster_indices = []
         else:
             raise Exception('Initialization must be \'k-means++\', ' + 
                     '\'random\', or an np.array of initial cluster_centers')
