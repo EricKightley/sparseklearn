@@ -17,9 +17,12 @@ class KMeans(Sparsifier):
                 best_inertia = self.inertia_
                 cluster_centers_ = self.cluster_centers_
                 labels_ = self.labels_
+                best_counter = self.counter
+
             self.cluster_centers_ =cluster_centers_
             self.labels_ = labels_
             self.inertia_ = best_inertia
+            self.counter = best_counter
        
         # postprocessing
 
@@ -181,7 +184,8 @@ class KMeans(Sparsifier):
         else:
             self.converged = False
 
-            
+        self.counter = current_iter
+
     def __init__(self, n_clusters = 8, init = 'k-means++', tol = 1e-4, 
                  full_init = True, n_init = 10, max_iter = 300, 
                  n_passes = 1, **kwargs):

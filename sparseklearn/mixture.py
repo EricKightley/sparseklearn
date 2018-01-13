@@ -78,7 +78,7 @@ class GaussianMixture(Sparsifier):
         if self.init_params == 'kmeans':
             kmc = KMeans(n_clusters = self.n_components, tol = self.tol,
                     init = self.kmeans_init, full_init = self.full_init, 
-                    max_iter = 0, 
+                    max_iter = self.kmeans_max_iter, 
                     use_ROS = self.use_ROS,
                     n_passes = self.n_passes, n_init = 1)
             kmc.fit(self)
@@ -92,6 +92,7 @@ class GaussianMixture(Sparsifier):
         elif self.init_params == 'random':
             resp = np.random.rand(self.N, self.n_components)
             resp /= resp.sum(axis=1)[:, np.newaxis]
+            rk, rkd = self._estimate_rkd(resp)
             # only overwrite the computed means if init is random
             # (note: this may lead to unexpected behavior in kmeans init, 
             # should take a look at that)
@@ -103,13 +104,12 @@ class GaussianMixture(Sparsifier):
         else:
             raise ValueError('Unimplemented initialization method: {}'.format(self.init_params))
 
-
         # compute and assign the covariances, overwriting if initialized
         if self.precisions_init is None:
             self.covariances_ = self._estimate_gaussian_covariances(resp, rkd, 
                     self.means_)
         else:
-            self.covariances_ = (self.apply_ROS(1/self.precisions_init) 
+            self.covariances_ = (self.apply_ROS(1/(self.precisions_init + self.reg_covar)) 
                     if self.use_ROS else 1/self.precisions_init)
 
         # compute and assign the weights, overwriting if initialized
@@ -119,107 +119,23 @@ class GaussianMixture(Sparsifier):
 
         self.log_prob_norm_ = -float_info.max
 
-        """
-
-        # Initialize the responsibility matrix, either using the labels
-        # from a kmeans fit...
-        if self.init_params == 'kmeans':
-            resp = np.zeros((self.N,self.n_components))
-            kmc = KMeans(n_clusters = self.n_components, tol = self.tol,
-                    init = 'k-means++', full_init = self.full_init, max_iter = self.max_iter,
-                    n_passes = 2, n_init = 1)
-            kmc.fit(self)
-            label = kmc.labels_
-            resp[np.arange(self.N), label] = 1
-            
-        # ... or randomly.
-        elif self.init_params == 'random':
-            # TODO: make this next line work on a random state instance
-            resp = np.random.rand(self.N, self.n_components)
-            resp /= resp.sum(axis=1)[:, np.newaxis]
-            #self.means_, _ = self.pick_K_datapoints(self.n_components)
-
-        else:
-            raise ValueError('Unimplemented initialization method: {}'.format(self.init_params))
-
-        # Now, use the responsibility matrix to set the model parameters
-        weights, means, covariances = self._estimate_gaussian_parameters(resp)
-        if self.precisions_init is None:
-            self.covariances_ = covariances
-        else:
-            self.covariances_ = (self.apply_ROS(1/self.precisions_init) 
-                    if self.use_ROS else 1/self.precisions_init)
-        # use the means from _estimate_gaussian_parameters if we didn't pass
-        # in initial means
-        if self.means_init is None:
-            self.means_ = means
-        # otherwise use the ones passed, applying the ROS if necessary
-        # TODO: the use_ROS flag here could cause problems later. 
-        else:
-            self.means_ = (self.apply_ROS(self.means_init) if self.use_ROS else self.means_init)
-
-        # use the weights we passed in or the ones we computed
-        # TODO: confirm we don't need to adjust the weights on ROS-transformed data
-        self.weights_ = (weights if self.weights_init is None else self.weights_init)
-
-
-
-
-            if self.use_ROS:
-                self.means_ = kmc.apply_ROS(kmc.cluster_centers_)
-            else:
-                self.means_ = kmc.cluster_centers_
-            self.kmc = kmc
-        # if we did pass it initial means then use these
-        else:
-            if self.use_ROS:
-                self.means_init = self.apply_ROS(self.means_init)
-            self.means_ = self.means_init
-
-        # initialize the weights
-        # if we didn't pass it the initial weights, compute them...
-        if self.weights_init is None:
-            # ... either uniformly ...
-            if self.init_params == 'random':
-                self.weights_ = np.ones(self.n_components)/self.n_components
-            # ... or using kmeans
-            elif self.init_params == 'kmeans':
-                self.weights_ = kmc.n_per_cluster
-                self.weights_ = self.weights_ / np.sum(self.weights_)
-        # if we did pass it initial weights then use these
-        else:
-            self.weights_ = weights_init
-
-        # initialize the covariance matrix
-
-        if self.covariance_type != 'diag':
-            raise Exception('Currently can only handle diagonal covariances')
-        if self.covariance_type == 'diag':
-            if self.init_params == 'kmeans':
-                raise Exception('must be random')
-            if self.init_params == 'random':
-                #TODO : is there a better initialization?
-                self.covariances_ = np.ones((self.n_components, self.P))
-                #TODO : this uses the dense data, for testing only. This must be fixed!
-                #datacov = np.diag(np.cov(self.HDX))
-                #self.covariances_ = np.array([datacov for k in
-                #        range(self.n_components)])
-        self.log_prob_norm_ = -float_info.max
-       """
 
     # parameter and responsibiltiy computation
 
     # E-step
     def _estimate_log_prob_resp(self, weights, means, cov):
         # compute the log probabilities
-        const = self.P * np.log(2*np.pi)
-        det = np.sum(np.log(cov), axis=1)
-        S = self.pairwise_distances(Y = means, W = 1/(cov+self.reg_covar))
-        log_prob = -.5 * (const + det + S)
+        const = self.M * np.log(2*np.pi)
+        #det = np.sum(np.log(cov), axis=1)
+        detn = self.mask_inverse.T.dot(np.log(cov).T)
+        S = self.pairwise_distances(Y = means, W = 1/cov)**2
+        log_prob = -.5 * (const + detn + S)
         # compute the log responsibilities
         lse = logsumexp(log_prob, b = weights, axis = 1)
         log_resp = np.log(weights) + log_prob - lse[:, np.newaxis]
-        return [log_prob, log_resp, np.mean(lse)]
+        log_prob_norm = np.mean(lse)
+        print(log_prob_norm)
+        return [log_prob, log_resp, log_prob_norm]
         
     # M-step
     def _estimate_gaussian_parameters(self, resp):
@@ -227,24 +143,6 @@ class GaussianMixture(Sparsifier):
         weights = self._estimate_gaussian_weights(rk)
         means = self._estimate_gaussian_means(resp, rk, rkd)
         covariances = self._estimate_gaussian_covariances(resp, rkd, means)
-        return [weights, means, covariances]
-        """
-        rk = np.sum(resp,axis=0) + 10 * np.finfo(resp.dtype).eps
-        # normalizer (takes the role of 1/rk)
-        rkd = self.mask_inverse.dot(resp).transpose() + np.finfo(resp.dtype).eps
-        # weights
-        weights = rk/self.N
-        # means
-        means = self.polynomial_combination(resp)
-        #means *= 1/rk[:,np.newaxis]
-        means /= rkd
-        # covariance
-        covariances = self.polynomial_combination(resp, power = 2)
-        #covariances *= 1/rk[:,np.newaxis]
-        covariances /= rkd
-        covariances += - means**2
-        covariances += self.reg_covar
-        """
         return [weights, means, covariances]
 
     # subroutines for the M-step
@@ -268,7 +166,7 @@ class GaussianMixture(Sparsifier):
         covariances /= rkd
         covariances += - means**2 + self.reg_covar
         if np.any(covariances <= 0):
-            import pdb; pdb.set_trace()
+            raise Exception('Something is wrong; got a negative variance.')
         return covariances
         
     def _convergence_check(self, log_prob_norm):

@@ -10,60 +10,71 @@ from sklearn.cluster import KMeans as KMeansDefault
 
 
 
+# set the random seed
+rs = 22
+np.random.seed(rs)
 
-np.random.seed(22)
+# load full data
 f = h5py.File('/home/eric/kmeansdata/mnistreduced.hdf5','r')
-fROS = h5py.File('/home/eric/kmeansdata/fROS_temp.hdf5','a')
+localpath = '/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/'
+#fROS = h5py.File('/home/eric/kmeansdata/fROS_temp.hdf5','a')
 
+# generate subset of data
 ntr = 2000
-#nsmall = 100
 n_train = {'0': ntr, '3' : ntr, '9' : ntr}
 nte = 100
 n_test = {'0': nte, '3' : nte, '9' : nte}
-
 X_train, y_train, X_test, y_test =  generate_mnist_dataset(f, n_train, n_test)
-# pick any three that belong to different clusters for some initialization testing
-#indices = [np.where(y_train==i)[0][0] for i in [0,3,9]]
-#means_init = X_train[indices]
 
-means_init = np.load('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/kmeans_means_dense.npy')
-# zero out the dangling bits
-means_init[np.abs(means_init)<.001] = 0
+# compute the exact means, weights, and precisions.
+indices = [np.where(y_train==i)[0] for i in [0,3,9]]
+means_init = np.mean([X_train[indices[i]] for i in range(3)], axis=1)
 closest = np.array([np.linalg.norm(X_train - mu, axis=1) for mu in means_init]).argmin(axis=0)
 variances = np.array([np.var(X_train[closest==i], axis=0) for i in range(3)])
 precisions_init = 1/(variances+1e-6)
+weights_init = np.array([1/3., 1/3., 1/3.])
 
-#s = Sparsifier(gamma = .03, alpha = 0.01)
-#s.fit_sparsifier(X_train)
-
-#np.random.seed(22)
-#kmc = KMeans(gamma = 1.0, alpha = 0.1, n_clusters = 3, n_init = 30)
-#kmc.fit(X_train)
-#np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/kmeans_means_dense.npy',
-#        kmc.cluster_centers_)
-
-np.random.seed(22)
-gmm = GaussianMixture(gamma = 1.0, alpha = .3, n_components = 3, covariance_type = 'diag',
+np.random.seed(rs)
+gmm = GaussianMixture(n_components = 3, covariance_type = 'diag',
+                      gamma = 0.1,
+                      #alpha = 0.3,
                       init_params = 'kmeans', 
-                      means_init = means_init,
+                      kmeans_init = 'k-means++', 
+                      kmeans_max_iter = 20,
+                      #means_init = means_init,
+                      #precisions_init = precisions_init,
+                      #weights_init = weights_init,
                       n_passes = 1, 
-                      #kmeans_init = 'k-means++', 
-                      #kmeans_max_iter = 20,
                       #precisions_init = precisions_init,
                       normalize = False, 
-                      max_iter = 2, 
+                      max_iter = 20, 
                       n_init = 1, 
-                      use_ROS = True)
+                      use_ROS =True)
 gmm.fit(X_train)
-np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/gmm_means.npy', gmm.means_)
+
+# save results from our gmm
+np.save(localpath + 'gmm_means.npy', gmm.means_)
+np.save(localpath + 'gmm_weights.npy', gmm.weights_)
 
 from sklearn.mixture import GaussianMixture as sklearnGaussianMixture
 clf = sklearnGaussianMixture(n_components=3, covariance_type='diag', max_iter = 20,
-        init_params = 'kmeans', precisions_init = precisions_init, 
-        means_init = means_init, random_state = 22)
+        init_params = 'random',
+        n_init = 1,
+        means_init = means_init,
+        precisions_init = precisions_init, 
+        weights_init = weights_init,
+        random_state = rs,
+        verbose = 2)
+        
 clf.fit(X_train)
 
-np.save('/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/sklearn_gmm_means.npy', clf.means_)
+# save results from sklearn gmm
+np.save(localpath + 'sklearn_gmm_means.npy', clf.means_)
+np.save(localpath + 'sklearn_gmm_weights.npy',clf.weights_)
+
+
+
+
 #d = gmm._estimate_gaussian_prob_diag(gmm.means_, np.random.rand(gmm.n_components,gmm.P))
 
 #X = np.random.rand(10,5)
