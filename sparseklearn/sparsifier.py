@@ -4,6 +4,7 @@ from scipy import sparse
 from scipy.fftpack import dct, idct
 
 class Sparsifier():
+    """ Sparsifies input data. """
 
 
     # assignment functions
