@@ -20,10 +20,10 @@ Indices and tables
 * :ref:`search`
 
 
-$sparseklearn
+sparseklearn
 =============
 
-$sparseklearn is a suite of machine learning tools built on the concept of
+sparseklearn is a suite of machine learning tools built on the concept of
 dimensionality reduction.
 
 License

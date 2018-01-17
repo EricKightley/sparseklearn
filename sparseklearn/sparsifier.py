@@ -44,20 +44,11 @@ class Sparsifier():
             self.M                 size of reduced latent dimension
         """
 
-        if type(data) is h5py._hl.dataset.Dataset:
-            X_type = 'hdf5'
-        elif type(data) is np.ndarray:
-            X_type = 'array'
-        else:
+        if not ((type(data) is h5py._hl.dataset.Dataset) or (type(data) is np.ndarray)):
             raise Exception('Data must either be an hdf5 dataset or a numpy array.')
 
         self.N, self.P = data.shape
         self.X = data
-
-        if self.verbose:
-            print('Data assigned as {}, '.format(X_type) + 
-                'and is {} '.format(self.N) + 'by {} '.format(self.P) +
-                '(data points by latent dimension).')
 
         ## compression factor gamma and common subsampling ratio alpha
         # if gamma is given as a float, find the number of dimensions
@@ -97,11 +88,9 @@ class Sparsifier():
         if self.use_ROS:
             # if we're told to compute it, do so
             if self.compute_ROS == True:
-                self.D_indices = self.generate_ROS(self.P)
+                self.D_indices = np.array([i for i in range(self.P) 
+                    if np.random.choice([0,1])])
                 HDX = self.apply_ROS(self.X[:])
-                # ... but write it if we're allowed to so
-                if self.write_permission == True:
-                    self.write_ROS(self.fROS, HDX, self.D_indices)
             # otherwise load it
             elif self.fROS != None:
                 HDX, D_indices = self.set_ROS_from_input(self.fROS, D_indices)
@@ -120,50 +109,31 @@ class Sparsifier():
         """ Assign the subsampled data once the ROS has been applied. Needs
         to be updated to work with C functions. 
         """
-        mask, shared = self.generate_mask(self.P, self.Ms, self.Mr, self.N)
-        # the mask returns HDX_sub in compact form
-        HDX_sub = self.apply_mask(self.HDX, mask)
-        # convert it if we need it in dense or sparse form
-        if self.sparsity_format == 'dense' or self.sparsity_format == 'sparse':
-            row_inds = [i for i in range(self.N) for j in range(self.M)]
-            HDX_sub = sparse.coo_matrix( ( HDX_sub.flatten(), 
-                      (row_inds, list(mask.flatten())) ) , 
-                      shape = (self.N,self.P))
-            if self.sparsity_format == 'dense':
-                HDX_sub = np.asarray(HDX_sub.todense())
-        self.HDX_sub = HDX_sub
-        self.mask = mask
-        self.shared = shared
-
+        self.mask, self.shared = self.generate_mask(self.P, self.Ms, self.Mr, self.N)
+        self.HDX_sub = self.apply_mask(self.HDX, self.mask)
 
     # ROS functions
-    def generate_ROS(self, P):
-        D_indices = np.array([i for i in range(P) if np.random.choice([0,1])])
-        return D_indices
-
     def apply_ROS(self, X):
         # copy it for now 
-        X = np.copy(X)
+        Y = np.copy(X)
         # apply D matrix
-        X[:,self.D_indices] *= -1
+        Y[:,self.D_indices] *= -1
         # apply H matrix
-        X = dct(X, norm = 'ortho', axis = 1, overwrite_x = False) 
-        return X
+        Y = dct(Y, norm = 'ortho', axis = 1, overwrite_x = False) 
+        return Y
 
-    def invert_ROS(self, X, D):
+    def invert_ROS(self, X):
         # copy it for now
-        X = np.copy(X)
-        X = idct(X, norm = 'ortho', axis = 1, overwrite_x = False)
-        X[:,D] *= -1
-        return X
+        Y = np.copy(X)
+        Y = idct(Y, norm = 'ortho', axis = 1, overwrite_x = False)
+        Y[:,self.D_indices] *= -1
+        return Y
 
     def set_ROS_from_input(self, fROS, D_indices):
         if type(fROS) is h5py._hl.dataset.Dataset:
-            HDX_type = 'hdf5'
             HDX = fROS['HDX']
             D_indices = fROS['D_indices']
         elif type(data) is np.ndarray:
-            HDX_type = 'array'
             HDX = HDX
         return [HDX, D_indices]
 
@@ -171,9 +141,6 @@ class Sparsifier():
         """ Writes HDX and D_indices to file fROS (D_indices are needed to
         invert the transformation)."""
         
-        if self.write_permission == False:
-            raise Exception('Trying to write the ROS transform to disk but' + 
-                             'write_permission is False')
         if 'HDX' in fROS:
             if self.verbose:
                 print('Deleting existing ROS dataset in hdf5 file {}'.format(fROS))
@@ -214,20 +181,6 @@ class Sparsifier():
 
         return [mask, np.sort(shared_mask)]
 
-    def invert_mask_nested_list(self, P, mask):
-        """ Given an N x M mask (N data points with reduced dimension M),
-        compute mask_inverse, a list of lists such that mask_inverse[p] is
-        the list of indices of the datapoints whose mask keeps the pth 
-        dimension. Cannot be an array because the lengths of the inner lists
-        is not a constant.
-        """
-        mask_inverse = []
-        N, M = mask.shape
-        inds = [n for n in range(N)]
-        for p in range(P):
-            mask_inverse.append([n for n in inds if p in mask[n]])
-        return mask_inverse
-
     def invert_mask_bool(self):
         """ Returns P by N binary sparse matrix. Each row indicates which
         of the N data points has the pth dimension preserved in the mask.
@@ -238,8 +191,6 @@ class Sparsifier():
         mask_binary = sparse.csr_matrix( (data, (row_inds, col_inds)), 
                       shape = (self.P,self.N), dtype = bool)
         return mask_binary
-
-
 
     def apply_mask(self, X, mask):
         """ Apply mask to X. 
@@ -284,21 +235,10 @@ class Sparsifier():
         return comb
 
 
-    def pairwise_distances(self, Y = None, X = None, W = None, 
-            transform_X = "", transform_Y = "R", transform_W = "R"):
+    def pairwise_distances(self, Y = None, W = None, 
+            transform_Y = "R", transform_W = "R"):
 
-        # assign X if we need to
-        if X is None:
-            X = self.HDX_sub
-        # augment X if we need to
-        if X.ndim == 1:
-            X = X[np.newaxis,:]
-        
-        # transform and subsample X if we need to
-        if "HD" in transform_X:
-            X = self.apply_ROS(X)
-        if "R" in transform_X:
-            X = self.apply_mask(X, self.mask)
+        X = self.HDX_sub
 
         # transform Y if we need to
         if "HD" in transform_Y and Y is not None:
@@ -310,7 +250,6 @@ class Sparsifier():
         if Y.ndim == 1:
             Y = Y[np.newaxis,:]
         
-
         # transform W if we need to
         if "HD" in transform_W and W is not None:
             W = self.apply_ROS(W)
@@ -353,7 +292,6 @@ class Sparsifier():
                     w = W[k]
                 Xmys = (X-y)**2
                 dist[k] = np.sqrt([np.dot(Xmys[n], w[n]) for n in range(self.N)])
-                #dist[k] = np.sqrt(np.dot((X-y)**2, w.T))
         return dist.T
 
     def pick_K_datapoints(self, K):
@@ -375,18 +313,16 @@ class Sparsifier():
 
 
     def __init__(self, gamma = 1.0, alpha = 0.0, verbose = False, fROS = None, 
-                 write_permission = False, use_ROS = True, compute_ROS = True, 
-                 sparsity_format = 'compact', normalize = False):
+                 use_ROS = True, compute_ROS = True, 
+                 normalize = False):
 
         # assign constants
         self.gamma = gamma
         self.alpha = alpha
         self.verbose = verbose
         self.fROS = fROS
-        self.write_permission = write_permission
         self.use_ROS = use_ROS
         self.compute_ROS = compute_ROS
-        self.sparsity_format = sparsity_format
         self.sparsifier_is_fit = False
         self.normalize = normalize
 

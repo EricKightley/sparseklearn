@@ -37,7 +37,7 @@ class KMeans(Sparsifier):
 
     def reconstruct_cluster_centers(self, n_passes):
         if n_passes == 1 and self.use_ROS:
-            cluster_centers_ = self.invert_ROS(self.cluster_centers_, self.D_indices)
+            cluster_centers_ = self.invert_ROS(self.cluster_centers_)
         elif n_passes == 2:
             cluster_centers_ = np.zeros_like(self.cluster_centers_)
             for k in range(self.K):

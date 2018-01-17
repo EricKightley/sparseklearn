@@ -40,7 +40,7 @@ gmm = GaussianMixture(n_components = 3, covariance_type = 'diag',
                       #alpha = 0.3,
                       init_params = 'kmeans', 
                       kmeans_init = 'k-means++', 
-                      kmeans_max_iter = 20,
+                      kmeans_max_iter = 0,
                       #means_init = means_init,
                       #precisions_init = precisions_init,
                       #weights_init = weights_init,
@@ -48,7 +48,7 @@ gmm = GaussianMixture(n_components = 3, covariance_type = 'diag',
                       #precisions_init = precisions_init,
                       normalize = False, 
                       max_iter = 20, 
-                      n_init = 1, 
+                      n_init = 5, 
                       use_ROS =True)
 gmm.fit(X_train)
 

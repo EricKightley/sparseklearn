@@ -42,8 +42,8 @@ class GaussianMixture(Sparsifier):
     def reconstruct_parameters(self, n_passes):
         if n_passes == 1:
             if self.use_ROS:
-                means_ = self.invert_ROS(self.means_, self.D_indices)
-                covariances_ = self.invert_ROS(self.covariances_, self.D_indices)
+                means_ = self.invert_ROS(self.means_)
+                covariances_ = self.invert_ROS(self.covariances_)
             else:
                 means_ = self.means_
                 covariances_ = self.covariances_
