@@ -34,6 +34,7 @@ sys.path.insert(0, os.path.abspath('../sparseklearn/'))
 extensions = ['sphinx.ext.mathjax',
     'sphinx.ext.githubpages',
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'numpydoc']
 
 # Add any paths that contain templates here, relative to this directory.

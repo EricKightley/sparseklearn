@@ -66,6 +66,59 @@
 </tbody>
 </table>
 <p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">apply_ROS</span></code>(X)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sparsifier.Sparsifier.apply_mask" title="sparsifier.Sparsifier.apply_mask"><code class="xref py py-obj docutils literal"><span class="pre">apply_mask</span></code></a>(X,&nbsp;mask)</td>
+<td>Apply mask to X.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#sparsifier.Sparsifier.fit_sparsifier" title="sparsifier.Sparsifier.fit_sparsifier"><code class="xref py py-obj docutils literal"><span class="pre">fit_sparsifier</span></code></a>(data[,&nbsp;override])</td>
+<td>Fit the sparsifier to specified data.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sparsifier.Sparsifier.generate_mask" title="sparsifier.Sparsifier.generate_mask"><code class="xref py py-obj docutils literal"><span class="pre">generate_mask</span></code></a>(P,&nbsp;Ms,&nbsp;Mr,&nbsp;N)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">invert_ROS</span></code>(X)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sparsifier.Sparsifier.invert_mask_bool" title="sparsifier.Sparsifier.invert_mask_bool"><code class="xref py py-obj docutils literal"><span class="pre">invert_mask_bool</span></code></a>()</td>
+<td>Returns P by N binary sparse matrix.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">normalize_by_subsample</span></code>()</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">pairwise_distances</span></code>([Y,&nbsp;W,&nbsp;transform_Y,&nbsp;…])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">pick_K_datapoints</span></code>(K)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sparsifier.Sparsifier.polynomial_combination" title="sparsifier.Sparsifier.polynomial_combination"><code class="xref py py-obj docutils literal"><span class="pre">polynomial_combination</span></code></a>(W[,&nbsp;power])</td>
+<td>Computes sum_n (w[n,k] * (x[n] * iota[n] )**power</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#sparsifier.Sparsifier.set_ROS" title="sparsifier.Sparsifier.set_ROS"><code class="xref py py-obj docutils literal"><span class="pre">set_ROS</span></code></a>([D_indices])</td>
+<td>Assigns the ROS and indices.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">set_ROS_from_input</span></code>(fROS,&nbsp;D_indices)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#sparsifier.Sparsifier.set_data" title="sparsifier.Sparsifier.set_data"><code class="xref py py-obj docutils literal"><span class="pre">set_data</span></code></a>(data)</td>
+<td>Assigns the data as an attribute.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sparsifier.Sparsifier.set_subsample" title="sparsifier.Sparsifier.set_subsample"><code class="xref py py-obj docutils literal"><span class="pre">set_subsample</span></code></a>()</td>
+<td>Assign the subsampled data once the ROS has been applied.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#sparsifier.Sparsifier.write_ROS" title="sparsifier.Sparsifier.write_ROS"><code class="xref py py-obj docutils literal"><span class="pre">write_ROS</span></code></a>(fROS,&nbsp;HDX,&nbsp;D_indices)</td>
+<td>Writes HDX and D_indices to file fROS (D_indices are needed to invert the transformation).</td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="sparsifier.Sparsifier.apply_mask">
 <code class="descname">apply_mask</code><span class="sig-paren">(</span><em>X</em>, <em>mask</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.apply_mask" title="Permalink to this definition">¶</a></dt>
