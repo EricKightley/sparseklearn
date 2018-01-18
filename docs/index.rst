@@ -9,8 +9,8 @@ Welcome to sparseklearn's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-   sparsifier
 
+   sparsifier.rst
 
 
 Indices and tables

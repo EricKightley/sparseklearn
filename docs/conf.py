@@ -19,7 +19,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('.//sparseklearn/'))
+sys.path.insert(0, os.path.abspath('../sparseklearn/'))
 
 
 # -- General configuration ------------------------------------------------
@@ -33,7 +33,8 @@ sys.path.insert(0, os.path.abspath('.//sparseklearn/'))
 # ones.
 extensions = ['sphinx.ext.mathjax',
     'sphinx.ext.githubpages',
-    'sphinx.ext.autodoc']
+    'sphinx.ext.autodoc',
+    'numpydoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -49,7 +50,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'sparseklearn'
-copyright = '2017, Eric Kightley'
+copyright = '2018, Eric Kightley'
 author = 'Eric Kightley'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -85,7 +86,7 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'haiku'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

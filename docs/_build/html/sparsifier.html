@@ -1,0 +1,167 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Sparsifier &#8212; sparseklearn 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to sparseklearn’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>sparseklearn 0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>Sparsifier</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="index.html">Welcome to sparseklearn’s documentation!</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="module-sparsifier">
+<span id="sparsifier"></span><h1>Sparsifier<a class="headerlink" href="#module-sparsifier" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="sparsifier.Sparsifier">
+<em class="property">class </em><code class="descclassname">sparsifier.</code><code class="descname">Sparsifier</code><span class="sig-paren">(</span><em>gamma=1.0</em>, <em>alpha=0.0</em>, <em>verbose=False</em>, <em>fROS=None</em>, <em>use_ROS=True</em>, <em>compute_ROS=True</em>, <em>normalize=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sparsifies input data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>gamma</strong> : float or int, defaults to 1.0.</p>
+<blockquote>
+<div><p>The compression factor.</p>
+</div></blockquote>
+<p><strong>alpha</strong> : float or int, defaults to 0.0.</p>
+<blockquote class="last">
+<div><p>The shared compression factor.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="sparsifier.Sparsifier.apply_mask">
+<code class="descname">apply_mask</code><span class="sig-paren">(</span><em>X</em>, <em>mask</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.apply_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply mask to X.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparsifier.Sparsifier.fit_sparsifier">
+<code class="descname">fit_sparsifier</code><span class="sig-paren">(</span><em>data</em>, <em>override=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.fit_sparsifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the sparsifier to specified data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : array-like</p>
+<blockquote class="last">
+<div><p>The data to fit.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparsifier.Sparsifier.generate_mask">
+<code class="descname">generate_mask</code><span class="sig-paren">(</span><em>P</em>, <em>Ms</em>, <em>Mr</em>, <em>N</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.generate_mask" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sparsifier.Sparsifier.invert_mask_bool">
+<code class="descname">invert_mask_bool</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.invert_mask_bool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns P by N binary sparse matrix. Each row indicates which
+of the N data points has the pth dimension preserved in the mask.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparsifier.Sparsifier.polynomial_combination">
+<code class="descname">polynomial_combination</code><span class="sig-paren">(</span><em>W</em>, <em>power=1</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.polynomial_combination" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes sum_n (w[n,k] * (x[n] * iota[n] )**power</p>
+<p>W is self.N by K, so that the output has K rows, each of which
+is a sum above using a column of w. This seems backwards.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparsifier.Sparsifier.set_ROS">
+<code class="descname">set_ROS</code><span class="sig-paren">(</span><em>D_indices=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.set_ROS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assigns the ROS and indices.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparsifier.Sparsifier.set_data">
+<code class="descname">set_data</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.set_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assigns the data as an attribute. data can either be a numpy ndarray
+or an h5py Dataset object. Sets the following attributes:</p>
+<blockquote>
+<div>self.X                 array or h5py Dataset, NxP
+self.N                 number of rows of X (number of datapoints)
+self.P                 number of cols of X (latent dimension)
+self.gamma             compression factor (recomputed)
+self.M                 size of reduced latent dimension</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparsifier.Sparsifier.set_subsample">
+<code class="descname">set_subsample</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.set_subsample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assign the subsampled data once the ROS has been applied. Needs
+to be updated to work with C functions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparsifier.Sparsifier.write_ROS">
+<code class="descname">write_ROS</code><span class="sig-paren">(</span><em>fROS</em>, <em>HDX</em>, <em>D_indices</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.write_ROS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes HDX and D_indices to file fROS (D_indices are needed to
+invert the transformation).</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="index.html">Welcome to sparseklearn’s documentation!</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Eric Kightley.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

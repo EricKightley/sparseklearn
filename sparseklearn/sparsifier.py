@@ -4,12 +4,32 @@ from scipy import sparse
 from scipy.fftpack import dct, idct
 
 class Sparsifier():
-    """ Sparsifies input data. """
+    """ Sparsifies input data. 
+    
+    Parameters
+    ----------
+
+    gamma : float or int, defaults to 1.0.
+        The compression factor.
+
+    alpha : float or int, defaults to 0.0.
+        The shared compression factor.
+    
+    """
 
 
     # assignment functions
 
     def fit_sparsifier(self, data, override = False):
+        """ Fit the sparsifier to specified data. 
+
+        Parameters
+        ----------
+
+        data : array-like
+            The data to fit. 
+
+        """
         # if we passed this object a sparsifier or 
         # a superclass of a sparsifier, 
         # just copy its attributes. This is probably a very bad idea.
