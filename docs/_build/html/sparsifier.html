@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Sparsifier &#8212; sparseklearn 0.1 documentation</title>
-    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -27,41 +27,86 @@
     <link rel="prev" title="Welcome to sparseklearn’s documentation!" href="index.html" /> 
   </head>
   <body>
-      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
-          <span>sparseklearn 0.1 documentation</span></a></h1>
-        <h2 class="heading"><span>Sparsifier</span></h2>
-      </div>
-      <div class="topnav" role="navigation" aria-label="top navigation">
-      
-        <p>
-        «&#160;&#160;<a href="index.html">Welcome to sparseklearn’s documentation!</a>
-        &#160;&#160;::&#160;&#160;
-        <a class="uplink" href="index.html">Contents</a>
-        </p>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to sparseklearn’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">sparseklearn 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
 
-      </div>
-      <div class="content">
-        
-        
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
   <div class="section" id="module-sparsifier">
 <span id="sparsifier"></span><h1>Sparsifier<a class="headerlink" href="#module-sparsifier" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="sparsifier.Sparsifier">
-<em class="property">class </em><code class="descclassname">sparsifier.</code><code class="descname">Sparsifier</code><span class="sig-paren">(</span><em>gamma=1.0</em>, <em>alpha=0.0</em>, <em>verbose=False</em>, <em>fROS=None</em>, <em>use_ROS=True</em>, <em>compute_ROS=True</em>, <em>normalize=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">sparsifier.</code><code class="descname">Sparsifier</code><span class="sig-paren">(</span><em>compression_target=1.0</em>, <em>alpha_target=0.0</em>, <em>transform='dct'</em>, <em>mask=None</em>, <em>precond_inds=None</em>, <em>data_dim=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sparsifies input data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>gamma</strong> : float or int, defaults to 1.0.</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>compression_target</strong> : float or int, defaults to 1.0.</p>
 <blockquote>
 <div><p>The compression factor.</p>
 </div></blockquote>
-<p><strong>alpha</strong> : float or int, defaults to 0.0.</p>
-<blockquote class="last">
+<p><strong>alpha_target</strong> : float or int, defaults to 0.0.</p>
+<blockquote>
 <div><p>The shared compression factor.</p>
 </div></blockquote>
+<p><strong>transform</strong> : {‘dct’, None},</p>
+<blockquote>
+<div><p>defaults to ‘dct’.
+String describing the type of transform to use. This sets what to use for
+the matrix H in the preconditioning transform HD. Any method other than
+None will also use the diagonal D matrix (which can be set using the
+precond_D parameter). Must be one of:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="s1">&#39;dct&#39;</span>  <span class="n">discrete</span> <span class="n">cosine</span> <span class="n">transform</span>
+<span class="s1">&#39;None&#39;</span> <span class="n">no</span> <span class="n">transform</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>mask</strong> : nd.array, shape (n_datapoints, dim_mask), optional</p>
+<blockquote>
+<div><p>defaults to None. The user-provided mask. If None, mask is
+generated using the generate_mask method.</p>
+</div></blockquote>
+<p><strong>precond_D</strong> : nd.array, shape (n_datapoints,), optional</p>
+<blockquote>
+<div><p>defaults to None. The user-provided diagonal of the preconditioning matrix D. 
+If None, generated using the generate_D method.</p>
+</div></blockquote>
+<p><strong>data_dim</strong> : int, required and allowed if and only if transform is ‘R’ or ‘RHD’</p>
+<blockquote class="last">
+<div><p>defaults to None. 
+Dimension of each data point in the original, dense space. Will be taken
+to be the number of columns of the data if the dense data is passed in.</p>
+</div></blockquote>
 </td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="44%" />
+<col width="56%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>mask</strong></td>
+<td>(array)</td>
 </tr>
 </tbody>
 </table>
@@ -72,26 +117,20 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">apply_ROS</span></code>(X)</td>
-<td></td>
+<tr class="row-odd"><td><a class="reference internal" href="#sparsifier.Sparsifier.apply_HD" title="sparsifier.Sparsifier.apply_HD"><code class="xref py py-obj docutils literal"><span class="pre">apply_HD</span></code></a>(X)</td>
+<td>Apply the preconditioning transform to X.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#sparsifier.Sparsifier.apply_mask" title="sparsifier.Sparsifier.apply_mask"><code class="xref py py-obj docutils literal"><span class="pre">apply_mask</span></code></a>(X,&nbsp;mask)</td>
+<tr class="row-even"><td><a class="reference internal" href="#sparsifier.Sparsifier.apply_mask" title="sparsifier.Sparsifier.apply_mask"><code class="xref py py-obj docutils literal"><span class="pre">apply_mask</span></code></a>(X)</td>
 <td>Apply mask to X.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#sparsifier.Sparsifier.fit_sparsifier" title="sparsifier.Sparsifier.fit_sparsifier"><code class="xref py py-obj docutils literal"><span class="pre">fit_sparsifier</span></code></a>(data[,&nbsp;override])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#sparsifier.Sparsifier.fit_sparsifier" title="sparsifier.Sparsifier.fit_sparsifier"><code class="xref py py-obj docutils literal"><span class="pre">fit_sparsifier</span></code></a>([X,&nbsp;HDX,&nbsp;RHDX])</td>
 <td>Fit the sparsifier to specified data.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#sparsifier.Sparsifier.generate_mask" title="sparsifier.Sparsifier.generate_mask"><code class="xref py py-obj docutils literal"><span class="pre">generate_mask</span></code></a>(P,&nbsp;Ms,&nbsp;Mr,&nbsp;N)</td>
-<td></td>
+<tr class="row-even"><td><a class="reference internal" href="#sparsifier.Sparsifier.invert_HD" title="sparsifier.Sparsifier.invert_HD"><code class="xref py py-obj docutils literal"><span class="pre">invert_HD</span></code></a>(HDX)</td>
+<td>Invert the preconditioning transform HD that has been applied to X.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">invert_ROS</span></code>(X)</td>
-<td></td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#sparsifier.Sparsifier.invert_mask_bool" title="sparsifier.Sparsifier.invert_mask_bool"><code class="xref py py-obj docutils literal"><span class="pre">invert_mask_bool</span></code></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#sparsifier.Sparsifier.invert_mask_bool" title="sparsifier.Sparsifier.invert_mask_bool"><code class="xref py py-obj docutils literal"><span class="pre">invert_mask_bool</span></code></a>()</td>
 <td>Returns P by N binary sparse matrix.</td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">normalize_by_subsample</span></code>()</td>
-<td></td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">pairwise_distances</span></code>([Y,&nbsp;W,&nbsp;transform_Y,&nbsp;…])</td>
 <td></td>
@@ -102,40 +141,28 @@
 <tr class="row-even"><td><a class="reference internal" href="#sparsifier.Sparsifier.polynomial_combination" title="sparsifier.Sparsifier.polynomial_combination"><code class="xref py py-obj docutils literal"><span class="pre">polynomial_combination</span></code></a>(W[,&nbsp;power])</td>
 <td>Computes sum_n (w[n,k] * (x[n] * iota[n] )**power</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#sparsifier.Sparsifier.set_ROS" title="sparsifier.Sparsifier.set_ROS"><code class="xref py py-obj docutils literal"><span class="pre">set_ROS</span></code></a>([D_indices])</td>
-<td>Assigns the ROS and indices.</td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">set_ROS_from_input</span></code>(fROS,&nbsp;D_indices)</td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#sparsifier.Sparsifier.set_data" title="sparsifier.Sparsifier.set_data"><code class="xref py py-obj docutils literal"><span class="pre">set_data</span></code></a>(data)</td>
-<td>Assigns the data as an attribute.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#sparsifier.Sparsifier.set_subsample" title="sparsifier.Sparsifier.set_subsample"><code class="xref py py-obj docutils literal"><span class="pre">set_subsample</span></code></a>()</td>
-<td>Assign the subsampled data once the ROS has been applied.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#sparsifier.Sparsifier.write_ROS" title="sparsifier.Sparsifier.write_ROS"><code class="xref py py-obj docutils literal"><span class="pre">write_ROS</span></code></a>(fROS,&nbsp;HDX,&nbsp;D_indices)</td>
-<td>Writes HDX and D_indices to file fROS (D_indices are needed to invert the transformation).</td>
+<tr class="row-odd"><td><a class="reference internal" href="#sparsifier.Sparsifier.write_HD" title="sparsifier.Sparsifier.write_HD"><code class="xref py py-obj docutils literal"><span class="pre">write_HD</span></code></a>(fHD,&nbsp;HDX,&nbsp;D_indices)</td>
+<td>Writes HDX and D_indices to file fHD (D_indices are needed to invert the transformation).</td>
 </tr>
 </tbody>
 </table>
 <dl class="method">
-<dt id="sparsifier.Sparsifier.apply_mask">
-<code class="descname">apply_mask</code><span class="sig-paren">(</span><em>X</em>, <em>mask</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.apply_mask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Apply mask to X.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sparsifier.Sparsifier.fit_sparsifier">
-<code class="descname">fit_sparsifier</code><span class="sig-paren">(</span><em>data</em>, <em>override=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.fit_sparsifier" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fit the sparsifier to specified data.</p>
+<dt id="sparsifier.Sparsifier.apply_HD">
+<code class="descname">apply_HD</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.apply_HD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the preconditioning transform to X.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : array-like</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : nd.array, shape (n, P)</p>
+<blockquote>
+<div><p>The data to precondition. Each row is a datapoint.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>HDX</strong> : nd.array, shape (n, P)</p>
 <blockquote class="last">
-<div><p>The data to fit.</p>
+<div><p>The transformed data.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -144,9 +171,76 @@
 </dd></dl>
 
 <dl class="method">
-<dt id="sparsifier.Sparsifier.generate_mask">
-<code class="descname">generate_mask</code><span class="sig-paren">(</span><em>P</em>, <em>Ms</em>, <em>Mr</em>, <em>N</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.generate_mask" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="sparsifier.Sparsifier.apply_mask">
+<code class="descname">apply_mask</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.apply_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply mask to X.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : nd.array, shape(nrows, P)</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>RX</strong> : nd.array, shape(nrows, Q)</p>
+<blockquote class="last">
+<div><p>Masked X. The nth row of RX is X[n][mask[n]].</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparsifier.Sparsifier.fit_sparsifier">
+<code class="descname">fit_sparsifier</code><span class="sig-paren">(</span><em>X=None</em>, <em>HDX=None</em>, <em>RHDX=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.fit_sparsifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the sparsifier to specified data. 
+At least one of the parameters must be set.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : nd.array, shape (N, P), optional</p>
+<blockquote>
+<div><p>defaults to None. Dense, raw data.</p>
+</div></blockquote>
+<p><strong>HDX</strong> : nd.array, shape (N, P), optional</p>
+<blockquote>
+<div><p>defaults to None. Dense, transformed data.</p>
+</div></blockquote>
+<p><strong>RHDX</strong> : nd.array, shape (N, Q), optional</p>
+<blockquote class="last">
+<div><p>defaults to None. Subsampled, transformed data.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparsifier.Sparsifier.invert_HD">
+<code class="descname">invert_HD</code><span class="sig-paren">(</span><em>HDX</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.invert_HD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invert the preconditioning transform HD that has been applied to X.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>HDX</strong> : nd.array, shape (n, P)</p>
+<blockquote>
+<div><p>The preconditioned data. Each row is a datapoint.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>X</strong> : nd.array, shape (n, P)</p>
+<blockquote class="last">
+<div><p>The raw data.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="sparsifier.Sparsifier.invert_mask_bool">
@@ -164,35 +258,9 @@ is a sum above using a column of w. This seems backwards.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="sparsifier.Sparsifier.set_ROS">
-<code class="descname">set_ROS</code><span class="sig-paren">(</span><em>D_indices=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.set_ROS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Assigns the ROS and indices.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sparsifier.Sparsifier.set_data">
-<code class="descname">set_data</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.set_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Assigns the data as an attribute. data can either be a numpy ndarray
-or an h5py Dataset object. Sets the following attributes:</p>
-<blockquote>
-<div>self.X                 array or h5py Dataset, NxP
-self.N                 number of rows of X (number of datapoints)
-self.P                 number of cols of X (latent dimension)
-self.gamma             compression factor (recomputed)
-self.M                 size of reduced latent dimension</div></blockquote>
-</dd></dl>
-
-<dl class="method">
-<dt id="sparsifier.Sparsifier.set_subsample">
-<code class="descname">set_subsample</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.set_subsample" title="Permalink to this definition">¶</a></dt>
-<dd><p>Assign the subsampled data once the ROS has been applied. Needs
-to be updated to work with C functions.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sparsifier.Sparsifier.write_ROS">
-<code class="descname">write_ROS</code><span class="sig-paren">(</span><em>fROS</em>, <em>HDX</em>, <em>D_indices</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.write_ROS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Writes HDX and D_indices to file fROS (D_indices are needed to
+<dt id="sparsifier.Sparsifier.write_HD">
+<code class="descname">write_HD</code><span class="sig-paren">(</span><em>fHD</em>, <em>HDX</em>, <em>D_indices</em><span class="sig-paren">)</span><a class="headerlink" href="#sparsifier.Sparsifier.write_HD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes HDX and D_indices to file fHD (D_indices are needed to
 invert the transformation).</p>
 </dd></dl>
 
@@ -201,17 +269,43 @@ invert the transformation).</p>
 </div>
 
 
+          </div>
+        </div>
       </div>
-      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
-      
-        <p>
-        «&#160;&#160;<a href="index.html">Welcome to sparseklearn’s documentation!</a>
-        &#160;&#160;::&#160;&#160;
-        <a class="uplink" href="index.html">Contents</a>
-        </p>
-
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to sparseklearn’s documentation!</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
       </div>
-
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to sparseklearn’s documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">sparseklearn 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Eric Kightley.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.

@@ -9,25 +9,319 @@ class Sparsifier():
     Parameters
     ----------
 
-    gamma : float or int, defaults to 1.0.
+    compression_target : float or int, defaults to 1.0.
         The compression factor.
 
-    alpha : float or int, defaults to 0.0.
+    alpha_target : float or int, defaults to 0.0.
         The shared compression factor.
+
+    transform : {'dct', None},
+        defaults to 'dct'.
+        String describing the type of transform to use. This sets what to use for
+        the matrix H in the preconditioning transform HD. Any method other than
+        None will also use the diagonal D matrix (which can be set using the
+        precond_D parameter). Must be one of::
+            
+            'dct'  discrete cosine transform
+            None no transform
+
+    mask : nd.array, shape (n_datapoints, dim_mask), optional
+        defaults to None. The user-provided mask. If None, mask is
+        generated using the generate_mask method.
+
+    precond_D : nd.array, shape (n_datapoints,), optional
+        defaults to None. The user-provided diagonal of the preconditioning matrix D. 
+        If None, generated using the generate_D method. 
+
+    data_dim : int, required and allowed if and only if transform is 'R' or 'RHD'
+        defaults to None. 
+        Dimension of each data point in the original, dense space. Will be taken
+        to be the number of columns of the data if the dense data is passed in.
+
+    Attributes
+    ----------
+
+    mask : nd.array, shape (n_datapoints, dim_mask)
+        The mask used to sparsify the data. Array of integers, each row is the
+        indices specifying which entries of X[row] were kept. 
+
+    D_indices: nd.array, shape (n_signflips,)
+        Defines the preconditioning matrix D. Array of integers, 
+        the indices of the preconditioning matrix D with sign -1. Array of integers.
     
     """
 
+    def _input_checker_sparsifier(self, compression_target, alpha_target, transform, 
+            mask, precond_D, data_dim):
+        """ Check the input parameters for errors or contradictions. Only performs checks
+        that can be run at instantiation. More will happen during fitting. 
+        """
 
-    # assignment functions
+        # Check type and bounds on compression_target
+        if (type(compression_target) is float and compression_target <= 0 or compression_target > 1) or \
+            (type(compression_target) is int and compression_target <= 0) or \
+            (type(compression_target) not in [int, float]):
+                raise ValueError('compression_target = {}, '.format(compression_target) + 
+                    'but must be a positive integer or a float 0 < c <= 1')
 
-    def fit_sparsifier(self, data, override = False):
-        """ Fit the sparsifier to specified data. 
+        # Check type and bounds on alpha_target
+        if (type(alpha_target) is float and alpha_target < 0 or alpha_target > 1) or \
+            (type(alpha_target) is int and (alpha_target <= 0)) or \
+            (type(alpha_target) not in [int, float]):
+                raise ValueError('alpha_target = {}, '.format(alpha_target) +
+                    'but must be a positive integer or a float 0 <= c <= 1')
+
+        # Check that alpha_target <= compression_target if both are ints
+        if (type(compression_target) is int and type(alpha_target) is int) \
+            and alpha_target > compression_target:
+            raise ValueError(
+                'alpha_target = {} > {} = compression_target'.format(alpha_target, compression_target))
+
+        # Make sure precond_D is a 1-D array of integers
+        if (precond_D is not None):
+            if (type(precond_D) is not np.ndarray) or (precond_D.ndim !=1) or \
+                (not np.issubdtype(precond_D.dtype, np.integer)):
+                raise ValueError('precond_D must be an array of integers.')
+
+        # Make sure transform is valid
+        if transform not in ['dct', None]:
+            raise ValueError('Transform parameter {} is not one of the '.format(transform) +
+                    'available methods. See documentation.')
+
+        # Make sure mask is a 2-D array of integers if it's given
+        if (mask is not None):
+            if (type(mask) is not np.ndarray) or mask.ndim != 2 or \
+                (not np.issubdtype(mask.dtype, np.integer)):
+                raise ValueError('Mask must be a 2D array of 64-bit integers.')
+
+
+    def _data_checker(self, X, HDX, RHDX):
+        #TODO
+        ## X must be a 2-D numpy array
+        #if (type(X) is not np.ndarray) or (X.ndim != 2):
+        #    raise ValueError('X must be a 2-D array.')
+        # If the data is already subsampled, we need to know the mask
+        #if transform in ['R', 'RHD'] and mask is None:
+        #    raise ValueError('Transform parameter {} indicates'.format(transform) +
+        #            'that the input is subsampled but mask is not given.')
+        # Make sure data_dim is given if we need it and not if we don't
+        #if ((transform in ['R', 'RHD']) and (type(data_dim) is not int)) or \
+        #        (transform not in ['R', 'RHD'] and data_dim is not None):
+        #    raise ValueError('P must be given if and only if X is already subsampled.')
+        # If the data is already preconditioned, we need to know the D matrix
+        #if transform == 'dct' and precond_D is None:
+        #    raise ValueError('Transform parameter {} indicates '.format(transform) +
+        #            'that the input is preconditioned but precond_D is not given.')
+        return
+
+    def _dimension_checker(self, compression, alpha, Q, Qs, N, P, X, HDX, RHDX):
+        #TODO
+        return
+
+
+    def _generate_D(self, transform, P):
+        """ Generate the indices where D == -1"""
+        # ... generate it randomly if we are using it ...
+        if transform in ['dct']:
+            D_indices = np.array([i for i in range(P) 
+                if np.random.choice([0,1])])
+        # ... or set it empty if we are not using it.
+        else:
+            D_indices = np.array([])
+        return D_indices
+
+    def _set_D(self, transform, precond_inds, P):
+        if precond_inds is None:
+            D_indices = self._generate_D(transform, P)
+        else:
+            D_indices = precond_inds
+        return D_indices
+
+    def _generate_mask(self, P, Qs, Qr, N):
+        inds = [p for p in range(P)]
+        np.random.shuffle(inds)
+        shared_mask = inds[:Qs]
+        inds = inds[Qs:]
+
+        random_masks = [np.random.choice(inds, Qr, replace=False)
+                        for n in range(N)]
+
+        mask = np.concatenate((random_masks, 
+               np.tile(shared_mask, (N,1)).astype(int)), axis = 1)
+        mask.sort(axis=1)
+        return mask
+
+    def _set_mask(self, mask, P, Qs, Qr, N):
+        if mask:
+            return mask
+        else:
+            return self._generate_mask(P, Qs, Qr, N)
+
+    def _compute_constants(self, X, HDX, RHDX, compression_target, alpha_target):
+        if X is not None:
+            N,P = np.shape(X)
+        elif HDX is not None:
+            N,P = np.shape(HDX)
+        elif RHDX is not None:
+            N,P = np.shape(RHDX)
+
+        # if compression_target is given as a float, find the number of dimensions
+        if type(compression_target) is float:
+            Q = int(np.floor(P * compression_target))
+        # if compression_target is given as the num dimensions, find the ratio
+        if type(compression_target) is int or type(compression_target) is np.int64:
+            Q = compression_target
+        # compute number of shared and random subsampling
+        if type(alpha_target) is float:
+            # then alpha is the ratio of shared indices
+            Qs = int(np.floor(Q * alpha_target))
+        elif type(alpha_target) is int or type(alpha_target) is np.int64:
+            # then alpha is the number of shared indices
+            Qs = alpha_target
+        # if we are not compressing then set Qs to Q
+        if compression_target == 1.0:
+            Qs = Q
+        Qr = Q - Qs
+        # recompute alpha and compression (either because they were ints or to 
+        # account for rounding from floor function above)
+        compression_adjusted = Q/P
+        alpha_adjusted = Qs/Q
+        return([compression_adjusted, alpha_adjusted, Q, Qs, Qr, N, P])
+                
+
+    def _set_HDX(self, transform, X, HDX, RHDX):
+        if HDX is not None:
+            return HDX
+        elif (X is not None and transform == 'dct'):
+            return self.apply_HD(X)
+        else:
+            return None
+
+    def _set_RHDX(self, X, HDX, RHDX):
+        if RHDX is not None:
+            return RHDX
+        elif HDX is not None:
+            return self.apply_mask(HDX)
+        else:
+            return self.apply_mask(X)
+
+
+
+    def apply_mask(self, X):
+        """ Apply mask to X.
 
         Parameters
         ----------
 
-        data : array-like
-            The data to fit. 
+        X : nd.array, shape(nrows, P)
+
+
+        Returns
+        -------
+
+        RX : nd.array, shape(nrows, Q)
+            Masked X. The nth row of RX is X[n][mask[n]].
+
+        """
+        if X.ndim == 2:
+            if X.shape[0] != self.mask.shape[0]:
+                raise Exception('Number of rows in mask must agree with number',
+                        'of rows in X')
+            X_masked = np.array([X[n][self.mask[n]] for n in range(self.mask.shape[0])])
+        elif X.ndim == 1:
+            X_masked = np.array([X[self.mask[n]] for n in range(self.mask.shape[0])])
+        else:
+            raise Exception('X must be 1 or 2-dimensional')
+        return X_masked
+
+
+    def apply_HD(self, X):
+        """ Apply the preconditioning transform to X. 
+
+        Parameters
+        ----------
+
+        X : nd.array, shape (n, P)
+            The data to precondition. Each row is a datapoint. 
+
+
+        Returns
+        -------
+
+        HDX : nd.array, shape (n, P)
+            The transformed data. 
+
+        """
+        # copy it for now 
+        Y = np.copy(X)
+        # apply D matrix
+        Y[:,self.D_indices] *= -1
+        # apply H matrix
+        Y = dct(Y, norm = 'ortho', axis = 1, overwrite_x = False) 
+        return Y
+
+    def invert_HD(self, HDX):
+        """ Invert the preconditioning transform HD that has been applied to X. 
+
+        Parameters
+        ----------
+
+        HDX : nd.array, shape (n, P)
+            The preconditioned data. Each row is a datapoint. 
+
+
+        Returns
+        -------
+
+        X : nd.array, shape (n, P)
+            The raw data. 
+
+        """
+        X = np.copy(HDX)
+        X = idct(X, norm = 'ortho', axis = 1, overwrite_x = False)
+        X[:,self.D_indices] *= -1
+        return X
+
+
+    def fit_sparsifier(self, X = None, HDX = None, RHDX = None):
+        """ Fit the sparsifier to specified data. 
+        At least one of the parameters must be set.
+
+        Parameters
+        ----------
+
+        X : nd.array, shape (N, P), optional
+            defaults to None. Dense, raw data.
+
+        HDX : nd.array, shape (N, P), optional
+            defaults to None. Dense, transformed data.
+
+        RHDX : nd.array, shape (N, Q), optional
+            defaults to None. Subsampled, transformed data.
+
+
+
+        """
+
+        # check input data
+        self._data_checker(X, HDX, RHDX)
+        # set model constants 
+        self.compression, self.alpha, self.Q, self.Qs, self.Qr, self.N, self.P = \
+                self._compute_constants(X, HDX, RHDX, self.compression_target, self.alpha_target)
+        # run checks
+        self._dimension_checker(self.compression, self.alpha, self.Q, 
+                self.Qs, self.N, self.P, X, HDX, RHDX)
+        # set D_indices
+        self.D_indices = self._set_D(self.transform, self.precond_inds, self.P)
+        # set mask
+        self.mask = self._set_mask(self.mask, self.P, self.Qs, self.Qr, self.N) 
+        # overwrite HDX
+        HDX = self._set_HDX(self.transform, X, HDX, RHDX)
+        # overwrite RHDX
+        RHDX = self._set_RHDX(X, HDX, RHDX)
+        self.HDX = HDX
+        self.RHDX = RHDX
+
 
         """
         # if we passed this object a sparsifier or 
@@ -39,29 +333,26 @@ class Sparsifier():
             data.__class__ is Sparsifier:
             #[setattr(self,key,data.__dict__[key]) for key in 
             #        data.__dict__.keys()]
-            copy_these_attributes = ['sparsifier_is_fit','N','M','P','gamma',
-                'alpha','HDX_sub','HDX','X','D_indices','mask', 'use_ROS', 'apply_ROS']
+            copy_these_attributes = ['sparsifier_is_fit','N','M','P','compression',
+                'alpha','HDX_sub','HDX','X','D_indices','mask', 'precond', 'apply_HD']
             for attr in copy_these_attributes:
                 setattr(self,attr,getattr(data,attr))
 
         # only fit it if it hasn't been fit, or if we explicitly override this
         if not self.sparsifier_is_fit or override:
-            self.set_data(data)
-            self.set_ROS()
-            self.set_subsample()
+            self._set_data(data)
+            self._set_HD(
+            self._set_subsample()
             self.sparsifier_is_fit = True
-            if self.normalize:
-                print('normalizing')
-                self.normalize_by_subsample()
-
-    def set_data(self, data):
+        """
+    def _set_data_old(self, data):
         """ Assigns the data as an attribute. data can either be a numpy ndarray
         or an h5py Dataset object. Sets the following attributes:
         
             self.X                 array or h5py Dataset, NxP
             self.N                 number of rows of X (number of datapoints)
             self.P                 number of cols of X (latent dimension)
-            self.gamma             compression factor (recomputed)
+            self.compression             compression factor (recomputed)
             self.M                 size of reduced latent dimension
         """
 
@@ -71,13 +362,13 @@ class Sparsifier():
         self.N, self.P = data.shape
         self.X = data
 
-        ## compression factor gamma and common subsampling ratio alpha
-        # if gamma is given as a float, find the number of dimensions
-        if type(self.gamma) is float:
-            self.M = int(np.floor(self.P * self.gamma))
-        # if gamma is given as the num dimensions, find the ratio
-        if type(self.gamma) is int or type(self.gamma) is np.int64:
-            self.M = self.gamma
+        ## compression factor compression and common subsampling ratio alpha
+        # if compression is given as a float, find the number of dimensions
+        if type(self.compression) is float:
+            self.M = int(np.floor(self.P * self.compression))
+        # if compression is given as the num dimensions, find the ratio
+        if type(self.compression) is int or type(self.compression) is np.int64:
+            self.M = self.compression
         # compute number of shared and random subsampling
         if type(self.alpha) is float:
             # then alpha is the ratio of shared indices
@@ -93,32 +384,26 @@ class Sparsifier():
        
         self.Ms = Ms
         self.Mr = self.M - Ms
-        # overwrite alpha and gamma (either because they were ints or to 
+        # overwrite alpha and compression (either because they were ints or to 
         # account for rounding from floor function above)
-        self.gamma = self.M/self.P
+        self.compression = self.M/self.P
         self.alpha = self.Ms/self.M
         if self.verbose:
             print('Latent dimension will be reduced to',
             '{} ({} shared) from {}'.format(self.M, self.Ms, self.P), 
             'for a compression factor of',
-            '{:.5} (alpha of {:.5}).'.format(self.gamma, self.alpha))
+            '{:.5} (alpha of {:.5}).'.format(self.compression, self.alpha))
 
 
-    def set_ROS(self, D_indices = None):
-        """ Assigns the ROS and indices."""
-        if self.use_ROS:
-            # if we're told to compute it, do so
-            if self.compute_ROS == True:
+    def _set_HD(self, D_indices = None):
+        """ Assigns the HD and indices."""
+        if self.precond:
+            if self.precond_X == True:
                 self.D_indices = np.array([i for i in range(self.P) 
                     if np.random.choice([0,1])])
-                HDX = self.apply_ROS(self.X[:])
-            # otherwise load it
-            elif self.fROS != None:
-                HDX, D_indices = self.set_ROS_from_input(self.fROS, D_indices)
-                self.D_indices = D_indices
-
+                HDX = self.apply_HD(self.X[:])
         else:
-            # if we're not using the ROS just set HDX to be X
+            # if we're not using the HD just set HDX to be X
             HDX = self.X[:].astype(float)
             self.D_indices = np.ones(self.N)
 
@@ -126,81 +411,40 @@ class Sparsifier():
         self.HDX = HDX
 
 
-    def set_subsample(self):
-        """ Assign the subsampled data once the ROS has been applied. Needs
-        to be updated to work with C functions. 
-        """
-        self.mask, self.shared = self.generate_mask(self.P, self.Ms, self.Mr, self.N)
-        self.HDX_sub = self.apply_mask(self.HDX, self.mask)
 
-    # ROS functions
-    def apply_ROS(self, X):
-        # copy it for now 
-        Y = np.copy(X)
-        # apply D matrix
-        Y[:,self.D_indices] *= -1
-        # apply H matrix
-        Y = dct(Y, norm = 'ortho', axis = 1, overwrite_x = False) 
-        return Y
+    # HD functions
 
-    def invert_ROS(self, X):
-        # copy it for now
-        Y = np.copy(X)
-        Y = idct(Y, norm = 'ortho', axis = 1, overwrite_x = False)
-        Y[:,self.D_indices] *= -1
-        return Y
 
-    def set_ROS_from_input(self, fROS, D_indices):
-        if type(fROS) is h5py._hl.dataset.Dataset:
-            HDX = fROS['HDX']
-            D_indices = fROS['D_indices']
+    def _set_HD_from_input(self, fHD, D_indices):
+        if type(fHD) is h5py._hl.dataset.Dataset:
+            HDX = fHD['HDX']
+            D_indices = fHD['D_indices']
         elif type(data) is np.ndarray:
             HDX = HDX
         return [HDX, D_indices]
 
-    def write_ROS(self, fROS, HDX, D_indices):
-        """ Writes HDX and D_indices to file fROS (D_indices are needed to
+    def write_HD(self, fHD, HDX, D_indices):
+        """ Writes HDX and D_indices to file fHD (D_indices are needed to
         invert the transformation)."""
         
-        if 'HDX' in fROS:
+        if 'HDX' in fHD:
             if self.verbose:
-                print('Deleting existing ROS dataset in hdf5 file {}'.format(fROS))
-            del fROS['HDX']
-        if 'D_indices' in self.fROS:
+                print('Deleting existing HD dataset in hdf5 file {}'.format(fHD))
+            del fHD['HDX']
+        if 'D_indices' in self.fHD:
             if self.verbose:
-                print('Deleting existing D_indices dataset in hdf5 file {}'.format(fROS))
-            del fROS['D_indices']
+                print('Deleting existing D_indices dataset in hdf5 file {}'.format(fHD))
+            del fHD['D_indices']
         if self.verbose:
-            print('Writing ROS and D_indices to hdf5 file {}'.format(fROS))
-        fROS.create_dataset('HDX', data = HDX, dtype = 'd')
-        fROS.create_dataset('D_indices', data = D_indices, dtype = 'int')
+            print('Writing HD and D_indices to hdf5 file {}'.format(fHD))
+        fHD.create_dataset('HDX', data = HDX, dtype = 'd')
+        fHD.create_dataset('D_indices', data = D_indices, dtype = 'int')
 
 
-    def normalize_by_subsample(self):
-        normalizer = np.mean(np.linalg.norm(self.HDX_sub,axis=1,ord=2))
-        self.HDX /= normalizer
-        self.HDX_sub /= normalizer
-        self.normalizer = normalizer
 
 
     # masking functions
 
-    def generate_mask(self, P, Ms, Mr, N):
-        """
-        """
-        inds = [p for p in range(P)]
-        np.random.shuffle(inds)
-        shared_mask = inds[:Ms]
-        inds = inds[Ms:]
-
-        random_masks = [np.random.choice(inds, Mr, replace=False)
-                        for n in range(N)]
-
-        mask = np.concatenate((random_masks, 
-               np.tile(shared_mask, (N,1)).astype(int)), axis = 1)
-        mask.sort(axis=1)
-
-        return [mask, np.sort(shared_mask)]
 
     def invert_mask_bool(self):
         """ Returns P by N binary sparse matrix. Each row indicates which
@@ -213,19 +457,6 @@ class Sparsifier():
                       shape = (self.P,self.N), dtype = bool)
         return mask_binary
 
-    def apply_mask(self, X, mask):
-        """ Apply mask to X. 
-        """
-        if X.ndim == 2:
-            if X.shape[0] != mask.shape[0]:
-                raise Exception('Number of rows in mask must agree with number',
-                        'of rows in X')
-            X_masked = np.array([X[n][mask[n]] for n in range(mask.shape[0])])
-        elif X.ndim == 1:
-            X_masked = np.array([X[mask[n]] for n in range(mask.shape[0])])
-        else:
-            raise Exception('X must be 1 or 2-dimensional')
-        return X_masked
 
 
     # masked matrix operations
@@ -263,7 +494,7 @@ class Sparsifier():
 
         # transform Y if we need to
         if "HD" in transform_Y and Y is not None:
-            Y = self.apply_ROS(Y)
+            Y = self.apply_HD(Y)
         # assign Y to be X if we need to
         elif Y is None:
             Y = X
@@ -273,7 +504,7 @@ class Sparsifier():
         
         # transform W if we need to
         if "HD" in transform_W and W is not None:
-            W = self.apply_ROS(W)
+            W = self.apply_HD(W)
 
         # set up the distances output array
         K, _ = np.shape(Y)
@@ -296,7 +527,7 @@ class Sparsifier():
         if W is None:
             for k in range(K):
                 if subsample_Y:
-                    y = self.apply_mask(Y[k], self.mask)
+                    y = self.apply_mask(Y[k])
                 else:
                     y = Y[k]
                 dist[k] = np.linalg.norm(y - X, axis = 1)
@@ -304,11 +535,11 @@ class Sparsifier():
         else:
             for k in range(K):
                 if subsample_Y:
-                    y = self.apply_mask(Y[k], self.mask)
+                    y = self.apply_mask(Y[k])
                 else:
                     y = Y[k]
                 if subsample_W:
-                    w = self.apply_mask(W[k], self.mask)
+                    w = self.apply_mask(W[k])
                 else:
                     w = W[k]
                 Xmys = (X-y)**2
@@ -333,18 +564,15 @@ class Sparsifier():
 
 
 
-    def __init__(self, gamma = 1.0, alpha = 0.0, verbose = False, fROS = None, 
-                 use_ROS = True, compute_ROS = True, 
-                 normalize = False):
+    def __init__(self, compression_target = 1.0, alpha_target = 0.0, transform = 'dct',
+            mask = None, precond_inds = None, data_dim = None):
 
-        # assign constants
-        self.gamma = gamma
-        self.alpha = alpha
-        self.verbose = verbose
-        self.fROS = fROS
-        self.use_ROS = use_ROS
-        self.compute_ROS = compute_ROS
-        self.sparsifier_is_fit = False
-        self.normalize = normalize
+        self._input_checker_sparsifier(compression_target, alpha_target, transform, mask, 
+                precond_inds, data_dim)
 
+        self.compression_target = compression_target
+        self.alpha_target = alpha_target
+        self.transform = transform
+        self.mask = mask
+        self.precond_inds = precond_inds
 

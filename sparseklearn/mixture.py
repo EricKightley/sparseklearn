@@ -41,9 +41,9 @@ class GaussianMixture(Sparsifier):
 
     def reconstruct_parameters(self, n_passes):
         if n_passes == 1:
-            if self.use_ROS:
-                means_ = self.invert_ROS(self.means_)
-                covariances_ = self.invert_ROS(self.covariances_)
+            if self.precond:
+                means_ = self.invert_HD(self.means_)
+                covariances_ = self.invert_HD(self.covariances_)
             else:
                 means_ = self.means_
                 covariances_ = self.covariances_
@@ -79,7 +79,7 @@ class GaussianMixture(Sparsifier):
             kmc = KMeans(n_clusters = self.n_components, tol = self.tol,
                     init = self.kmeans_init, full_init = self.full_init, 
                     max_iter = self.kmeans_max_iter, 
-                    use_ROS = self.use_ROS,
+                    precond = self.precond,
                     n_passes = self.n_passes, n_init = 1)
             kmc.fit(self)
             resp = np.zeros((self.N, self.n_components))
@@ -99,7 +99,7 @@ class GaussianMixture(Sparsifier):
             if self.means_init is None:
                 self.means_ = self._estimate_gaussian_means(resp, rk, rkd)
             else:
-                self.means_ = (self.apply_ROS(self.means_init) if self.use_ROS else self.means_init)
+                self.means_ = (self.apply_HD(self.means_init) if self.precond else self.means_init)
 
         else:
             raise ValueError('Unimplemented initialization method: {}'.format(self.init_params))
@@ -109,8 +109,8 @@ class GaussianMixture(Sparsifier):
             self.covariances_ = self._estimate_gaussian_covariances(resp, rkd, 
                     self.means_)
         else:
-            self.covariances_ = (self.apply_ROS(1/(self.precisions_init + self.reg_covar)) 
-                    if self.use_ROS else 1/self.precisions_init)
+            self.covariances_ = (self.apply_HD(1/(self.precisions_init + self.reg_covar)) 
+                    if self.precond else 1/self.precisions_init)
 
         # compute and assign the weights, overwriting if initialized
         weights = self._estimate_gaussian_weights(rk)
