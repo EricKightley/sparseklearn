@@ -10,8 +10,6 @@ Welcome to sparseklearn's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   sparsifier.rst
-
 
 Indices and tables
 ==================

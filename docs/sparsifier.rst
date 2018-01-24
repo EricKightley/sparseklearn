@@ -1,7 +1,0 @@
-Sparsifier
-==========
-
-.. automodule:: sparsifier
-
-.. autoclass:: Sparsifier
-    :members:

@@ -7,5 +7,11 @@
 *.pyc
 *.pk
 /dist/
+/plots/
+/tests/
 /*.egg-info
+_build
+_static
+_templates
+
 
