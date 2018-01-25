@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # sparseklearn documentation build configuration file, created by
-# sphinx-quickstart on Sun Nov 12 09:13:26 2017.
+# sphinx-quickstart on Wed Jan 24 17:11:18 2018.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -19,7 +19,6 @@
 #
 import os
 import sys
-#sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../sparseklearn/'))
 
 
@@ -32,13 +31,10 @@ sys.path.insert(0, os.path.abspath('../sparseklearn/'))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.mathjax',
-    'sphinx.ext.githubpages',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
+extensions = ['sphinx.ext.autodoc',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.viewcode',
     'sphinx.ext.napoleon']
-    #'sphinxcontrib.napoleon']
-    #'numpydoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -90,8 +86,7 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-#html_theme = 'classic'
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
