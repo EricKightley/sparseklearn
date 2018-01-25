@@ -444,7 +444,7 @@ class Sparsifier():
     ###########################################################################
     # Operations on masked data
 
-    def polynomial_combination(self, W, power = 1):
+    def _polynomial_combination(self, W, power = 1):
         """
 
         Computes sum_n (w[n,k] * (x[n] * iota[n] )**power
@@ -470,7 +470,7 @@ class Sparsifier():
         return comb
 
 
-    def pairwise_distances(self, Y = None, W = None, 
+    def _pairwise_distances(self, Y = None, W = None, 
             transform_Y = "R", transform_W = "R"):
 
         X = self.HDX_sub
@@ -529,7 +529,7 @@ class Sparsifier():
                 dist[k] = np.sqrt([np.dot(Xmys[n], w[n]) for n in range(self.N)])
         return dist.T
 
-    def pick_K_datapoints(self, K):
+    def _pick_K_datapoints(self, K):
         # pick K data points at random uniformly
         cluster_indices = np.random.choice(self.N, K, replace = False)
         cluster_indices.sort()
@@ -543,8 +543,6 @@ class Sparsifier():
                 cluster_centers_[k][mask[cluster_indices[k]]] = \
                         self.HDX_sub[cluster_indices[k]]
         return [cluster_centers_, cluster_indices]
-
-
 
 
     def __init__(self, compression_target = 1.0, alpha_target = 0.0, transform = 'dct',

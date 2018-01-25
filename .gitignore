@@ -9,6 +9,7 @@
 /dist/
 /plots/
 /tests/
+/temp_backup/
 /*.egg-info
 _build
 _static
