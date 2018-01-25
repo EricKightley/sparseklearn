@@ -4,8 +4,5 @@ The Sparsifier Object
 Here is a section
 -----------------
 
-Here are some words about this section, and now, some documentation
-pulled in using autodocs:
+Here are some words about this section.
 
-.. automodule:: sparsifier
-.. autoclass:: Sparsifier
