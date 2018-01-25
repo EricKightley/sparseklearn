@@ -16,6 +16,7 @@ Welcome to sparseklearn's documentation!
 Indices and tables
 ==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+Hmmm! HMMM!
+.. * :ref:`genindex`
+.. * :ref:`modindex`
+.. * :ref:`search`
