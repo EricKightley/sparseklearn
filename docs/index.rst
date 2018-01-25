@@ -3,14 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Is this even changing?
-========================================
+Come on!
+========
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
-   sparsifier
    
 
 Indices and tables
