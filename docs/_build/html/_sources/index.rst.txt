@@ -10,7 +10,8 @@ Welcome to sparseklearn's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-
+   ./source/sparseklearn
+   
 
 Indices and tables
 ==================
