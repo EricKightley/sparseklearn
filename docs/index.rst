@@ -10,13 +10,13 @@ Welcome to sparseklearn's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-    sparsifier
+   sparsifier
    
 
 Indices and tables
 ==================
 
 Hmmm! HMMM!
-.. * :ref:`genindex`
-.. * :ref:`modindex`
-.. * :ref:`search`
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
