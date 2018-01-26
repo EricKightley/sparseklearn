@@ -10,6 +10,7 @@ Welcome to sparseklearn's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   readme
    intro
    
 
