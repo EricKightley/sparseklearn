@@ -203,13 +203,13 @@ class Sparsifier():
         Parameters
         ----------
 
-        X : nd.array, shape(nrows, P)
+        X : nd.array, shape(n, P)
 
 
         Returns
         -------
 
-        RX : nd.array, shape(nrows, Q)
+        RX : nd.array, shape(n, Q)
             Masked X. The nth row of RX is X[n][mask[n]].
 
         """
@@ -433,10 +433,11 @@ class Sparsifier():
         self.D_indices = self._set_D(self.transform, self.precond_inds, self.P)
         # set mask
         self.mask = self._set_mask(self.mask, self.P, self.Qs, self.Qr, self.N) 
-        # overwrite HDX
+        # compute HDX and RHDX
         HDX = self._set_HDX(self.transform, X, HDX, RHDX)
-        # overwrite RHDX
         RHDX = self._set_RHDX(X, HDX, RHDX)
+        # assign data
+        self.X = X
         self.HDX = HDX
         self.RHDX = RHDX
 
@@ -444,13 +445,28 @@ class Sparsifier():
     ###########################################################################
     # Operations on masked data
 
-    def _polynomial_combination(self, W, power = 1):
+    def polynomial_combination(self, W, power = 1):
         """
 
-        Computes sum_n (w[n,k] * (x[n] * iota[n] )**power
+        Computes a weighted sum over the masked data, with powers.
 
-        W is self.N by K, so that the output has K rows, each of which
-        is a sum above using a column of w. This seems backwards. 
+        .. math::
+
+           \sum_{n} W_{nk} R_n^T R_n{\mathbf{x}_n}^p
+
+        Parameters
+        ----------
+
+            W : nd.array, shape (N,k)
+                Weights to apply to the terms in the sum.
+            power : int or float, optional
+                The exponent, defaults to 1. 
+
+        Returns
+        -------
+
+            comb : nd.array, shape (k,P)
+                The weighted sum over the exponentiated data.
 
         """
         if W.ndim != 2:
@@ -470,10 +486,32 @@ class Sparsifier():
         return comb
 
 
-    def _pairwise_distances(self, Y = None, W = None, 
+    def pairwise_distances(self, Y = None, W = None, 
             transform_Y = "R", transform_W = "R"):
+        """ Compute the pairwise distances between the masked X and Y.
 
-        X = self.HDX_sub
+        Parameters
+        ----------
+
+        Y : nd.array, shape (k,P) or (k,Q), optional
+            The array of vectors, each row is a point, default = None. If None,
+            is taken to be X. 
+        W : nd.array, shape (k,P) or (k,Q), optional
+            The weights for each point, default = None. If None, is taken to
+            be vector of ones.
+        transform_Y : str, temporary
+        transform_W : str, temporary
+
+        Returns
+        -------
+
+        dist : nd.array, shape (N,k)
+            The distances. dist[n,j] is the distance of the nth datapoint to Y[j].
+
+        """
+
+
+        X = self.RHDX
 
         # transform Y if we need to
         if "HD" in transform_Y and Y is not None:
