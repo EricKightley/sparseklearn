@@ -4,6 +4,14 @@ sparseklearn package
 Submodules
 ----------
 
+sparseklearn\.kmeans module
+---------------------------
+
+.. automodule:: sparseklearn.kmeans
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 sparseklearn\.sparsifier module
 -------------------------------
 
