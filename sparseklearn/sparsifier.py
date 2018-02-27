@@ -500,7 +500,6 @@ class Sparsifier():
 
     def polynomial_combination(self, W, power = 1):
         """
-
         Computes a weighted sum over the masked data, with powers.
 
         .. math::
@@ -542,6 +541,14 @@ class Sparsifier():
     def pairwise_distances(self, Y = None, W = None, 
             transform_Y = "R", transform_W = "R"):
         """ Compute the pairwise distances between the masked X and Y.
+        REPLACE
+
+        fast_polynomial(....) = pairwise_distances(Y, W)
+            X in fast_polynomial is self.RHDX
+
+        X = self.RHDX
+        mask = self.mask
+        P = self.P
 
         Parameters
         ----------

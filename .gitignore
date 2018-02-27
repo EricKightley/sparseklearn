@@ -8,7 +8,6 @@
 *.pk
 /dist/
 /plots/
-/tests/
 /examples/
 /temp_backup/
 /*.egg-info
