@@ -1,4 +1,3 @@
-
 import numpy as np
 from sys import float_info
 from .sparsifier import Sparsifier
@@ -159,7 +158,9 @@ class KMeans(Sparsifier):
         # now pick the remaining k-1 cluster_centers
         for k in range(1,self.K):
             # distance from all the data points to the last cluster added
-            d_curr = self.pairwise_distances(Y = self.cluster_centers_[k-1])[:,0]
+            latest_cluster = self.cluster_centers_[k-1,np.newaxis]
+            d_curr = self.pairwise_distances(U = latest_cluster, power = 2)
+            import pdb; pdb.set_trace()
             # ||x - U|| is either this distance or the current minimum
             d_curr = np.min((d_prev, d_curr), axis = 0)
             # overwrite previous distances with new closest
@@ -196,7 +197,7 @@ class KMeans(Sparsifier):
 
     def _compute_labels(self):
         """ Compute the labels of each datapoint."""
-        d = self.pairwise_distances(Y=self.cluster_centers_)
+        d = self.pairwise_distances(U=self.cluster_centers_, power = 2)
         labels_ = d.argsort(axis=1)[:,0]
         inertia_ = np.sum([d[n,labels_[n]] for n in range(self.N)])
         return [labels_, inertia_]

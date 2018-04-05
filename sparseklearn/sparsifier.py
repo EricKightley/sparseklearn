@@ -1,7 +1,11 @@
 import numpy as np
 import h5py
+import os
 from scipy import sparse
 from scipy.fftpack import dct, idct
+from numpy.ctypeslib import ndpointer
+import ctypes as ct
+from .fastLA import polynomial_combination, pairwise_distances
 
 class Sparsifier():
     """ Sparsifier.
@@ -498,7 +502,54 @@ class Sparsifier():
     ###########################################################################
     # Operations on masked data
 
-    def polynomial_combination(self, W, power = 1):
+    def wrapped_ndptr(*args, **kwargs):
+        base = ndpointer(*args, **kwargs)
+        def from_param(cls, obj):
+            if obj is None:
+                return obj
+            return base.from_param(obj)
+        return type(base.__name__, (base,), {'from_param': classmethod(from_param)})
+    DoubleArrayType = wrapped_ndptr(dtype=np.float64, flags='C_CONTIGUOUS')
+
+    def polynomial_combination(self, S = None, W = None, U = None, 
+        Sigma = None, power = 1):
+        """ Compute sum_n w_nk (x_n - R_n U_k)^power // Sigma_k
+
+        Inputs
+        ------
+
+        S : array of ints, optional
+            Subset of the data X to use. Each entry in S corresponds
+            to a row of X. If None, all rows of X are used.
+
+        W : array of floats, shape (N,K), optional
+            Data weights. If None, K is inferred from mu and W is taken to be all 1s.
+
+        U : array of floats, shape (K,P), optional
+            Offsets. If None, K is taken to be 1 and U is taken to be all 0s.
+
+        Sigma : array of floats, shape (K,P), optional
+            Dimension weights. If None, K is inferred from U and Sigma is taken to
+            be all 1s.
+
+        power : int, optional
+            Polynomial exponent, defaults to 1. 
+
+        Returns
+        -------
+
+        result : array of floats, shape (K, P)
+            The sum above.
+        """    
+        return polynomial_combination(self.RHDX, self.mask, self.P, S, W, U, Sigma, power)
+
+    def pairwise_distances(self, S = None, W = None, U = None, 
+        Sigma = None, power = 1):
+
+        return pairwise_distances(self.RHDX, self.mask, S, W, U, Sigma, power, self.P)
+
+
+    def polynomial_combination_old(self, W, power = 1):
         """
         Computes a weighted sum over the masked data, with powers.
 
@@ -538,7 +589,7 @@ class Sparsifier():
         return comb
 
 
-    def pairwise_distances(self, Y = None, W = None, 
+    def pairwise_distances_old(self, Y = None, W = None, 
             transform_Y = "R", transform_W = "R"):
         """ Compute the pairwise distances between the masked X and Y.
         REPLACE
@@ -658,4 +709,6 @@ class Sparsifier():
         self.mask = mask
         self.precond_D = precond_D
         self.data_dim = data_dim
+
+
 

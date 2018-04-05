@@ -25,10 +25,15 @@ P = 784
 spr = Sparsifier(mask = mask, data_dim = P)
 spr.fit_sparsifier(RHDX = RHDX)
 
-#skm = KMeans(mask = mask, data_dim = P, n_clusters = 3)
+test0 = spr.pairwise_distances(U = RHDX[5:10], S = np.array([4,9,12]))
+test1 = spr.pairwise_distances(S = np.array([4,9,12]))
 
-skm = KMeans(n_clusters = 3, compression_target = 0.03, precond_D = precond_D)
-skm.fit(HDX=HDX)
+#skm = KMeans(n_clusters = 3)
+#skm.fit(X=X)
+
+#skm = KMeans(mask = mask, data_dim = P, n_clusters = 3)
+#skm = KMeans(n_clusters = 3, compression_target = 0.03, precond_D = precond_D)
+#skm.fit(HDX=HDX)
 #localpath = '/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/'
 
 #np.save(localpath+'kmeans_means.npy', skm.cluster_centers_)
