@@ -67,7 +67,7 @@ class Sparsifier():
 
     alpha : float
         The shared compression factor. Computed as Qs/Q where Qs has been
-        chosen to make Qs/Q as close to compression_target as possible
+        chosen to make Qs/Q as close to alpha_target as possible
 
     Q : int
         Dimensionality of the mask, i.e., the number of dimensions preserved
@@ -89,9 +89,9 @@ class Sparsifier():
         """
 
         # Check type and bounds on compression_target
-        if (type(compression_target) is float and compression_target <= 0 or compression_target > 1) or \
+        if (type(compression_target) is float and (compression_target <= 0 or compression_target > 1)) or \
             (type(compression_target) is int and compression_target <= 0) or \
-            (type(compression_target) not in [int, float]):
+            (type(compression_target) not in [int, float, np.int64]):
                 raise ValueError('compression_target = {}, '.format(compression_target) + 
                     'but must be a positive integer or a float 0 < c <= 1')
 
@@ -424,7 +424,7 @@ class Sparsifier():
             # compute number of shared and random subsampling
             if type(alpha_target) is float:
                 # then alpha is the ratio of shared indices
-                Qs = int(np.floor(Q * alpha_target))
+                Qs = int(np.ceil(Q * alpha_target))
             elif type(alpha_target) is int or type(alpha_target) is np.int64:
                 # then alpha is the number of shared indices
                 Qs = alpha_target
@@ -450,11 +450,11 @@ class Sparsifier():
     def _set_RHDX(self, X, HDX, RHDX):
         """ Wrapper to compute RHDX from HDX or assign it if user-specified. """
         if RHDX is not None:
-            return RHDX
+            return RHDX.astype(float)
         elif HDX is not None:
-            return self.apply_mask(HDX)
+            return self.apply_mask(HDX.astype(float))
         else:
-            return self.apply_mask(X)
+            return self.apply_mask(X.astype(float))
 
     def fit_sparsifier(self, X = None, HDX = None, RHDX = None):
         """ Fit the sparsifier to specified data. 
@@ -544,7 +544,7 @@ class Sparsifier():
         return polynomial_combination(self.RHDX, self.mask, self.P, S, W, U, Sigma, power)
 
     def pairwise_distances(self, S = None, W = None, U = None, 
-        Sigma = None, power = 1):
+        Sigma = None, power = 2):
 
         return pairwise_distances(self.RHDX, self.mask, S, W, U, Sigma, power, self.P)
 
@@ -700,15 +700,16 @@ class Sparsifier():
     def __init__(self, compression_target = 1.0, alpha_target = 0.0, transform = 'dct',
             mask = None, precond_D = None, data_dim = None):
 
-        self._input_checker_sparsifier(compression_target, alpha_target, transform, mask, 
-                precond_D, data_dim)
-
         self.compression_target = compression_target
         self.alpha_target = alpha_target
         self.transform = transform
         self.mask = mask
         self.precond_D = precond_D
         self.data_dim = data_dim
+
+        self._input_checker_sparsifier(compression_target, alpha_target, transform, mask, 
+                precond_D, data_dim)
+
 
 
 

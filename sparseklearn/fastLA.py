@@ -158,7 +158,6 @@ def pairwise_distances(RHDX, mask, S, W, U, Sigma, power, P):
     D = DATA(RHDX.ctypes.data_as(ct.POINTER(ct.c_double)),
              mask.ctypes.data_as(ct.POINTER(ct.c_int64)))
 
-
     # call C function, which modifies result
     pwdist(result, nrow, ncol, C, D, power, S, W, U, Sigma)
 

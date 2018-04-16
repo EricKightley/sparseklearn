@@ -159,11 +159,12 @@ class KMeans(Sparsifier):
         for k in range(1,self.K):
             # distance from all the data points to the last cluster added
             latest_cluster = self.cluster_centers_[k-1,np.newaxis]
-            d_curr = self.pairwise_distances(U = latest_cluster, power = 2)
-            import pdb; pdb.set_trace()
+            d_curr = self.pairwise_distances(U = latest_cluster, power = 2)[0,:]**2
             # ||x - U|| is either this distance or the current minimum
-            d_curr = np.min((d_prev, d_curr), axis = 0)
-            # overwrite previous distances with new closest
+            # overwrite current distances where we haven't improved
+            where_we_have_not_improved = np.where(d_curr > d_prev)[0]
+            #if where_we_have_not_improved:
+            d_curr[where_we_have_not_improved] = d_prev[where_we_have_not_improved]
             d_prev = np.copy(d_curr)
 
             # compute this to normalize d_curr_sum into a prob density, and
@@ -197,7 +198,7 @@ class KMeans(Sparsifier):
 
     def _compute_labels(self):
         """ Compute the labels of each datapoint."""
-        d = self.pairwise_distances(U=self.cluster_centers_, power = 2)
+        d = self.pairwise_distances(U=self.cluster_centers_, power = 2).T
         labels_ = d.argsort(axis=1)[:,0]
         inertia_ = np.sum([d[n,labels_[n]] for n in range(self.N)])
         return [labels_, inertia_]

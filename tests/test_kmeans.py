@@ -22,19 +22,15 @@ labels = hdf5_file['labels'][:]
 # set P
 P = 784
 
-spr = Sparsifier(mask = mask, data_dim = P)
-spr.fit_sparsifier(RHDX = RHDX)
+#spr = Sparsifier(mask = mask, data_dim = P)
+#spr.fit_sparsifier(X = X)
 
-test0 = spr.pairwise_distances(U = RHDX[5:10], S = np.array([4,9,12]))
-test1 = spr.pairwise_distances(S = np.array([4,9,12]))
-
-#skm = KMeans(n_clusters = 3)
+#skm = KMeans(n_clusters = 3, compression_target = 0.1)
 #skm.fit(X=X)
 
-#skm = KMeans(mask = mask, data_dim = P, n_clusters = 3)
-#skm = KMeans(n_clusters = 3, compression_target = 0.03, precond_D = precond_D)
-#skm.fit(HDX=HDX)
-#localpath = '/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/'
-
-#np.save(localpath+'kmeans_means.npy', skm.cluster_centers_)
-#np.save(localpath+'kmeans_counts.npy', skm.n_per_cluster)
+skm = KMeans(mask = mask, data_dim = P, precond_D = precond_D, n_clusters = 3)
+#skm = KMeans(n_clusters = 3, precond_D = precond_D)
+skm.fit(RHDX=RHDX)
+localpath = '/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/'
+np.save(localpath+'kmeans_means.npy', skm.cluster_centers_)
+np.save(localpath+'kmeans_counts.npy', skm.n_per_cluster)
