@@ -44,7 +44,8 @@ int64_t func_U0(double *result, int64_t nrow, int64_t ncol, struct CONSTANTS *C,
             }\
         }\
     }\
-    sqrt_array(result, ncol, ncol);\
+    if (power == 2)\
+        sqrt_array(result, nrow, ncol);\
     for (rr = 0 ; rr < ncol - 1 ; rr++) {\
         for (rc = rr + 1 ; rc < ncol  ; rc++) {\
             result[rc*ncol+rr] = result[rr*ncol+rc];\
@@ -59,9 +60,9 @@ int64_t func_U1(double *result, int64_t nrow, int64_t ncol, struct CONSTANTS *C,
     int64_t rr, rc, dr, q, q_to_p;\
     double scale;\
     if (power == 1)\
-        scale = (float)C->P / (float)C->Q;\
+        scale = ((float)C->P / (float)C->Q) * ((float)C->P / (float)C->Q);\
     else if (power == 2)\
-        scale = sqrt((float)C->P / (float)C->Q);\
+        scale = (float)C->P / (float)C->Q;\
     for (rr = 0 ; rr < nrow ; rr++) {\
         for (rc = 0 ; rc < ncol ; rc++) {\
             dr = S[rc];\
@@ -72,6 +73,8 @@ int64_t func_U1(double *result, int64_t nrow, int64_t ncol, struct CONSTANTS *C,
             result[rr*ncol+rc] *= scale;\
         }\
     }\
+    if (power == 2)\
+       sqrt_array(result, nrow, ncol);\
 }
 
 macro_U0(
