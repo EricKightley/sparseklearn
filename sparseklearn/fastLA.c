@@ -23,10 +23,10 @@ double _l2_distance_both_masked(double *compressed_sample_1,
  *     compressed_sample_2 : array, length num_feat_comp
  *
  *     mask_1 : array, length num_feat_comp. The indices specifying which 
- *              entries of the dense sample_1 were kept. Must be sorted.
+ *              entries of the full sample_1 were kept. Must be sorted.
  *
  *     mask_2 : array, length num_feat_comp. The indices specifying which 
- *              entries of the dense sample_2 were kept. Must be sorted.
+ *              entries of the full sample_2 were kept. Must be sorted.
  *
  *     num_feat_comp : the number of features in a compressed sample. 
  *
@@ -70,6 +70,56 @@ double _l2_distance_both_masked(double *compressed_sample_1,
     return distance;
 }
 
+
+double _l2_distance_one_masked_one_full(double *compressed_sample, 
+                                        double *full_sample, 
+                                        int64_t *mask, 
+                                        int64_t num_feat_comp,
+                                        int64_t num_feat_full)
+/* Computes the l2 distance between compressed_sample_1 and 
+ * compressed_sample_2, by finding the intersection of their masks, computing
+ * the distance between the samples projected onto this common subspace, and
+ * then scaling this distance back up.
+ *
+ * Inputs
+ * ------
+ *
+ *     compressed_sample : array, length num_feat_comp
+ *
+ *     full_sample : array, length num_feat_fukl
+ *
+ *     mask : array, length num_feat_comp. The indices specifying which 
+ *                   entries of the full sample_1 were kept. Must be sorted.
+ *
+ *     num_feat_comp : the number of features in a compressed sample. 
+ *
+ *     num_feat_full : the number of features in a full sample. 
+ *
+ * Returns
+ * -------
+ *
+ *      distance : double, the approximate l2 distance between both samples.
+ */
+{
+    int64_t ind_comp = 0; //indexes entries of compressed_sample
+    double distance = 0;
+
+    for (ind_comp = 0 ; ind_comp < num_feat_comp ; ind_comp ++) {
+        distance += ( compressed_sample[ind_comp] -   \
+                      full_sample[mask[ind_comp]] ) * \
+                    ( compressed_sample[ind_comp] -   \
+                      full_sample[mask[ind_comp]] );
+    }
+
+    distance = sqrt(distance);
+
+    // rescale the distance from the compressed dimension to the full dimension
+    distance *= sqrt((float)num_feat_full / (float)num_feat_comp);
+
+    return distance;
+}
+
+
 //void pairwise_l2_distances_with_self(double *result, 
 //                                     double *X_compressed, 
 //                                     int64_t *mask, 
@@ -78,7 +128,7 @@ double _l2_distance_both_masked(double *compressed_sample_1,
 //                                     int64_t num_feat_full)
 /*  Computes the pairwise l2 distance between the rows of X_compressed by 
  *  intersecting the the masks of each pair of datapoints (x,y) and
- *  approximating ||x-y||_2 in the dense domain with ||x-y||_2 * scale
+ *  approximating ||x-y||_2 in the full domain with ||x-y||_2 * scale
  *  in the reduced domain specified by where x and y have common entries. 
  *
  * Inputs
@@ -88,14 +138,14 @@ double _l2_distance_both_masked(double *compressed_sample_1,
  *                    row is a datapoint in the compressed domain.
  *
  *     mask : array, size num_samples_X by num_feat_comp. Each row is
- *            the indices indicating which entries of the dense datapoint were
+ *            the indices indicating which entries of the full datapoint were
  *            kept. 
  *
  *     num_samples_X : the number of samples (number of rows in X)
  *
  *     num_feat_comp : the number of dimensions in the compressed data
  *
- *     num_feat_full : the number of dimensions in the dense data
+ *     num_feat_full : the number of dimensions in the full data
  *
  * Returns
  * -------
@@ -106,7 +156,7 @@ double _l2_distance_both_masked(double *compressed_sample_1,
  *              X_compressed. 
  */ 
 
-//void pairwise_l2_distances_with_dense_data
+//void pairwise_l2_distances_with_full_data
 //void pairwise_l2_distances_mahalanobis_diagonal
 //void pairwise_l2_distances_mahalanobis_spherical
 //void weighted_first_moment

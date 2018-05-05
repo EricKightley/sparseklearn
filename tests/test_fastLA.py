@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 
 from sparseklearn import _l2_distance_both_masked
+from sparseklearn import _l2_distance_one_masked_one_full
 
 class DataGenerator():
 
@@ -43,14 +44,25 @@ class TestFastLAMethods(unittest.TestCase):
     def test__l2_distance_both_masked(self):
         """ Distance between RHDX[1] and RHDX[3]. """
         result = _l2_distance_both_masked(self.testdata.RHDX[1], 
-                                         self.testdata.RHDX[3],
-                                         self.testdata.mask[1],
-                                         self.testdata.mask[3],
-                                         self.testdata.Q,
-                                         self.testdata.P)
+                                          self.testdata.RHDX[3],
+                                          self.testdata.mask[1],
+                                          self.testdata.mask[3],
+                                          self.testdata.Q,
+                                          self.testdata.P)
         correct = np.sqrt(5/2. * 37)
-        self.assertEqual(correct,result)
+        self.assertAlmostEqual(correct,result,places=6)
         #self.assertTrue(np.array_equal(self.testdata._U0_W0_Sig0_Pow1,result))
+
+    def test__l2_distance_one_masked_one_full(self):
+        """ Distance between RHDX[1] and U[2]. """
+        result = _l2_distance_one_masked_one_full(self.testdata.RHDX[1], 
+                                                  self.testdata.U[2],
+                                                  self.testdata.mask[1],
+                                                  self.testdata.Q,
+                                                  self.testdata.P)
+        correct = np.sqrt(5/3. * 50)
+        self.assertAlmostEqual(correct,result,places=6)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -23,6 +23,12 @@ double _l2_distance_both_masked(double *compressed_sample_1,
                                 int64_t num_feat_comp,
                                 int64_t num_feat_full);
 
+double _l2_distance_one_masked_one_full(double *compressed_sample, 
+                                        double *full_sample, 
+                                        int64_t *mask, 
+                                        int64_t num_feat_comp,
+                                        int64_t num_feat_full);
+
 void sqrt_array(double *array, const int64_t num_samples_U, const int64_t num_subsamples_X);
 
 void pwdist(double *result, int64_t num_samples_U, int64_t num_subsamples_X, 

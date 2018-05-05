@@ -23,33 +23,6 @@ def _l2_distance_both_masked(compressed_sample_1,
                             mask_2,
                             num_feat_comp,
                             num_feat_full):
-    """ Computes the l2 distance between compressed_sample_1 and 
-    compressed_sample_2, by finding the intersection of their masks, computing
-    the distance between the samples projected onto this common subspace, and
-    then scaling this distance back up.
-
-    Inputs
-    ------
-
-        compressed_sample_1 : array, length num_feat_comp
-
-        compressed_sample_2 : array, length num_feat_comp
-
-        mask_1 : array, length num_feat_comp. The indices specifying which 
-                 entries of the dense sample_1 were kept. Must be sorted.
-
-        mask_2 : array, length num_feat_comp. The indices specifying which 
-                 entries of the dense sample_2 were kept. Must be sorted.
-
-        num_feat_comp : the number of features in a compressed sample. 
-
-        num_feat_full : the number of features in a full sample. 
-
-    Returns
-    -------
-
-         distance : double, the approximate l2 distance between both samples.
-    """
 
     return fastLA._l2_distance_both_masked(compressed_sample_1,
                                            compressed_sample_2,
@@ -57,6 +30,30 @@ def _l2_distance_both_masked(compressed_sample_1,
                                            mask_2,
                                            num_feat_comp,
                                            num_feat_full)
+
+################################################################################
+## _l2_distance_one_masked_one_full
+
+fastLA._l2_distance_one_masked_one_full.restype = ct.c_double
+fastLA._l2_distance_one_masked_one_full.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #full_sample
+    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
+    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64]                                   #num_feat_full
+
+def _l2_distance_one_masked_one_full(compressed_sample, 
+                                     full_sample, 
+                                     mask,
+                                     num_feat_comp,
+                                     num_feat_full):
+
+    return fastLA._l2_distance_one_masked_one_full(compressed_sample,
+                                                   full_sample,
+                                                   mask,
+                                                   num_feat_comp,
+                                                   num_feat_full)
+
 
 
 """
