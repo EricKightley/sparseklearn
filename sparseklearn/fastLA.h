@@ -15,7 +15,16 @@ struct DATA
     int64_t *mask; // data mask, N x Q
 };
 
-void sqrt_array(double *array, const int64_t nrow, const int64_t ncol);
 
-void pwdist(double *result, int64_t nrow, int64_t ncol, struct CONSTANTS *C, struct DATA *D,
-            int power, int64_t *S, double *W, double *U, double *Sigma);
+double _l2_distance_both_masked(double *compressed_sample_1, 
+                                double *compressed_sample_2, 
+                                int64_t *mask_1, 
+                                int64_t *mask_2,
+                                int64_t num_feat_comp,
+                                int64_t num_feat_full);
+
+void sqrt_array(double *array, const int64_t num_samples_U, const int64_t num_subsamples_X);
+
+void pwdist(double *result, int64_t num_samples_U, int64_t num_subsamples_X, 
+            struct CONSTANTS *C, struct DATA *D, int power, int64_t *S, 
+            double *W, double *U, double *Sigma);

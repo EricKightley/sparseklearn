@@ -5,7 +5,7 @@ from scipy import sparse
 from scipy.fftpack import dct, idct
 from numpy.ctypeslib import ndpointer
 import ctypes as ct
-from .fastLA import polynomial_combination, pairwise_distances
+#from .fastLA import polynomial_combination, pairwise_distances
 
 class Sparsifier():
     """ Sparsifier.

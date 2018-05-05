@@ -15,7 +15,7 @@ np.random.seed(rs)
 # load computed data
 hdf5_file = h5py.File('/home/eric/kmeansdata/sample_mnist.hdf5','r')
 X = hdf5_file['X'][:]
-#HDX = hdf5_file['HDX'][:]
+HDX = hdf5_file['HDX'][:]
 #RHDX = hdf5_file['RHDX'][:]
 #mask = hdf5_file['mask'][:]
 #precond_D = hdf5_file['precond_D'][:]
@@ -33,6 +33,7 @@ compression_target = float(Q/P)
 spr = Sparsifier(compression_target = compression_target, alpha_target = 0.0, transform = 'dct')
 spr.fit_sparsifier(X = X)
 pd = spr.pairwise_distances()
+pd2 = spr.pairwise_distances(U=HDX[2:4])
 
 
 #from sklearn.metrics.pairwise import pairwise_distances
