@@ -145,10 +145,13 @@ class TestFastLAMethods(unittest.TestCase):
                                                  self.td.K,
                                                  self.td.Q,
                                                  self.td.P)
-        correct = np.sqrt(57/8 * 5/3)
-        print(result)
-        #self.assertAlmostEqual(correct, result, places=6)
-        self.assertTrue(True)
+        correct = np.array([[ 75/2,  38/3, 181/4],
+                            [  6/2,  22/3,  50/4],
+                            [ 40/2,  21/3, 125/4],
+                            [ 53/2,  26/3,  27/4]],
+                            dtype = np.float64)
+        correct = np.sqrt(5/3*correct)
+        self.assertTrue(np.allclose(correct, result, rtol=1e-6))
 
 if __name__ == '__main__':
     unittest.main()
