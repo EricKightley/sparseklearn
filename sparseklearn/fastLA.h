@@ -59,6 +59,16 @@ double mahalanobis_distance_diagonal(double *compressed_sample,
                                      int64_t num_feat_comp,
                                      int64_t num_feat_full);
 
+void pairwise_mahalanobis_distances_spherical(double *result,
+                                             double *compressed_array,
+                                             double *full_means,
+                                             int64_t *mask_array,
+                                             double *spherical_covariance_array,
+                                             int64_t num_samples_comp,
+                                             int64_t num_samples_full,
+                                             int64_t num_feat_comp,
+                                             int64_t num_feat_full);
+
 void sqrt_array(double *array, const int64_t num_samples_U, const int64_t num_subsamples_X);
 
 void pwdist(double *result, int64_t num_samples_U, int64_t num_subsamples_X, 

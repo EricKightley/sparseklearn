@@ -7,6 +7,7 @@ from sparseklearn import pairwise_l2_distances_with_self
 from sparseklearn import pairwise_l2_distances_with_full
 from sparseklearn import mahalanobis_distance_spherical
 from sparseklearn import mahalanobis_distance_diagonal
+from sparseklearn import pairwise_mahalanobis_distances_spherical
 
 class DataGenerator():
 
@@ -31,9 +32,11 @@ class DataGenerator():
                            [1, 3, 4, 7, 5],
                            [8, 9, 0, 4, 2]], dtype = np.float64)
 
-        self.Sigma = np.array([[2, 3, 1, 1, 6],
-                               [7, 2, 1, 5, 4],
-                               [4, 2, 8, 9, 1]], dtype = np.float64)
+        self.diagonal_covariances = np.array([[2, 3, 1, 1, 6],
+                                              [7, 2, 1, 5, 4],
+                                              [4, 2, 8, 9, 1]], dtype = np.float64)
+
+        self.spherical_covariances = np.array([2,3,4], dtype = np.float64)
 
         self.N = 4
         self.Q = 3
@@ -55,7 +58,6 @@ class TestFastLAMethods(unittest.TestCase):
                                           self.td.P)
         correct = np.sqrt(5/2. * 37)
         self.assertAlmostEqual(correct,result,places=6)
-        #self.assertTrue(np.array_equal(self.td._U0_W0_Sig0_Pow1,result))
 
     def test__l2_distance_one_compressed_one_full(self):
         """ Distance between RHDX[1] and U[2]. """
@@ -118,18 +120,35 @@ class TestFastLAMethods(unittest.TestCase):
 
     def test_mahalanobis_distance_diagonal(self):
         """ Mahalanobis distance ||RHDX[0] - U[2]|| with diagonal covariance
-        Sigma[2]. """
+        diagonal_covariances[2]. """
 
         result = mahalanobis_distance_diagonal(self.td.RHDX[1],
                                                 self.td.U[2],
                                                 self.td.mask[1],
-                                                self.td.Sigma[2],
+                                                self.td.diagonal_covariances[2],
                                                 self.td.Q,
                                                 self.td.P)
         correct = np.sqrt(57/8 * 5/3)
         self.assertAlmostEqual(correct, result, places=6)
-        #self.assertTrue(True)
 
+    def test_pairwise_mahalanobis_distances_spherical(self):
+        """ Mahalanobis distances ||RHDX - U|| with spherical_covariances.
+        """
+
+        result = np.zeros((self.td.N,self.td.K))
+        pairwise_mahalanobis_distances_spherical(result,
+                                                 self.td.RHDX,
+                                                 self.td.U,
+                                                 self.td.mask,
+                                                 self.td.spherical_covariances,
+                                                 self.td.N,
+                                                 self.td.K,
+                                                 self.td.Q,
+                                                 self.td.P)
+        correct = np.sqrt(57/8 * 5/3)
+        print(result)
+        #self.assertAlmostEqual(correct, result, places=6)
+        self.assertTrue(True)
 
 if __name__ == '__main__':
     unittest.main()
