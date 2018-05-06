@@ -4,6 +4,7 @@ import numpy as np
 from sparseklearn import _l2_distance_both_compressed
 from sparseklearn import _l2_distance_one_compressed_one_full
 from sparseklearn import pairwise_l2_distances_with_self
+from sparseklearn import pairwise_l2_distances_with_full
 
 class DataGenerator():
 
@@ -79,6 +80,25 @@ class TestFastLAMethods(unittest.TestCase):
                             [5/2*73, 5/2*37, 5*49  , 0     ]], 
                             dtype = np.float64)
         correct = np.sqrt(correct)
+        self.assertTrue(np.allclose(correct, result, rtol=1e-6))
+
+    def test_pairwise_l2_distances_with_full(self):
+        """Pairwise distances between rows of RHDX and rows of U."""
+        result = np.zeros((self.td.N, self.td.K))
+        pairwise_l2_distances_with_full(result,
+                                        self.td.RHDX,
+                                        self.td.U,
+                                        self.td.mask,
+                                        self.td.N,
+                                        self.td.K,
+                                        self.td.Q,
+                                        self.td.P)
+        correct = np.array([[  75,  38, 181],
+                            [   6,  22,  50],
+                            [  40,  21, 125],
+                            [  53,  26,  27]],
+                            dtype = np.float64)
+        correct = np.sqrt(5/3*correct)
         self.assertTrue(np.allclose(correct, result, rtol=1e-6))
 
 if __name__ == '__main__':

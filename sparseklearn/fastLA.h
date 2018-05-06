@@ -36,6 +36,16 @@ void pairwise_l2_distances_with_self(double *result,
                                      int64_t num_feat_comp,
                                      int64_t num_feat_full);
 
+void pairwise_full_distances_with_full(double *result,
+                                       double *compressed_array,
+                                       double *full_array,
+                                       int64_t *mask_array,
+                                       int64_t num_samples_comp,
+                                       int64_t num_samples_full,
+                                       int64_t num_feat_comp,
+                                       int64_t num_feat_full);
+
+
 void sqrt_array(double *array, const int64_t num_samples_U, const int64_t num_subsamples_X);
 
 void pwdist(double *result, int64_t num_samples_U, int64_t num_subsamples_X, 

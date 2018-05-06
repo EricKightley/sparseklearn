@@ -3,6 +3,7 @@ from .gmm import GaussianMixture
 from .fastLA import _l2_distance_both_compressed
 from .fastLA import _l2_distance_one_compressed_one_full
 from .fastLA import pairwise_l2_distances_with_self
+from .fastLA import pairwise_l2_distances_with_full
 #from .auxutils import generate_mnist_dataset
 #from .auxutils import load_mnist_dataset
 #from .auxutils import write_mnist_dataset

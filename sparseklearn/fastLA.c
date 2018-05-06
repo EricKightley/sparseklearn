@@ -155,7 +155,6 @@ void pairwise_l2_distances_with_self(double *result,
 {
     int64_t ind_samp1 = 0; //indexes rows of compressed_array
     int64_t ind_samp2 = 0; //indexes rows of compressed_array
-    int64_t index_compressed_feature = 0; //indexes cols of compressed_array
     // upper triangular 
     for (ind_samp1 = 0 ; ind_samp1 < num_samples - 1 ; ind_samp1++) {
         for (ind_samp2 = ind_samp1 + 1 ; ind_samp2 < num_samples ; ind_samp2++) {
@@ -180,6 +179,28 @@ void pairwise_l2_distances_with_self(double *result,
     }
 }
 
+void pairwise_l2_distances_with_full(double *result,
+                                     double *compressed_array,
+                                     double *full_array,
+                                     int64_t *mask_array,
+                                     int64_t num_samples_comp,
+                                     int64_t num_samples_full,
+                                     int64_t num_feat_comp,
+                                     int64_t num_feat_full)
+{
+    int64_t ind_samp_comp = 0; //indexes rows of compressed_array
+    int64_t ind_samp_full = 0; //indexes rows of full_array
+    for (ind_samp_comp = 0 ; ind_samp_comp < num_samples_comp ; ind_samp_comp ++) {
+        for (ind_samp_full = 0 ; ind_samp_full < num_samples_full ; ind_samp_full ++) {
+            result[ind_samp_comp*num_samples_full+ind_samp_full] = \
+            _l2_distance_one_compressed_one_full(&compressed_array[ind_samp_comp*num_feat_comp],
+                                                 &full_array[ind_samp_full*num_feat_full],
+                                                 &mask_array[ind_samp_comp*num_feat_comp],
+                                                 num_feat_comp,
+                                                 num_feat_full);
+        }
+    }
+}
 
 
 

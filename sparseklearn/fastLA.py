@@ -80,6 +80,49 @@ def pairwise_l2_distances_with_self(result,
                                                   num_feat_comp,
                                                   num_feat_full)
 
+
+################################################################################
+## pairwise_l2_distances_with_full
+
+fastLA.pairwise_l2_distances_with_full.restype = None
+fastLA.pairwise_l2_distances_with_full.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #result
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_array
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #full_array
+    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask_array
+    ct.c_int64,                                   #num_samples_comp
+    ct.c_int64,                                   #num_samples_full
+    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64]                                   #num_feat_full
+
+def pairwise_l2_distances_with_full(result,
+                                    compressed_array,
+                                    full_array,
+                                    mask_array,
+                                    num_samples_comp,
+                                    num_samples_full,
+                                    num_feat_comp,
+                                    num_feat_full):
+
+    return fastLA.pairwise_l2_distances_with_full(result,
+                                                  compressed_array,
+                                                  full_array,
+                                                  mask_array,
+                                                  num_samples_comp,
+                                                  num_samples_full,
+                                                  num_feat_comp,
+                                                  num_feat_full)
+
+
+
+
+
+
+
+
+
+
+
 """
 polycomb = fastLA.polycomb
 pwdist = fastLA.pwdist
