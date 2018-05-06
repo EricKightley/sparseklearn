@@ -236,8 +236,30 @@ void pairwise_l2_distances_with_full(double *result,
 }
 
 
+double mahalanobis_distance_spherical(double *compressed_sample,
+                                      double *full_mean,
+                                      int64_t *mask,
+                                      double spherical_variance,
+                                      int64_t num_feat_comp,
+                                      int64_t num_feat_full)
+{
+    int64_t ind_feat_comp = 0; //indexes entries of compressed_sample
+    double distance = 0;
 
-
+    for (ind_feat_comp = 0 ; ind_feat_comp < num_feat_comp ; ind_feat_comp ++) {
+        distance += ( compressed_sample[ind_feat_comp] -   \
+                      full_mean[mask[ind_feat_comp]] ) * \
+                    ( compressed_sample[ind_feat_comp] -   \
+                      full_mean[mask[ind_feat_comp]] );
+    }
+    // divide by variance
+    distance *= 1/spherical_variance;
+    // rescale from compressed dimension to full
+    distance *= (float)num_feat_full / (float)num_feat_comp;
+    // all of this needs to be sqrt
+    distance = sqrt(distance);
+    return distance;
+}
 
 
 // U_ind : result row

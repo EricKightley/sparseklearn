@@ -113,13 +113,31 @@ def pairwise_l2_distances_with_full(result,
                                                   num_feat_comp,
                                                   num_feat_full)
 
+################################################################################
+## mahalanobis_distance_spherical
 
+fastLA.mahalanobis_distance_spherical.restype = ct.c_double
+fastLA.mahalanobis_distance_spherical.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #full_mean
+    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
+    ct.c_double,                                  #spherical_variance
+    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64]                                   #num_feat_full
 
+def mahalanobis_distance_spherical(compressed_sample,
+                                   full_mean,
+                                   mask,
+                                   spherical_variance,
+                                   num_feat_comp,
+                                   num_feat_full):
 
-
-
-
-
+    return fastLA.mahalanobis_distance_spherical(compressed_sample,
+                                                 full_mean,
+                                                 mask,
+                                                 spherical_variance,
+                                                 num_feat_comp,
+                                                 num_feat_full)
 
 
 

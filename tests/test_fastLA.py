@@ -5,6 +5,7 @@ from sparseklearn import _l2_distance_both_compressed
 from sparseklearn import _l2_distance_one_compressed_one_full
 from sparseklearn import pairwise_l2_distances_with_self
 from sparseklearn import pairwise_l2_distances_with_full
+from sparseklearn import mahalanobis_distance_spherical
 
 class DataGenerator():
 
@@ -100,6 +101,19 @@ class TestFastLAMethods(unittest.TestCase):
                             dtype = np.float64)
         correct = np.sqrt(5/3*correct)
         self.assertTrue(np.allclose(correct, result, rtol=1e-6))
+
+    def test_mahalanobis_distance_spherical(self):
+        """ Mahalanobis distance ||RHDX[1] - U[2]|| with spherical covariance
+        sigmasquared = 2.2. """
+
+        result = mahalanobis_distance_spherical(self.td.RHDX[1],
+                                                self.td.U[2],
+                                                self.td.mask[1],
+                                                2.2,
+                                                self.td.Q,
+                                                self.td.P)
+        correct = np.sqrt(50 * 5/3 / 2.2)
+        self.assertAlmostEqual(correct, result, places=6)
 
 if __name__ == '__main__':
     unittest.main()
