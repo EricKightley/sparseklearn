@@ -121,25 +121,49 @@ fastLA.mahalanobis_distance_spherical.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #full_mean
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
-    ct.c_double,                                  #spherical_variance
+    ct.c_double,                                  #spherical_covariance
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
 def mahalanobis_distance_spherical(compressed_sample,
                                    full_mean,
                                    mask,
-                                   spherical_variance,
+                                   spherical_covariance,
                                    num_feat_comp,
                                    num_feat_full):
 
     return fastLA.mahalanobis_distance_spherical(compressed_sample,
                                                  full_mean,
                                                  mask,
-                                                 spherical_variance,
+                                                 spherical_covariance,
                                                  num_feat_comp,
                                                  num_feat_full)
 
+################################################################################
+## mahalanobis_distance_diagonal
 
+fastLA.mahalanobis_distance_diagonal.restype = ct.c_double
+fastLA.mahalanobis_distance_diagonal.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #full_mean
+    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'),  #diagonal covariance
+    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64]                                   #num_feat_full
+
+def mahalanobis_distance_diagonal(compressed_sample,
+                                   full_mean,
+                                   mask,
+                                   diagonal_covariance,
+                                   num_feat_comp,
+                                   num_feat_full):
+
+    return fastLA.mahalanobis_distance_diagonal(compressed_sample,
+                                                full_mean,
+                                                mask,
+                                                diagonal_covariance,
+                                                num_feat_comp,
+                                                num_feat_full)
 
 """
 polycomb = fastLA.polycomb

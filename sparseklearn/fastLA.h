@@ -48,9 +48,16 @@ void pairwise_full_distances_with_full(double *result,
 double mahalanobis_distance_spherical(double *compressed_sample,
                                       double *full_mean,
                                       int64_t *mask,
-                                      double spherical_variance,
+                                      double spherical_covariance,
                                       int64_t num_feat_comp,
                                       int64_t num_feat_full);
+
+double mahalanobis_distance_diagonal(double *compressed_sample,
+                                     double *full_mean,
+                                     int64_t *mask,
+                                     double *diagonal_covariance,
+                                     int64_t num_feat_comp,
+                                     int64_t num_feat_full);
 
 void sqrt_array(double *array, const int64_t num_samples_U, const int64_t num_subsamples_X);
 

@@ -86,7 +86,7 @@ double _l2_distance_one_compressed_one_full(double *compressed_sample,
  *
  *     compressed_sample : array, length num_feat_comp
  *
- *     full_sample : array, length num_feat_fukl
+ *     full_sample : array, length num_feat_full
  *
  *     mask : array, length num_feat_comp. The indices specifying which 
  *                   entries of the full sample_1 were kept. Must be sorted.
@@ -239,9 +239,35 @@ void pairwise_l2_distances_with_full(double *result,
 double mahalanobis_distance_spherical(double *compressed_sample,
                                       double *full_mean,
                                       int64_t *mask,
-                                      double spherical_variance,
+                                      double spherical_covariance,
                                       int64_t num_feat_comp,
                                       int64_t num_feat_full)
+/* Computes the Mahalanobis distance between compressed_sample and full_mean 
+ * by projecting full_mean into the compressed domain using compressed_sample's
+ * mask, then scaling this distance back up
+ *
+ * Inputs
+ * ------
+ *
+ *     compressed_sample : array, length num_feat_comp
+ *
+ *     full_mean : array, length num_feat_full
+ *
+ *     mask : array, length num_feat_comp. The indices specifying which 
+ *                   entries of the full sample_1 were kept. Must be sorted
+ *
+ *     spherical_covariance : spherical variance (sigma^2)
+ *
+ *     num_feat_comp : the number of features in a compressed sample. 
+ *
+ *     num_feat_full : the number of features in a full sample. 
+ *
+ * Returns
+ * -------
+ *
+ *      distance : double, the approximate mahalanobis distance between 
+ *                 compressed_sample and full_mean using spherical_covariance.
+ */
 {
     int64_t ind_feat_comp = 0; //indexes entries of compressed_sample
     double distance = 0;
@@ -253,13 +279,74 @@ double mahalanobis_distance_spherical(double *compressed_sample,
                       full_mean[mask[ind_feat_comp]] );
     }
     // divide by variance
-    distance *= 1/spherical_variance;
+    distance *= 1/spherical_covariance;
     // rescale from compressed dimension to full
     distance *= (float)num_feat_full / (float)num_feat_comp;
     // all of this needs to be sqrt
     distance = sqrt(distance);
     return distance;
 }
+
+double mahalanobis_distance_diagonal(double *compressed_sample,
+                                     double *full_mean,
+                                     int64_t *mask,
+                                     double *diagonal_covariance,
+                                     int64_t num_feat_comp,
+                                     int64_t num_feat_full)
+/* Computes the Mahalanobis distance between compressed_sample and full_mean 
+ * by projecting full_mean into the compressed domain using compressed_sample's
+ * mask, then scaling this distance back up
+ *
+ * Inputs
+ * ------
+ *
+ *     compressed_sample : array, length num_feat_comp
+ *
+ *     full_mean : array, length num_feat_full
+ *
+ *     mask : array, length num_feat_comp. The indices specifying which 
+ *                   entries of the full sample_1 were kept. Must be sorted
+ *
+ *     diagonal_covariance : array, length num_feat_full. 
+ *
+ *     num_feat_comp : the number of features in a compressed sample. 
+ *
+ *     num_feat_full : the number of features in a full sample. 
+ *
+ * Returns
+ * -------
+ *
+ *      distance : double, the approximate mahalanobis distance between 
+ *                 compressed_sample and full_mean using spherical_covariance.
+ */
+{
+    int64_t ind_feat_comp = 0; //indexes entries of compressed_sample
+    double distance = 0;
+
+    for (ind_feat_comp = 0 ; ind_feat_comp < num_feat_comp ; ind_feat_comp ++) {
+        distance += ( compressed_sample[ind_feat_comp] -   \
+                      full_mean[mask[ind_feat_comp]] ) * \
+                    ( compressed_sample[ind_feat_comp] -   \
+                      full_mean[mask[ind_feat_comp]] ) / \
+                    diagonal_covariance[mask[ind_feat_comp]];
+    }
+    // rescale from compressed dimension to full
+    distance *= (float)num_feat_full / (float)num_feat_comp;
+    // all of this needs to be sqrt
+    distance = sqrt(distance);
+    return distance;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 // U_ind : result row

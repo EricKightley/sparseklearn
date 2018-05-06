@@ -6,6 +6,7 @@ from sparseklearn import _l2_distance_one_compressed_one_full
 from sparseklearn import pairwise_l2_distances_with_self
 from sparseklearn import pairwise_l2_distances_with_full
 from sparseklearn import mahalanobis_distance_spherical
+from sparseklearn import mahalanobis_distance_diagonal
 
 class DataGenerator():
 
@@ -114,6 +115,21 @@ class TestFastLAMethods(unittest.TestCase):
                                                 self.td.P)
         correct = np.sqrt(50 * 5/3 / 2.2)
         self.assertAlmostEqual(correct, result, places=6)
+
+    def test_mahalanobis_distance_diagonal(self):
+        """ Mahalanobis distance ||RHDX[0] - U[2]|| with diagonal covariance
+        Sigma[2]. """
+
+        result = mahalanobis_distance_diagonal(self.td.RHDX[1],
+                                                self.td.U[2],
+                                                self.td.mask[1],
+                                                self.td.Sigma[2],
+                                                self.td.Q,
+                                                self.td.P)
+        correct = np.sqrt(57/8 * 5/3)
+        self.assertAlmostEqual(correct, result, places=6)
+        #self.assertTrue(True)
+
 
 if __name__ == '__main__':
     unittest.main()
