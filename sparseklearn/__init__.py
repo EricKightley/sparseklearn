@@ -7,6 +7,7 @@ from .fastLA import pairwise_l2_distances_with_full
 from .fastLA import mahalanobis_distance_spherical
 from .fastLA import mahalanobis_distance_diagonal
 from .fastLA import pairwise_mahalanobis_distances_spherical
+from .fastLA import pairwise_mahalanobis_distances_diagonal
 #from .auxutils import generate_mnist_dataset
 #from .auxutils import load_mnist_dataset
 #from .auxutils import write_mnist_dataset

@@ -8,6 +8,7 @@ from sparseklearn import pairwise_l2_distances_with_full
 from sparseklearn import mahalanobis_distance_spherical
 from sparseklearn import mahalanobis_distance_diagonal
 from sparseklearn import pairwise_mahalanobis_distances_spherical
+from sparseklearn import pairwise_mahalanobis_distances_diagonal
 
 class DataGenerator():
 
@@ -119,7 +120,7 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertAlmostEqual(correct, result, places=6)
 
     def test_mahalanobis_distance_diagonal(self):
-        """ Mahalanobis distance ||RHDX[0] - U[2]|| with diagonal covariance
+        """ Mahalanobis distance ||RHDX[1] - U[2]|| with diagonal covariance
         diagonal_covariances[2]. """
 
         result = mahalanobis_distance_diagonal(self.td.RHDX[1],
@@ -149,6 +150,28 @@ class TestFastLAMethods(unittest.TestCase):
                             [  6/2,  22/3,  50/4],
                             [ 40/2,  21/3, 125/4],
                             [ 53/2,  26/3,  27/4]],
+                            dtype = np.float64)
+        correct = np.sqrt(5/3*correct)
+        self.assertTrue(np.allclose(correct, result, rtol=1e-6))
+
+    def test_pairwise_mahalanobis_distances_diagonal(self):
+        """ Mahalanobis distances ||RHDX - U|| with diagonal_covariances.
+        """
+
+        result = np.zeros((self.td.N,self.td.K))
+        pairwise_mahalanobis_distances_diagonal(result,
+                                                self.td.RHDX,
+                                                self.td.U,
+                                                self.td.mask,
+                                                self.td.diagonal_covariances,
+                                                self.td.N,
+                                                self.td.K,
+                                                self.td.Q,
+                                                self.td.P)
+        correct = np.array([[   17.5,   29.25, 78.125],
+                            [    8/3,    11.8,  7.125],
+                            [      8,  17+1/7,     42],
+                            [  151/3,    12.7, 12+53/72]],
                             dtype = np.float64)
         correct = np.sqrt(5/3*correct)
         self.assertTrue(np.allclose(correct, result, rtol=1e-6))

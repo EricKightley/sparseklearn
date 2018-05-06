@@ -346,7 +346,7 @@ void pairwise_mahalanobis_distances_spherical(double *result,
                                              int64_t num_samples_full,
                                              int64_t num_feat_comp,
                                              int64_t num_feat_full)
-/*  Computes the pairwise spherical mahalanobis istance between 
+/*  Computes the pairwise spherical mahalanobis distance between 
  *  the rows of compressed_array and the rows of full_array by 
  *  masking each sample in full_array with each mask 
  *  in mask_array, finding the l2 distance in the compressed domain, and then
@@ -400,6 +400,68 @@ void pairwise_mahalanobis_distances_spherical(double *result,
     }
 }
 
+void pairwise_mahalanobis_distances_diagonal(double *result,
+                                             double *compressed_array,
+                                             double *full_means,
+                                             int64_t *mask_array,
+                                             double *diagonal_covariance_array,
+                                             int64_t num_samples_comp,
+                                             int64_t num_samples_full,
+                                             int64_t num_feat_comp,
+                                             int64_t num_feat_full)
+/*  Computes the pairwise mahalanobis distances, with diagonal covariances, 
+ *  between the rows of compressed_array and the rows of full_array by 
+ *  masking each sample in full_array with each mask 
+ *  in mask_array, finding the l2 distance in the compressed domain, and then
+ *  scaling back up to approximate the distance in the full domain.
+ *
+ * Inputs
+ * ------
+ *
+ *     compressed_array : array, size num_samples by num_feat_comp. Each row is
+ *                        a datapoint in the compressed domain.
+ *
+ *     full_means : array, size num_samples by num_feat_full. Each row is
+ *                  a datapoint in the full domain.
+ *
+ *     mask_array : array, size num_samples by num_feat_comp. Each row is the indices 
+ *                  indicating which entries were kept of the full datapoint from 
+ *                  which the compressed sample in compressed_array was obtained.
+ *
+ *     diagonal_covariance_array : array, size num_samples_full by num_feat_full. 
+ *                                 Each row is the diagonal covariance for the 
+ *                                 corresponding mean.              
+ *
+ *     num_samples_comp : the number of samples (rows) in compressed_array
+ *
+ *     num_samples_full : the number of samples (rows) in full_array
+ *
+ *     num_feat_comp : the number of dimensions in the compressed data
+ *
+ *     num_feat_full : the number of dimensions in the full data
+ *
+ * Returns
+ * -------
+ *
+ *     result : (modified) array, size num_samples by num_samples, the pairwise
+ *              mahalanobis distance between each datapoint; i.e., result[i][j] 
+ *              is the distance between the ith and jth row of compressed_array. 
+ */ 
+{
+    int64_t ind_samp_comp = 0; //indexes rows of compressed_array
+    int64_t ind_samp_full = 0; //indexes rows of full_array
+    for (ind_samp_comp = 0 ; ind_samp_comp < num_samples_comp ; ind_samp_comp ++) {
+        for (ind_samp_full = 0 ; ind_samp_full < num_samples_full ; ind_samp_full ++) {
+            result[ind_samp_comp*num_samples_full+ind_samp_full] = \
+            mahalanobis_distance_diagonal(&compressed_array[ind_samp_comp*num_feat_comp],
+                                           &full_means[ind_samp_full*num_feat_full],
+                                           &mask_array[ind_samp_comp*num_feat_comp],
+                                           &diagonal_covariance_array[ind_samp_full*num_feat_full],
+                                           num_feat_comp,
+                                           num_feat_full);
+        }
+    }
+}
 
 
 

@@ -200,6 +200,42 @@ def pairwise_mahalanobis_distances_spherical(result,
                                                           num_feat_comp,
                                                           num_feat_full)
 
+################################################################################
+## pairwise_mahalanobis_distances_diagonal
+
+fastLA.pairwise_mahalanobis_distances_diagonal.restype = None
+fastLA.pairwise_mahalanobis_distances_diagonal.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #result
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_array
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #full_means
+    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask_array
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #diagonal_covariance_array
+    ct.c_int64,                                   #num_samples_comp
+    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64]                                   #num_feat_full
+
+def pairwise_mahalanobis_distances_diagonal(result,
+                                            compressed_array,
+                                            full_means,
+                                            mask_array,
+                                            diagonal_covariance_array,
+                                            num_samples_comp,
+                                            num_samples_full,
+                                            num_feat_comp,
+                                            num_feat_full):
+
+    return fastLA.pairwise_mahalanobis_distances_diagonal(result,
+                                                          compressed_array,
+                                                          full_means,
+                                                          mask_array,
+                                                          diagonal_covariance_array,
+                                                          num_samples_comp,
+                                                          num_samples_full,
+                                                          num_feat_comp,
+                                                          num_feat_full)
+
+
 """
 polycomb = fastLA.polycomb
 pwdist = fastLA.pwdist
