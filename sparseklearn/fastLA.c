@@ -4,7 +4,7 @@
 #include "fastLA.h"
 
 
-double _l2_distance_both_masked(double *compressed_sample_1, 
+double _l2_distance_both_compressed(double *compressed_sample_1, 
                                 double *compressed_sample_2, 
                                 int64_t *mask_1, 
                                 int64_t *mask_2,
@@ -71,7 +71,7 @@ double _l2_distance_both_masked(double *compressed_sample_1,
 }
 
 
-double _l2_distance_one_masked_one_full(double *compressed_sample, 
+double _l2_distance_one_compressed_one_full(double *compressed_sample, 
                                         double *full_sample, 
                                         int64_t *mask, 
                                         int64_t num_feat_comp,
@@ -119,13 +119,12 @@ double _l2_distance_one_masked_one_full(double *compressed_sample,
     return distance;
 }
 
-
-//void pairwise_l2_distances_with_self(double *result, 
-//                                     double *X_compressed, 
-//                                     int64_t *mask, 
-//                                     int64_t num_samples_X, 
-//                                     int64_t num_feat_comp,
-//                                     int64_t num_feat_full)
+void pairwise_l2_distances_with_self(double *result,
+                                     double *compressed_array,
+                                     int64_t *mask_array,
+                                     int64_t num_samples,
+                                     int64_t num_feat_comp,
+                                     int64_t num_feat_full)
 /*  Computes the pairwise l2 distance between the rows of X_compressed by 
  *  intersecting the the masks of each pair of datapoints (x,y) and
  *  approximating ||x-y||_2 in the full domain with ||x-y||_2 * scale
@@ -134,14 +133,13 @@ double _l2_distance_one_masked_one_full(double *compressed_sample,
  * Inputs
  * ------
  *
- *     X_compressed : array, size num_samples_X by num_feat_comp. Each
- *                    row is a datapoint in the compressed domain.
+ *     compressed_array : array, size num_samples by num_feat_comp. Each row is
+ *                        a datapoint in the compressed domain.
  *
- *     mask : array, size num_samples_X by num_feat_comp. Each row is
- *            the indices indicating which entries of the full datapoint were
- *            kept. 
+ *     mask : array, size num_samples by num_feat_comp. Each row is the indices 
+ *            indicating which entries of the full datapoint were kept. 
  *
- *     num_samples_X : the number of samples (number of rows in X)
+ *     num_samples : the number of samples (number of rows in X)
  *
  *     num_feat_comp : the number of dimensions in the compressed data
  *
@@ -150,18 +148,38 @@ double _l2_distance_one_masked_one_full(double *compressed_sample,
  * Returns
  * -------
  *
- *     result : (modified) array, size num_samples_X by num_samples_X, the
- *              pairwise distances between each datapoint; i.e., 
- *              result[i][j] is the distance between the ith and jth row of
- *              X_compressed. 
+ *     result : (modified) array, size num_samples by num_samples, the pairwise
+ *              distances between each datapoint; i.e., result[i][j] is the 
+ *              distance between the ith and jth row of compressed_array. 
  */ 
+{
+    int64_t ind_samp1 = 0; //indexes rows of compressed_array
+    int64_t ind_samp2 = 0; //indexes rows of compressed_array
+    int64_t index_compressed_feature = 0; //indexes cols of compressed_array
+    // upper triangular 
+    for (ind_samp1 = 0 ; ind_samp1 < num_samples - 1 ; ind_samp1++) {
+        for (ind_samp2 = ind_samp1 + 1 ; ind_samp2 < num_samples ; ind_samp2++) {
+            result[ind_samp1 * num_samples + ind_samp2] = \
+            _l2_distance_both_compressed(&compressed_array[ind_samp1*num_feat_comp],
+                                         &compressed_array[ind_samp2*num_feat_comp],
+                                         &mask_array[ind_samp1*num_feat_comp],
+                                         &mask_array[ind_samp2*num_feat_comp],
+                                         num_feat_comp,
+                                         num_feat_full);
+        }
+    }
+    // lower triangular and diagonal
+    for (ind_samp1 = 0 ; ind_samp1 < num_samples ; ind_samp1++) {
+        //the diagonal is 0
+        result[ind_samp1 * num_samples + ind_samp1] = 0;
+        //the lower triangular is copied from the upper
+        for (ind_samp2 = 0 ; ind_samp2 < ind_samp1 ; ind_samp2++) {
+            result[ind_samp1 * num_samples + ind_samp2] = \
+            result[ind_samp2 * num_samples + ind_samp1];
+        }
+    }
+}
 
-//void pairwise_l2_distances_with_full_data
-//void pairwise_l2_distances_mahalanobis_diagonal
-//void pairwise_l2_distances_mahalanobis_spherical
-//void weighted_first_moment
-//void weighted__first_and_second_moment
-//
 
 
 

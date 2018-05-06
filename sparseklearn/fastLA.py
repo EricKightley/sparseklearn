@@ -6,10 +6,10 @@ import ctypes as ct
 fastLA = ct.CDLL('/home/eric/Dropbox/EricStephenShare/sparseklearn/sparseklearn/libfastLA.so')
 
 ################################################################################
-## _l2_distance_both_masked
+## _l2_distance_both_compressed
 
-fastLA._l2_distance_both_masked.restype = ct.c_double
-fastLA._l2_distance_both_masked.argtypes = [
+fastLA._l2_distance_both_compressed.restype = ct.c_double
+fastLA._l2_distance_both_compressed.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample_1
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample_2
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask_1
@@ -17,14 +17,14 @@ fastLA._l2_distance_both_masked.argtypes = [
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def _l2_distance_both_masked(compressed_sample_1, 
+def _l2_distance_both_compressed(compressed_sample_1, 
                             compressed_sample_2, 
                             mask_1,
                             mask_2,
                             num_feat_comp,
                             num_feat_full):
 
-    return fastLA._l2_distance_both_masked(compressed_sample_1,
+    return fastLA._l2_distance_both_compressed(compressed_sample_1,
                                            compressed_sample_2,
                                            mask_1,
                                            mask_2,
@@ -32,29 +32,53 @@ def _l2_distance_both_masked(compressed_sample_1,
                                            num_feat_full)
 
 ################################################################################
-## _l2_distance_one_masked_one_full
+## _l2_distance_one_compressed_one_full
 
-fastLA._l2_distance_one_masked_one_full.restype = ct.c_double
-fastLA._l2_distance_one_masked_one_full.argtypes = [
+fastLA._l2_distance_one_compressed_one_full.restype = ct.c_double
+fastLA._l2_distance_one_compressed_one_full.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #full_sample
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def _l2_distance_one_masked_one_full(compressed_sample, 
+def _l2_distance_one_compressed_one_full(compressed_sample, 
                                      full_sample, 
                                      mask,
                                      num_feat_comp,
                                      num_feat_full):
 
-    return fastLA._l2_distance_one_masked_one_full(compressed_sample,
+    return fastLA._l2_distance_one_compressed_one_full(compressed_sample,
                                                    full_sample,
                                                    mask,
                                                    num_feat_comp,
                                                    num_feat_full)
 
+################################################################################
+## pairwise_l2_distances_with_self
 
+fastLA.pairwise_l2_distances_with_self.restype = None
+fastLA.pairwise_l2_distances_with_self.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #result
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_array
+    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask_array
+    ct.c_int64,                                   #num_samples
+    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64]                                   #num_feat_full
+
+def pairwise_l2_distances_with_self(result,
+                                    compressed_array,
+                                    mask_array,
+                                    num_samples,
+                                    num_feat_comp,
+                                    num_feat_full):
+
+    return fastLA.pairwise_l2_distances_with_self(result,
+                                                  compressed_array,
+                                                  mask_array,
+                                                  num_samples,
+                                                  num_feat_comp,
+                                                  num_feat_full)
 
 """
 polycomb = fastLA.polycomb

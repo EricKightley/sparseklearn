@@ -16,18 +16,25 @@ struct DATA
 };
 
 
-double _l2_distance_both_masked(double *compressed_sample_1, 
+double _l2_distance_both_compressed(double *compressed_sample_1, 
                                 double *compressed_sample_2, 
                                 int64_t *mask_1, 
                                 int64_t *mask_2,
                                 int64_t num_feat_comp,
                                 int64_t num_feat_full);
 
-double _l2_distance_one_masked_one_full(double *compressed_sample, 
+double _l2_distance_one_compressed_one_full(double *compressed_sample, 
                                         double *full_sample, 
                                         int64_t *mask, 
                                         int64_t num_feat_comp,
                                         int64_t num_feat_full);
+
+void pairwise_l2_distances_with_self(double *result,
+                                     double *compressed_array,
+                                     int64_t *mask_array,
+                                     int64_t num_samples,
+                                     int64_t num_feat_comp,
+                                     int64_t num_feat_full);
 
 void sqrt_array(double *array, const int64_t num_samples_U, const int64_t num_subsamples_X);
 
