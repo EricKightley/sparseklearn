@@ -125,7 +125,7 @@ void pairwise_l2_distances_with_self(double *result,
                                      int64_t num_samples,
                                      int64_t num_feat_comp,
                                      int64_t num_feat_full)
-/*  Computes the pairwise l2 distance between the rows of X_compressed by 
+/*  Computes the pairwise l2 distance between the rows of compressed_array by 
  *  intersecting the the masks of each pair of datapoints (x,y) and
  *  approximating ||x-y||_2 in the full domain with ||x-y||_2 * scale
  *  in the reduced domain specified by where x and y have common entries. 
@@ -139,7 +139,7 @@ void pairwise_l2_distances_with_self(double *result,
  *     mask : array, size num_samples by num_feat_comp. Each row is the indices 
  *            indicating which entries of the full datapoint were kept. 
  *
- *     num_samples : the number of samples (number of rows in X)
+ *     num_samples : the number of samples (rows) in compressed_array
  *
  *     num_feat_comp : the number of dimensions in the compressed data
  *
@@ -187,6 +187,39 @@ void pairwise_l2_distances_with_full(double *result,
                                      int64_t num_samples_full,
                                      int64_t num_feat_comp,
                                      int64_t num_feat_full)
+/*  Computes the pairwise l2 distance between the rows of compressed_array and 
+ *  the rows of full_array by masking each sample in full_array with each mask 
+ *  in mask_array, finding the l2 distance in the compressed domain, and then
+ *  scaling back up to approximate the distance in the full domain.
+ *
+ * Inputs
+ * ------
+ *
+ *     compressed_array : array, size num_samples by num_feat_comp. Each row is
+ *                        a datapoint in the compressed domain.
+ *
+ *     compressed_array : array, size num_samples by num_feat_full. Each row is
+ *                        a datapoint in the full domain.
+ *
+ *     mask : array, size num_samples by num_feat_comp. Each row is the indices 
+ *            indicating which entries were kept of the full datapoint from 
+ *            which the compressed sample in compressed_array was obtained.
+ *
+ *     num_samples_comp : the number of samples (rows) in compressed_array
+ *
+ *     num_samples_full : the number of samples (rows) in full_array
+ *
+ *     num_feat_comp : the number of dimensions in the compressed data
+ *
+ *     num_feat_full : the number of dimensions in the full data
+ *
+ * Returns
+ * -------
+ *
+ *     result : (modified) array, size num_samples by num_samples, the pairwise
+ *              distances between each datapoint; i.e., result[i][j] is the 
+ *              distance between the ith and jth row of compressed_array. 
+ */ 
 {
     int64_t ind_samp_comp = 0; //indexes rows of compressed_array
     int64_t ind_samp_full = 0; //indexes rows of full_array
