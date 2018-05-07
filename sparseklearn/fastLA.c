@@ -524,6 +524,7 @@ void update_first_moment_single_sample(double *first_moment_to_update,
     }
 }
 
+
 void update_both_moments_single_sample(double *first_moment_to_update,
                                        double *second_moment_to_update,
                                        double *normalizer_to_update,
