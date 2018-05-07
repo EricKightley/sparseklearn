@@ -362,6 +362,39 @@ def update_both_moment_arrays_single_sample(first_moment_array,
                                                          num_samp_full,
                                                          num_feat_comp,
                                                          num_feat_full)
+
+################################################################################
+## compute_first_moment_array
+
+fastLA.compute_first_moment_array.restype = None
+fastLA.compute_first_moment_array.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_array
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_array
+    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #weights
+    ct.c_int64,                                   #num_samp_comp
+    ct.c_int64,                                   #num_samp_full
+    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64]                                   #num_feat_full
+
+def compute_first_moment_array(first_moment_array,
+                               compressed_array,
+                               mask_array,
+                               weights_array,
+                               num_samp_comp,
+                               num_samp_full,
+                               num_feat_comp,
+                               num_feat_full):
+
+    return fastLA.compute_first_moment_array(first_moment_array,
+                                             compressed_array,
+                                             mask_array,
+                                             weights_array,
+                                             num_samp_comp,
+                                             num_samp_full,
+                                             num_feat_comp,
+                                             num_feat_full)
+
 """
 polycomb = fastLA.polycomb
 pwdist = fastLA.pwdist

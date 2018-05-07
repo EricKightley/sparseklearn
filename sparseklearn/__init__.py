@@ -12,6 +12,7 @@ from .fastLA import update_first_moment_single_sample
 from .fastLA import update_both_moments_single_sample
 from .fastLA import update_first_moment_array_single_sample
 from .fastLA import update_both_moment_arrays_single_sample
+from .fastLA import compute_first_moment_array
 #from .auxutils import generate_mnist_dataset
 #from .auxutils import load_mnist_dataset
 #from .auxutils import write_mnist_dataset

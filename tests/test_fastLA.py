@@ -13,6 +13,7 @@ from sparseklearn import update_first_moment_single_sample
 from sparseklearn import update_both_moments_single_sample
 from sparseklearn import update_first_moment_array_single_sample
 from sparseklearn import update_both_moment_arrays_single_sample
+from sparseklearn import compute_first_moment_array
 
 class DataGenerator():
 
@@ -286,6 +287,20 @@ class TestFastLAMethods(unittest.TestCase):
             rtol = 1e-6))
         self.assertTrue(np.allclose(correct_normalizer_array, normalizer_array, 
             rtol = 1e-6))
+
+    def test_compute_first_moment_array(self):
+        first_moment_array = np.zeros((self.td.K, self.td.P))
+        compute_first_moment_array(first_moment_array,
+                                   self.td.RHDX,
+                                   self.td.mask,
+                                   self.td.W,
+                                   self.td.N,
+                                   self.td.K,
+                                   self.td.Q,
+                                   self.td.P)
+
+        print(first_moment_array)
+        self.assertTrue(True)
 
 if __name__ == '__main__':
     unittest.main()
