@@ -79,6 +79,23 @@ void pairwise_mahalanobis_distances_diagonal(double *result,
                                              int64_t num_feat_comp,
                                              int64_t num_feat_full);
 
+void update_first_moment_single_sample(double *first_moment_to_update,
+                                       double *normalizer_to_update,
+                                       double *compressed_sample,
+                                       int64_t *mask,
+                                       double weight,
+                                       int64_t num_feat_comp,
+                                       int64_t num_feat_full);
+
+void update_both_moments_single_sample(double *first_moment_to_update,
+                                       double *second_moment_to_update,
+                                       double *normalizer_to_update,
+                                       double *compressed_sample,
+                                       int64_t *mask,
+                                       double weight,
+                                       int64_t num_feat_comp,
+                                       int64_t num_feat_full);
+
 void sqrt_array(double *array, const int64_t num_samples_U, const int64_t num_subsamples_X);
 
 void pwdist(double *result, int64_t num_samples_U, int64_t num_subsamples_X, 

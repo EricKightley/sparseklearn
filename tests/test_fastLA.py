@@ -9,6 +9,8 @@ from sparseklearn import mahalanobis_distance_spherical
 from sparseklearn import mahalanobis_distance_diagonal
 from sparseklearn import pairwise_mahalanobis_distances_spherical
 from sparseklearn import pairwise_mahalanobis_distances_diagonal
+from sparseklearn import update_first_moment_single_sample
+from sparseklearn import update_both_moments_single_sample
 
 class DataGenerator():
 
@@ -175,6 +177,53 @@ class TestFastLAMethods(unittest.TestCase):
                             dtype = np.float64)
         correct = np.sqrt(5/3*correct)
         self.assertTrue(np.allclose(correct, result, rtol=1e-6))
+
+    def test_update_first_moment_single_sample(self):
+        """ Update a (init to zero) weighted mean and normalizer using 
+        X[1], W[1,0]. """
+
+        first_moment_to_update = np.zeros(self.td.P)
+        normalizer_to_update = np.zeros(self.td.P)
+        update_first_moment_single_sample(first_moment_to_update,
+                                          normalizer_to_update,
+                                          self.td.RHDX[1],
+                                          self.td.mask[1],
+                                          self.td.W[1,0],
+                                          self.td.Q,
+                                          self.td.P)
+        correct_moment = np.array([0, 0, 28, 16, 12], dtype = np.float64)
+        correct_normalizer = np.array([0, 0, 4, 4, 4], dtype = np.float64)
+
+        self.assertTrue(np.allclose(correct_moment, first_moment_to_update, 
+            rtol = 1e-6))
+        self.assertTrue(np.allclose(correct_normalizer, normalizer_to_update, 
+            rtol = 1e-6))
+
+    def test_update_second_moment_single_sample(self):
+        """ Update a (init to zero) weighted mean and normalizer using 
+        X[1], W[1,0]. """
+
+        first_moment_to_update = np.zeros(self.td.P)
+        second_moment_to_update = np.zeros(self.td.P)
+        normalizer_to_update = np.zeros(self.td.P)
+        update_both_moments_single_sample(first_moment_to_update,
+                                          second_moment_to_update,
+                                          normalizer_to_update,
+                                          self.td.RHDX[1],
+                                          self.td.mask[1],
+                                          self.td.W[1,0],
+                                          self.td.Q,
+                                          self.td.P)
+        correct_first_moment = np.array([0, 0, 28, 16, 12], dtype = np.float64)
+        correct_second_moment = np.array([0, 0, 196, 64, 36])
+        correct_normalizer = np.array([0, 0, 4, 4, 4], dtype = np.float64)
+
+        self.assertTrue(np.allclose(correct_first_moment, first_moment_to_update, 
+            rtol = 1e-6))
+        self.assertTrue(np.allclose(correct_second_moment, second_moment_to_update, 
+            rtol = 1e-6))
+        self.assertTrue(np.allclose(correct_normalizer, normalizer_to_update, 
+            rtol = 1e-6))
 
 if __name__ == '__main__':
     unittest.main()

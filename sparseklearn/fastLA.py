@@ -176,7 +176,7 @@ fastLA.pairwise_mahalanobis_distances_spherical.argtypes = [
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #spherical_covariance_array
     ct.c_int64,                                   #num_samples_comp
-    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64,                                   #num_samples_full
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
@@ -234,6 +234,67 @@ def pairwise_mahalanobis_distances_diagonal(result,
                                                           num_samples_full,
                                                           num_feat_comp,
                                                           num_feat_full)
+
+################################################################################
+## update_first_moment_single_sample
+
+fastLA.update_first_moment_single_sample.restype = None
+fastLA.update_first_moment_single_sample.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_to_update
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #normalizer_to_update
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
+    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
+    ct.c_double,                                  #weight
+    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64]                                   #num_feat_full
+
+def update_first_moment_single_sample(first_moment_to_update,
+                                      normalizer_to_update,
+                                      compressed_sample,
+                                      mask,
+                                      weight,
+                                      num_feat_comp,
+                                      num_feat_full):
+
+    return fastLA.update_first_moment_single_sample(first_moment_to_update,
+                                                    normalizer_to_update,
+                                                    compressed_sample,
+                                                    mask,
+                                                    weight,
+                                                    num_feat_comp,
+                                                    num_feat_full)
+
+################################################################################
+## update_both_moments_single_sample
+
+fastLA.update_both_moments_single_sample.restype = None
+fastLA.update_both_moments_single_sample.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_to_update
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #second_moment_to_update
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #normalizer_to_update
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
+    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
+    ct.c_double,                                  #weight
+    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64]                                   #num_feat_full
+
+def update_both_moments_single_sample(first_moment_to_update,
+                                      second_moment_to_update,
+                                      normalizer_to_update,
+                                      compressed_sample,
+                                      mask,
+                                      weight,
+                                      num_feat_comp,
+                                      num_feat_full):
+
+    return fastLA.update_both_moments_single_sample(first_moment_to_update,
+                                                    second_moment_to_update,
+                                                    normalizer_to_update,
+                                                    compressed_sample,
+                                                    mask,
+                                                    weight,
+                                                    num_feat_comp,
+                                                    num_feat_full)
 
 
 """

@@ -119,6 +119,7 @@ double _l2_distance_one_compressed_one_full(double *compressed_sample,
     return distance;
 }
 
+
 void pairwise_l2_distances_with_self(double *result,
                                      double *compressed_array,
                                      int64_t *mask_array,
@@ -178,6 +179,7 @@ void pairwise_l2_distances_with_self(double *result,
         }
     }
 }
+
 
 void pairwise_l2_distances_with_full(double *result,
                                      double *compressed_array,
@@ -287,6 +289,7 @@ double mahalanobis_distance_spherical(double *compressed_sample,
     return distance;
 }
 
+
 double mahalanobis_distance_diagonal(double *compressed_sample,
                                      double *full_mean,
                                      int64_t *mask,
@@ -336,6 +339,7 @@ double mahalanobis_distance_diagonal(double *compressed_sample,
     distance = sqrt(distance);
     return distance;
 }
+
 
 void pairwise_mahalanobis_distances_spherical(double *result,
                                              double *compressed_array,
@@ -400,6 +404,7 @@ void pairwise_mahalanobis_distances_spherical(double *result,
     }
 }
 
+
 void pairwise_mahalanobis_distances_diagonal(double *result,
                                              double *compressed_array,
                                              double *full_means,
@@ -463,10 +468,114 @@ void pairwise_mahalanobis_distances_diagonal(double *result,
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//  First and Second Moments
 
+void update_first_moment_single_sample(double *first_moment_to_update,
+                                       double *normalizer_to_update,
+                                       double *compressed_sample,
+                                       int64_t *mask,
+                                       double weight,
+                                       int64_t num_feat_comp,
+                                       int64_t num_feat_full)
+/* Performs an update to the first moment using a single compressed_sample
+ * and weight. Also updates the normalizer. The normalizer is needed because
+ * the weights must sum to 1 over all samples, but due to sparsification, not
+ * all weights will be used on all dimensions of the full mean, so each entry
+ * in the num_feat_full-dimensional space must be individually renormalized by
+ * the sum of all weights that were used to modify that specific entry.
+ *
+ * Inputs
+ * ------
+ *
+ *     compressed_sample : array, length num_feat_comp
+ *
+ *     mask : array, length num_feat_comp. The indices specifying which 
+ *                   entries of the full sample_1 were kept. Must be sorted
+ *
+ *     num_feat_comp : the number of features in a compressed sample. 
+ *
+ *     num_feat_full : the number of features in a full sample. 
+ *
+ *
+ * Returns
+ * -------
+ *
+ *      first_moment_to_update : (modified) array, len num_feat_full. 
+ *                               The current first moment (mean), to be 
+ *                               updated.
+ *
+ *      second_moment_to_update : (modified) array, len num_feat_full. 
+ *                               The current first moment (mean), to be 
+ *                               updated.
+ *
+ *      normalizer_to_update : (modified) array, len num_feat_full. The 
+ *                             current normalizer, used to keep track of
+ *                             which weights have been used in which 
+ *                             dimensions.
+ */
+{ 
+    int64_t ind_feat_comp = 0; //indexes through compressed_sample and mask
+    int64_t ind_feat_full = 0; //indexes through moment and normalizer
+    for (ind_feat_comp = 0 ; ind_feat_comp < num_feat_comp ; ind_feat_comp++ ) {
+        ind_feat_full = mask[ind_feat_comp];
+        first_moment_to_update[ind_feat_full] += weight * compressed_sample[ind_feat_comp];
+        normalizer_to_update[ind_feat_full] += weight;
+    }
+}
 
-
-
+void update_both_moments_single_sample(double *first_moment_to_update,
+                                       double *second_moment_to_update,
+                                       double *normalizer_to_update,
+                                       double *compressed_sample,
+                                       int64_t *mask,
+                                       double weight,
+                                       int64_t num_feat_comp,
+                                       int64_t num_feat_full)
+/* Performs an update to the first and second moment using a single 
+ * compressed_sample and weight. Also updates the normalizer. See
+ * docs for update_first_moment_single_sample for details. 
+ *
+ * Inputs
+ * ------
+ *
+ *     compressed_sample : array, length num_feat_comp
+ *
+ *     mask : array, length num_feat_comp. The indices specifying which 
+ *                   entries of the full sample_1 were kept. Must be sorted
+ *
+ *     num_feat_comp : the number of features in a compressed sample. 
+ *
+ *     num_feat_full : the number of features in a full sample. 
+ *
+ *
+ * Returns
+ * -------
+ *
+ *      first_moment_to_update : (modified) array, len num_feat_full. 
+ *                               The current first moment (mean), to be 
+ *                               updated.
+ *
+ *      second_moment_to_update : (modified) array, len num_feat_full. 
+ *                               The current first moment (mean), to be 
+ *                               updated.
+ *
+ *      normalizer_to_update : (modified) array, len num_feat_full. The 
+ *                             current normalizer, used to keep track of
+ *                             which weights have been used in which 
+ *                             dimensions.
+ */
+{ 
+    int64_t ind_feat_comp = 0; //indexes through compressed_sample and mask
+    int64_t ind_feat_full = 0; //indexes through moment and normalizer
+    for (ind_feat_comp = 0 ; ind_feat_comp < num_feat_comp ; ind_feat_comp++ ) {
+        ind_feat_full = mask[ind_feat_comp];
+        first_moment_to_update[ind_feat_full] += weight * compressed_sample[ind_feat_comp];
+        second_moment_to_update[ind_feat_full] += weight * \
+            compressed_sample[ind_feat_comp] * compressed_sample[ind_feat_comp];
+        normalizer_to_update[ind_feat_full] += weight;
+    }
+}
 
 
 
