@@ -10,6 +10,7 @@ from .fastLA import pairwise_mahalanobis_distances_spherical
 from .fastLA import pairwise_mahalanobis_distances_diagonal
 from .fastLA import update_first_moment_single_sample
 from .fastLA import update_both_moments_single_sample
+from .fastLA import update_first_moment_array_single_sample
 #from .auxutils import generate_mnist_dataset
 #from .auxutils import load_mnist_dataset
 #from .auxutils import write_mnist_dataset

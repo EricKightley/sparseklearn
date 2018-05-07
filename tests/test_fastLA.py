@@ -11,6 +11,7 @@ from sparseklearn import pairwise_mahalanobis_distances_spherical
 from sparseklearn import pairwise_mahalanobis_distances_diagonal
 from sparseklearn import update_first_moment_single_sample
 from sparseklearn import update_both_moments_single_sample
+from sparseklearn import update_first_moment_array_single_sample
 
 class DataGenerator():
 
@@ -199,7 +200,7 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertTrue(np.allclose(correct_normalizer, normalizer_to_update, 
             rtol = 1e-6))
 
-    def test_update_second_moment_single_sample(self):
+    def test_update_both_moments_single_sample(self):
         """ Update a (init to zero) weighted mean and normalizer using 
         X[1], W[1,0]. """
 
@@ -223,6 +224,32 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertTrue(np.allclose(correct_second_moment, second_moment_to_update, 
             rtol = 1e-6))
         self.assertTrue(np.allclose(correct_normalizer, normalizer_to_update, 
+            rtol = 1e-6))
+
+    def test_update_first_moment_array_single_sample(self):
+        """ Update a set of 3 zero-initialized means using X[2], W[2,:]."""
+        first_moment_array = np.zeros((self.td.K, self.td.P))
+        normalizer_array = np.zeros((self.td.K, self.td.P))
+        update_first_moment_array_single_sample(first_moment_array,
+                                               normalizer_array,
+                                               self.td.RHDX[2],
+                                               self.td.mask[2],
+                                               self.td.W[2,:],
+                                               self.td.K,
+                                               self.td.Q,
+                                               self.td.P)
+        correct_first_moment_array = np.array([[  2,  0,  8,  0,  7],
+                                               [ 12,  0, 48,  0, 42],
+                                               [  8,  0, 32,  0, 28]], 
+                                               dtype = np.float64)
+        correct_normalizer_array = np.array([[1,0,1,0,1],
+                                            [6,0,6,0,6],
+                                            [4,0,4,0,4]],
+                                            dtype = np.float64)
+
+        self.assertTrue(np.allclose(correct_first_moment_array, first_moment_array, 
+            rtol = 1e-6))
+        self.assertTrue(np.allclose(correct_normalizer_array, normalizer_array, 
             rtol = 1e-6))
 
 if __name__ == '__main__':

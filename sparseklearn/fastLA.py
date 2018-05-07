@@ -296,6 +296,37 @@ def update_both_moments_single_sample(first_moment_to_update,
                                                     num_feat_comp,
                                                     num_feat_full)
 
+################################################################################
+## update_first_moment_array_single_sample
+
+fastLA.update_first_moment_array_single_sample.restype = None
+fastLA.update_first_moment_array_single_sample.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_array
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #normalizer_array
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
+    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #weights
+    ct.c_int64,                                   #num_samp_full
+    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64]                                   #num_feat_full
+
+def update_first_moment_array_single_sample(first_moment_array,
+                                           normalizer_array,
+                                           compressed_sample,
+                                           mask,
+                                           weights,
+                                           num_samp_full,
+                                           num_feat_comp,
+                                           num_feat_full):
+
+    return fastLA.update_first_moment_array_single_sample(first_moment_array,
+                                                         normalizer_array,
+                                                         compressed_sample,
+                                                         mask,
+                                                         weights,
+                                                         num_samp_full,
+                                                         num_feat_comp,
+                                                         num_feat_full)
 
 """
 polycomb = fastLA.polycomb

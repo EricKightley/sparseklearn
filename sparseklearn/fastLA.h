@@ -96,6 +96,16 @@ void update_both_moments_single_sample(double *first_moment_to_update,
                                        int64_t num_feat_comp,
                                        int64_t num_feat_full);
 
+void update_first_moment_array_single_sample(double *first_moment_array,
+                                            double *normalizer_array,
+                                            double *compressed_sample,
+                                            int64_t *mask,
+                                            double *weights,
+                                            int64_t num_samp_full,
+                                            int64_t num_feat_comp,
+                                            int64_t num_feat_full);
+
+
 void sqrt_array(double *array, const int64_t num_samples_U, const int64_t num_subsamples_X);
 
 void pwdist(double *result, int64_t num_samples_U, int64_t num_subsamples_X, 
