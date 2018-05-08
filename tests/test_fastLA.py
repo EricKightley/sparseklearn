@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
 
-from sparseklearn import _l2_distance_both_compressed
-from sparseklearn import _l2_distance_one_compressed_one_full
+from sparseklearn import dist_both_comp
+from sparseklearn import dist_one_comp_one_full
 from sparseklearn import pairwise_l2_distances_with_self
 from sparseklearn import pairwise_l2_distances_with_full
 from sparseklearn import mahalanobis_distance_spherical
@@ -14,6 +14,7 @@ from sparseklearn import update_both_moments_single_sample
 from sparseklearn import update_first_moment_array_single_sample
 from sparseklearn import update_both_moment_arrays_single_sample
 from sparseklearn import compute_first_moment_array
+from sparseklearn import compute_both_moment_arrays
 
 class DataGenerator():
 
@@ -59,9 +60,9 @@ class TestFastLAMethods(unittest.TestCase):
     def setUp(self):
         self.td = DataGenerator()
 
-    def test__l2_distance_both_compressed(self):
+    def test_dist_both_comp(self):
         """ Distance between RX[1] and RX[3]. """
-        result = _l2_distance_both_compressed(self.td.RX[1], 
+        result = dist_both_comp(self.td.RX[1], 
                                           self.td.RX[3],
                                           self.td.mask[1],
                                           self.td.mask[3],
@@ -70,9 +71,9 @@ class TestFastLAMethods(unittest.TestCase):
         correct = np.sqrt(5/2. * 37)
         self.assertAlmostEqual(correct,result,places=6)
 
-    def test__l2_distance_one_compressed_one_full(self):
+    def test_dist_one_comp_one_full(self):
         """ Distance between RX[1] and U[2]. """
-        result = _l2_distance_one_compressed_one_full(self.td.RX[1], 
+        result = dist_one_comp_one_full(self.td.RX[1], 
                                                   self.td.U[2],
                                                   self.td.mask[1],
                                                   self.td.Q,
@@ -304,11 +305,33 @@ class TestFastLAMethods(unittest.TestCase):
                                    self.td.K,
                                    self.td.Q,
                                    self.td.P)
-        # too many irrationals to bother hard-coding. 
         correct_first_moment_array = np.dot(self.td.W.T, self.td.RRTX) / \
                                      np.dot(self.td.W.T, (self.td.RRTX!=0).astype(int))
         self.assertTrue(np.allclose(first_moment_array, correct_first_moment_array, 
                                     rtol=1e-6))
+
+    def test_compute_both_moment_arrays(self):
+        """ Weighted first and second moments, one moment per col of W."""
+        first_moment_array = np.zeros((self.td.K, self.td.P))
+        second_moment_array = np.zeros((self.td.K, self.td.P))
+        compute_both_moment_arrays(first_moment_array,
+                                   second_moment_array,
+                                   self.td.RX,
+                                   self.td.mask,
+                                   self.td.W,
+                                   self.td.N,
+                                   self.td.K,
+                                   self.td.Q,
+                                   self.td.P)
+        correct_first_moment_array = np.dot(self.td.W.T, self.td.RRTX) / \
+                                     np.dot(self.td.W.T, (self.td.RRTX!=0).astype(int))
+        correct_second_moment_array = np.dot(self.td.W.T, self.td.RRTX**2) / \
+                                      np.dot(self.td.W.T, (self.td.RRTX!=0).astype(int))
+        self.assertTrue(np.allclose(first_moment_array, correct_first_moment_array, 
+                                    rtol=1e-6))
+        self.assertTrue(np.allclose(second_moment_array, correct_second_moment_array, 
+                                    rtol=1e-6))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -3,52 +3,53 @@ import numpy as np
 from numpy.ctypeslib import ndpointer
 import ctypes as ct
 
-fastLA = ct.CDLL('/home/eric/Dropbox/EricStephenShare/sparseklearn/sparseklearn/libfastLA.so')
+dist = ct.CDLL('/home/eric/Dropbox/EricStephenShare/sparseklearn/sparseklearn/source/libdistances.so')
+moms = ct.CDLL('/home/eric/Dropbox/EricStephenShare/sparseklearn/sparseklearn/source/libmoments.so')
 
 ################################################################################
-## _l2_distance_both_compressed
+## dist_both_comp
 
-fastLA._l2_distance_both_compressed.restype = ct.c_double
-fastLA._l2_distance_both_compressed.argtypes = [
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample_1
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample_2
+dist.dist_both_comp.restype = ct.c_double
+dist.dist_both_comp.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_sample_1
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_sample_2
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask_1
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask_2
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def _l2_distance_both_compressed(compressed_sample_1, 
-                            compressed_sample_2, 
+def dist_both_comp(comp_sample_1, 
+                            comp_sample_2, 
                             mask_1,
                             mask_2,
                             num_feat_comp,
                             num_feat_full):
 
-    return fastLA._l2_distance_both_compressed(compressed_sample_1,
-                                           compressed_sample_2,
+    return dist.dist_both_comp(comp_sample_1,
+                                           comp_sample_2,
                                            mask_1,
                                            mask_2,
                                            num_feat_comp,
                                            num_feat_full)
 
 ################################################################################
-## _l2_distance_one_compressed_one_full
+## dist_one_comp_one_full
 
-fastLA._l2_distance_one_compressed_one_full.restype = ct.c_double
-fastLA._l2_distance_one_compressed_one_full.argtypes = [
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
+dist.dist_one_comp_one_full.restype = ct.c_double
+dist.dist_one_comp_one_full.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_sample
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #full_sample
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def _l2_distance_one_compressed_one_full(compressed_sample, 
+def dist_one_comp_one_full(comp_sample, 
                                      full_sample, 
                                      mask,
                                      num_feat_comp,
                                      num_feat_full):
 
-    return fastLA._l2_distance_one_compressed_one_full(compressed_sample,
+    return dist.dist_one_comp_one_full(comp_sample,
                                                    full_sample,
                                                    mask,
                                                    num_feat_comp,
@@ -57,24 +58,24 @@ def _l2_distance_one_compressed_one_full(compressed_sample,
 ################################################################################
 ## pairwise_l2_distances_with_self
 
-fastLA.pairwise_l2_distances_with_self.restype = None
-fastLA.pairwise_l2_distances_with_self.argtypes = [
+dist.pairwise_l2_distances_with_self.restype = None
+dist.pairwise_l2_distances_with_self.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #result
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_array
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_array
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask_array
     ct.c_int64,                                   #num_samples
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
 def pairwise_l2_distances_with_self(result,
-                                    compressed_array,
+                                    comp_array,
                                     mask_array,
                                     num_samples,
                                     num_feat_comp,
                                     num_feat_full):
 
-    return fastLA.pairwise_l2_distances_with_self(result,
-                                                  compressed_array,
+    return dist.pairwise_l2_distances_with_self(result,
+                                                  comp_array,
                                                   mask_array,
                                                   num_samples,
                                                   num_feat_comp,
@@ -84,10 +85,10 @@ def pairwise_l2_distances_with_self(result,
 ################################################################################
 ## pairwise_l2_distances_with_full
 
-fastLA.pairwise_l2_distances_with_full.restype = None
-fastLA.pairwise_l2_distances_with_full.argtypes = [
+dist.pairwise_l2_distances_with_full.restype = None
+dist.pairwise_l2_distances_with_full.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #result
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_array
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #full_array
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask_array
     ct.c_int64,                                   #num_samples_comp
@@ -96,7 +97,7 @@ fastLA.pairwise_l2_distances_with_full.argtypes = [
     ct.c_int64]                                   #num_feat_full
 
 def pairwise_l2_distances_with_full(result,
-                                    compressed_array,
+                                    comp_array,
                                     full_array,
                                     mask_array,
                                     num_samples_comp,
@@ -104,8 +105,8 @@ def pairwise_l2_distances_with_full(result,
                                     num_feat_comp,
                                     num_feat_full):
 
-    return fastLA.pairwise_l2_distances_with_full(result,
-                                                  compressed_array,
+    return dist.pairwise_l2_distances_with_full(result,
+                                                  comp_array,
                                                   full_array,
                                                   mask_array,
                                                   num_samples_comp,
@@ -116,23 +117,23 @@ def pairwise_l2_distances_with_full(result,
 ################################################################################
 ## mahalanobis_distance_spherical
 
-fastLA.mahalanobis_distance_spherical.restype = ct.c_double
-fastLA.mahalanobis_distance_spherical.argtypes = [
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
+dist.mahalanobis_distance_spherical.restype = ct.c_double
+dist.mahalanobis_distance_spherical.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_sample
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #full_mean
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
     ct.c_double,                                  #spherical_covariance
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def mahalanobis_distance_spherical(compressed_sample,
+def mahalanobis_distance_spherical(comp_sample,
                                    full_mean,
                                    mask,
                                    spherical_covariance,
                                    num_feat_comp,
                                    num_feat_full):
 
-    return fastLA.mahalanobis_distance_spherical(compressed_sample,
+    return dist.mahalanobis_distance_spherical(comp_sample,
                                                  full_mean,
                                                  mask,
                                                  spherical_covariance,
@@ -142,23 +143,23 @@ def mahalanobis_distance_spherical(compressed_sample,
 ################################################################################
 ## mahalanobis_distance_diagonal
 
-fastLA.mahalanobis_distance_diagonal.restype = ct.c_double
-fastLA.mahalanobis_distance_diagonal.argtypes = [
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
+dist.mahalanobis_distance_diagonal.restype = ct.c_double
+dist.mahalanobis_distance_diagonal.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_sample
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #full_mean
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'),  #diagonal covariance
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def mahalanobis_distance_diagonal(compressed_sample,
+def mahalanobis_distance_diagonal(comp_sample,
                                    full_mean,
                                    mask,
                                    diagonal_covariance,
                                    num_feat_comp,
                                    num_feat_full):
 
-    return fastLA.mahalanobis_distance_diagonal(compressed_sample,
+    return dist.mahalanobis_distance_diagonal(comp_sample,
                                                 full_mean,
                                                 mask,
                                                 diagonal_covariance,
@@ -168,10 +169,10 @@ def mahalanobis_distance_diagonal(compressed_sample,
 ################################################################################
 ## pairwise_mahalanobis_distances_spherical
 
-fastLA.pairwise_mahalanobis_distances_spherical.restype = None
-fastLA.pairwise_mahalanobis_distances_spherical.argtypes = [
+dist.pairwise_mahalanobis_distances_spherical.restype = None
+dist.pairwise_mahalanobis_distances_spherical.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #result
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_array
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #full_means
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #spherical_covariance_array
@@ -181,7 +182,7 @@ fastLA.pairwise_mahalanobis_distances_spherical.argtypes = [
     ct.c_int64]                                   #num_feat_full
 
 def pairwise_mahalanobis_distances_spherical(result,
-                                            compressed_array,
+                                            comp_array,
                                             full_means,
                                             mask_array,
                                             spherical_covariance_array,
@@ -190,8 +191,8 @@ def pairwise_mahalanobis_distances_spherical(result,
                                             num_feat_comp,
                                             num_feat_full):
 
-    return fastLA.pairwise_mahalanobis_distances_spherical(result,
-                                                          compressed_array,
+    return dist.pairwise_mahalanobis_distances_spherical(result,
+                                                          comp_array,
                                                           full_means,
                                                           mask_array,
                                                           spherical_covariance_array,
@@ -203,10 +204,10 @@ def pairwise_mahalanobis_distances_spherical(result,
 ################################################################################
 ## pairwise_mahalanobis_distances_diagonal
 
-fastLA.pairwise_mahalanobis_distances_diagonal.restype = None
-fastLA.pairwise_mahalanobis_distances_diagonal.argtypes = [
+dist.pairwise_mahalanobis_distances_diagonal.restype = None
+dist.pairwise_mahalanobis_distances_diagonal.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #result
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_array
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #full_means
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #diagonal_covariance_array
@@ -216,7 +217,7 @@ fastLA.pairwise_mahalanobis_distances_diagonal.argtypes = [
     ct.c_int64]                                   #num_feat_full
 
 def pairwise_mahalanobis_distances_diagonal(result,
-                                            compressed_array,
+                                            comp_array,
                                             full_means,
                                             mask_array,
                                             diagonal_covariance_array,
@@ -225,8 +226,8 @@ def pairwise_mahalanobis_distances_diagonal(result,
                                             num_feat_comp,
                                             num_feat_full):
 
-    return fastLA.pairwise_mahalanobis_distances_diagonal(result,
-                                                          compressed_array,
+    return dist.pairwise_mahalanobis_distances_diagonal(result,
+                                                          comp_array,
                                                           full_means,
                                                           mask_array,
                                                           diagonal_covariance_array,
@@ -235,14 +236,15 @@ def pairwise_mahalanobis_distances_diagonal(result,
                                                           num_feat_comp,
                                                           num_feat_full)
 
+
 ################################################################################
 ## update_first_moment_single_sample
 
-fastLA.update_first_moment_single_sample.restype = None
-fastLA.update_first_moment_single_sample.argtypes = [
+moms.update_first_moment_single_sample.restype = None
+moms.update_first_moment_single_sample.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_to_update
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #normalizer_to_update
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_sample
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
     ct.c_double,                                  #weight
     ct.c_int64,                                   #num_feat_comp
@@ -250,15 +252,15 @@ fastLA.update_first_moment_single_sample.argtypes = [
 
 def update_first_moment_single_sample(first_moment_to_update,
                                       normalizer_to_update,
-                                      compressed_sample,
+                                      comp_sample,
                                       mask,
                                       weight,
                                       num_feat_comp,
                                       num_feat_full):
 
-    return fastLA.update_first_moment_single_sample(first_moment_to_update,
+    return moms.update_first_moment_single_sample(first_moment_to_update,
                                                     normalizer_to_update,
-                                                    compressed_sample,
+                                                    comp_sample,
                                                     mask,
                                                     weight,
                                                     num_feat_comp,
@@ -267,12 +269,12 @@ def update_first_moment_single_sample(first_moment_to_update,
 ################################################################################
 ## update_both_moments_single_sample
 
-fastLA.update_both_moments_single_sample.restype = None
-fastLA.update_both_moments_single_sample.argtypes = [
+moms.update_both_moments_single_sample.restype = None
+moms.update_both_moments_single_sample.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_to_update
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #second_moment_to_update
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #normalizer_to_update
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_sample
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
     ct.c_double,                                  #weight
     ct.c_int64,                                   #num_feat_comp
@@ -281,16 +283,16 @@ fastLA.update_both_moments_single_sample.argtypes = [
 def update_both_moments_single_sample(first_moment_to_update,
                                       second_moment_to_update,
                                       normalizer_to_update,
-                                      compressed_sample,
+                                      comp_sample,
                                       mask,
                                       weight,
                                       num_feat_comp,
                                       num_feat_full):
 
-    return fastLA.update_both_moments_single_sample(first_moment_to_update,
+    return moms.update_both_moments_single_sample(first_moment_to_update,
                                                     second_moment_to_update,
                                                     normalizer_to_update,
-                                                    compressed_sample,
+                                                    comp_sample,
                                                     mask,
                                                     weight,
                                                     num_feat_comp,
@@ -299,11 +301,11 @@ def update_both_moments_single_sample(first_moment_to_update,
 ################################################################################
 ## update_first_moment_array_single_sample
 
-fastLA.update_first_moment_array_single_sample.restype = None
-fastLA.update_first_moment_array_single_sample.argtypes = [
+moms.update_first_moment_array_single_sample.restype = None
+moms.update_first_moment_array_single_sample.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #normalizer_array
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_sample
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #weights
     ct.c_int64,                                   #num_samp_full
@@ -312,16 +314,16 @@ fastLA.update_first_moment_array_single_sample.argtypes = [
 
 def update_first_moment_array_single_sample(first_moment_array,
                                            normalizer_array,
-                                           compressed_sample,
+                                           comp_sample,
                                            mask,
                                            weights,
                                            num_samp_full,
                                            num_feat_comp,
                                            num_feat_full):
 
-    return fastLA.update_first_moment_array_single_sample(first_moment_array,
+    return moms.update_first_moment_array_single_sample(first_moment_array,
                                                          normalizer_array,
-                                                         compressed_sample,
+                                                         comp_sample,
                                                          mask,
                                                          weights,
                                                          num_samp_full,
@@ -331,12 +333,12 @@ def update_first_moment_array_single_sample(first_moment_array,
 ################################################################################
 ## update_both_moment_arrays_single_sample
 
-fastLA.update_both_moment_arrays_single_sample.restype = None
-fastLA.update_both_moment_arrays_single_sample.argtypes = [
+moms.update_both_moment_arrays_single_sample.restype = None
+moms.update_both_moment_arrays_single_sample.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #second_moment_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #normalizer_array
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_sample
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_sample
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #weights
     ct.c_int64,                                   #num_samp_full
@@ -346,17 +348,17 @@ fastLA.update_both_moment_arrays_single_sample.argtypes = [
 def update_both_moment_arrays_single_sample(first_moment_array,
                                            second_moment_array,
                                            normalizer_array,
-                                           compressed_sample,
+                                           comp_sample,
                                            mask,
                                            weights,
                                            num_samp_full,
                                            num_feat_comp,
                                            num_feat_full):
 
-    return fastLA.update_both_moment_arrays_single_sample(first_moment_array,
+    return moms.update_both_moment_arrays_single_sample(first_moment_array,
                                                          second_moment_array,
                                                          normalizer_array,
-                                                         compressed_sample,
+                                                         comp_sample,
                                                          mask,
                                                          weights,
                                                          num_samp_full,
@@ -366,10 +368,10 @@ def update_both_moment_arrays_single_sample(first_moment_array,
 ################################################################################
 ## compute_first_moment_array
 
-fastLA.compute_first_moment_array.restype = None
-fastLA.compute_first_moment_array.argtypes = [
+moms.compute_first_moment_array.restype = None
+moms.compute_first_moment_array.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_array
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #compressed_array
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_array
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #weights
     ct.c_int64,                                   #num_samp_comp
@@ -378,7 +380,7 @@ fastLA.compute_first_moment_array.argtypes = [
     ct.c_int64]                                   #num_feat_full
 
 def compute_first_moment_array(first_moment_array,
-                               compressed_array,
+                               comp_array,
                                mask_array,
                                weights_array,
                                num_samp_comp,
@@ -386,8 +388,8 @@ def compute_first_moment_array(first_moment_array,
                                num_feat_comp,
                                num_feat_full):
 
-    return fastLA.compute_first_moment_array(first_moment_array,
-                                             compressed_array,
+    return moms.compute_first_moment_array(first_moment_array,
+                                             comp_array,
                                              mask_array,
                                              weights_array,
                                              num_samp_comp,
@@ -395,120 +397,37 @@ def compute_first_moment_array(first_moment_array,
                                              num_feat_comp,
                                              num_feat_full)
 
-"""
-polycomb = fastLA.polycomb
-pwdist = fastLA.pwdist
-# below function from
-# https://stackoverflow.com/questions/64120178/how-can-i-pass-null-to-an-external-library-using-ctypes-with-an-argument-decla
-def wrapped_ndptr(*args, **kwargs):
-    base = ndpointer(*args, **kwargs)
-    def from_param(cls, obj):
-        if obj is None:
-            return obj
-        return base.from_param(obj)
-    return type(base.__name__, (base,), {'from_param': classmethod(from_param)})
-DoubleArrayType = wrapped_ndptr(dtype=np.float64, flags='C_CONTIGUOUS')
+################################################################################
+## compute_both_moment_arrays
 
-class CONSTANTS(ct.Structure):
-    _fields_ = [
-        ('N', ct.c_int64),
-        ('P', ct.c_int64),
-        ('Q', ct.c_int64)]
+moms.compute_both_moment_arrays.restype = None
+moms.compute_both_moment_arrays.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_array
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #second_moment_array
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_array
+    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #weights
+    ct.c_int64,                                   #num_samp_comp
+    ct.c_int64,                                   #num_samp_full
+    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64]                                   #num_feat_full
 
-class DATA(ct.Structure):
-    _fields_ = [
-        ('RHDX', ct.POINTER(ct.c_double)),
-        ('mask', ct.POINTER(ct.c_int64))]
+def compute_both_moment_arrays(first_moment_array,
+                               second_moment_array,
+                               comp_array,
+                               mask_array,
+                               weights_array,
+                               num_samp_comp,
+                               num_samp_full,
+                               num_feat_comp,
+                               num_feat_full):
 
-polycomb.restype = None
-# make the arguments that should be optional (W, U, Sigma)
-# use the DoubleArrayType, the other ndarrays will use ndpointer
-polycomb.argtypes = [
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'),
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'),
-    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),
-    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),
-    DoubleArrayType,
-    DoubleArrayType,
-    DoubleArrayType,
-    ct.c_int64,
-    ct.c_int64,
-    ct.c_int64,
-    ct.c_int64,
-    ct.c_int64,
-    ct.c_int64
-]
-
-def polynomial_combination(X, mask, P, S = None, W = None, U = None, Sigma = None, power = 1):
-    # assign Q
-    N,Q = X.shape
-
-    # assign K
-    if U is not None:
-        K = U.shape[0]
-    elif W is not None:
-        K = W.shape[1]
-    elif Sigma is not None:
-        K = Sigma.shape[0]
-    else:
-        K = 1
-
-    # assign S if we need to
-    if S is None:
-        S = np.array(range(N))
-
-    # initialize result
-    result = np.zeros((K,P))
-    # call C function, which modifies result
-    polycomb(result, X, mask, S, W, U, Sigma, power, len(S), Q, N, P, K)
-
-    return result
-
-pwdist.restype = None
-pwdist.argtypes = [
-    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), # result
-    ct.c_int64,                                   # num_samples_U
-    ct.c_int64,                                   # num_subsamples_X
-    ct.POINTER(CONSTANTS),                        # struct CONSTANTS
-    ct.POINTER(DATA),                             # struct DATA
-    ct.c_int,                                     # power
-    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  # S
-    DoubleArrayType,                              # W
-    DoubleArrayType,                              # U
-    DoubleArrayType]                              # Sigma
-
-def pairwise_distances(RHDX, mask, P, S = None, W = None, U = None, Sigma = None, power = 1):
-
-    if (U is not None) and (U.ndim != 2):
-        raise Exception('U must be a 2D array or None.')
-
-    # assign Q
-    N,Q = RHDX.shape
-
-    # assign S if needed
-    if S is None:
-        S = np.array(range(N))
-
-    num_samples_U = len(S)
-
-    # assign num_samples_U
-    if U is not None:
-        num_subsamples_X = U.shape[0]
-    else:
-        num_subsamples_X = num_samples_U
-  
-
-    # initialize result
-    result = np.zeros((num_samples_U, num_subsamples_X))
-    
-    # build the structs
-    C = CONSTANTS(N,P,Q)
-    D = DATA(RHDX.ctypes.data_as(ct.POINTER(ct.c_double)),
-             mask.ctypes.data_as(ct.POINTER(ct.c_int64)))
-
-    # call C function, which modifies result
-    pwdist(result, num_samples_U, num_subsamples_X, C, D, power, S, W, U, Sigma)
-
-    return result
-
-"""
+    return moms.compute_both_moment_arrays(first_moment_array,
+                                             second_moment_array,
+                                             comp_array,
+                                             mask_array,
+                                             weights_array,
+                                             num_samp_comp,
+                                             num_samp_full,
+                                             num_feat_comp,
+                                             num_feat_full)

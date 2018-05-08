@@ -1,7 +1,7 @@
 from .sparsifier import Sparsifier
 from .gmm import GaussianMixture
-from .fastLA import _l2_distance_both_compressed
-from .fastLA import _l2_distance_one_compressed_one_full
+from .fastLA import dist_both_comp
+from .fastLA import dist_one_comp_one_full
 from .fastLA import pairwise_l2_distances_with_self
 from .fastLA import pairwise_l2_distances_with_full
 from .fastLA import mahalanobis_distance_spherical
@@ -13,6 +13,7 @@ from .fastLA import update_both_moments_single_sample
 from .fastLA import update_first_moment_array_single_sample
 from .fastLA import update_both_moment_arrays_single_sample
 from .fastLA import compute_first_moment_array
+from .fastLA import compute_both_moment_arrays
 #from .auxutils import generate_mnist_dataset
 #from .auxutils import load_mnist_dataset
 #from .auxutils import write_mnist_dataset
