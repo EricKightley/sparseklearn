@@ -19,7 +19,12 @@ class DataGenerator():
 
     def __init__(self):
 
-        self.RHDX = np.array([[1, 9, 8],
+        self.RRTX = np.array([[0, 1, 9, 0, 8],
+                           [0, 0, 7, 4, 3],
+                           [2, 0, 8, 0, 7],
+                           [0, 4, 1, 3, 0]], dtype=np.float64)
+
+        self.RX = np.array([[1, 9, 8],
                               [7, 4, 3],
                               [2, 8, 7],
                               [4, 1, 3]], dtype = np.float64)
@@ -55,9 +60,9 @@ class TestFastLAMethods(unittest.TestCase):
         self.td = DataGenerator()
 
     def test__l2_distance_both_compressed(self):
-        """ Distance between RHDX[1] and RHDX[3]. """
-        result = _l2_distance_both_compressed(self.td.RHDX[1], 
-                                          self.td.RHDX[3],
+        """ Distance between RX[1] and RX[3]. """
+        result = _l2_distance_both_compressed(self.td.RX[1], 
+                                          self.td.RX[3],
                                           self.td.mask[1],
                                           self.td.mask[3],
                                           self.td.Q,
@@ -66,8 +71,8 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertAlmostEqual(correct,result,places=6)
 
     def test__l2_distance_one_compressed_one_full(self):
-        """ Distance between RHDX[1] and U[2]. """
-        result = _l2_distance_one_compressed_one_full(self.td.RHDX[1], 
+        """ Distance between RX[1] and U[2]. """
+        result = _l2_distance_one_compressed_one_full(self.td.RX[1], 
                                                   self.td.U[2],
                                                   self.td.mask[1],
                                                   self.td.Q,
@@ -76,10 +81,10 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertAlmostEqual(correct,result,places=6)
 
     def test_pairwise_l2_distances_with_self(self):
-        """ Pairwise distances between rows of RHDX."""
+        """ Pairwise distances between rows of RX."""
         result = np.zeros((self.td.N, self.td.N))
         pairwise_l2_distances_with_self(result,
-                                        self.td.RHDX,
+                                        self.td.RX,
                                         self.td.mask,
                                         self.td.N,
                                         self.td.Q,
@@ -93,10 +98,10 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertTrue(np.allclose(correct, result, rtol=1e-6))
 
     def test_pairwise_l2_distances_with_full(self):
-        """Pairwise distances between rows of RHDX and rows of U."""
+        """Pairwise distances between rows of RX and rows of U."""
         result = np.zeros((self.td.N, self.td.K))
         pairwise_l2_distances_with_full(result,
-                                        self.td.RHDX,
+                                        self.td.RX,
                                         self.td.U,
                                         self.td.mask,
                                         self.td.N,
@@ -112,10 +117,10 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertTrue(np.allclose(correct, result, rtol=1e-6))
 
     def test_mahalanobis_distance_spherical(self):
-        """ Mahalanobis distance ||RHDX[1] - U[2]|| with spherical covariance
+        """ Mahalanobis distance ||RX[1] - U[2]|| with spherical covariance
         sigmasquared = 2.2. """
 
-        result = mahalanobis_distance_spherical(self.td.RHDX[1],
+        result = mahalanobis_distance_spherical(self.td.RX[1],
                                                 self.td.U[2],
                                                 self.td.mask[1],
                                                 2.2,
@@ -125,10 +130,10 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertAlmostEqual(correct, result, places=6)
 
     def test_mahalanobis_distance_diagonal(self):
-        """ Mahalanobis distance ||RHDX[1] - U[2]|| with diagonal covariance
+        """ Mahalanobis distance ||RX[1] - U[2]|| with diagonal covariance
         diagonal_covariances[2]. """
 
-        result = mahalanobis_distance_diagonal(self.td.RHDX[1],
+        result = mahalanobis_distance_diagonal(self.td.RX[1],
                                                 self.td.U[2],
                                                 self.td.mask[1],
                                                 self.td.diagonal_covariances[2],
@@ -138,12 +143,12 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertAlmostEqual(correct, result, places=6)
 
     def test_pairwise_mahalanobis_distances_spherical(self):
-        """ Mahalanobis distances ||RHDX - U|| with spherical_covariances.
+        """ Mahalanobis distances ||RX - U|| with spherical_covariances.
         """
 
         result = np.zeros((self.td.N,self.td.K))
         pairwise_mahalanobis_distances_spherical(result,
-                                                 self.td.RHDX,
+                                                 self.td.RX,
                                                  self.td.U,
                                                  self.td.mask,
                                                  self.td.spherical_covariances,
@@ -160,12 +165,12 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertTrue(np.allclose(correct, result, rtol=1e-6))
 
     def test_pairwise_mahalanobis_distances_diagonal(self):
-        """ Mahalanobis distances ||RHDX - U|| with diagonal_covariances.
+        """ Mahalanobis distances ||RX - U|| with diagonal_covariances.
         """
 
         result = np.zeros((self.td.N,self.td.K))
         pairwise_mahalanobis_distances_diagonal(result,
-                                                self.td.RHDX,
+                                                self.td.RX,
                                                 self.td.U,
                                                 self.td.mask,
                                                 self.td.diagonal_covariances,
@@ -189,7 +194,7 @@ class TestFastLAMethods(unittest.TestCase):
         normalizer_to_update = np.zeros(self.td.P)
         update_first_moment_single_sample(first_moment_to_update,
                                           normalizer_to_update,
-                                          self.td.RHDX[1],
+                                          self.td.RX[1],
                                           self.td.mask[1],
                                           self.td.W[1,0],
                                           self.td.Q,
@@ -212,7 +217,7 @@ class TestFastLAMethods(unittest.TestCase):
         update_both_moments_single_sample(first_moment_to_update,
                                           second_moment_to_update,
                                           normalizer_to_update,
-                                          self.td.RHDX[1],
+                                          self.td.RX[1],
                                           self.td.mask[1],
                                           self.td.W[1,0],
                                           self.td.Q,
@@ -234,7 +239,7 @@ class TestFastLAMethods(unittest.TestCase):
         normalizer_array = np.zeros((self.td.K, self.td.P))
         update_first_moment_array_single_sample(first_moment_array,
                                                normalizer_array,
-                                               self.td.RHDX[2],
+                                               self.td.RX[2],
                                                self.td.mask[2],
                                                self.td.W[2,:],
                                                self.td.K,
@@ -262,7 +267,7 @@ class TestFastLAMethods(unittest.TestCase):
         update_both_moment_arrays_single_sample(first_moment_array,
                                                second_moment_array,
                                                normalizer_array,
-                                               self.td.RHDX[2],
+                                               self.td.RX[2],
                                                self.td.mask[2],
                                                self.td.W[2,:],
                                                self.td.K,
@@ -289,18 +294,21 @@ class TestFastLAMethods(unittest.TestCase):
             rtol = 1e-6))
 
     def test_compute_first_moment_array(self):
+        """ Weighted first moments, one moment per col of W."""
         first_moment_array = np.zeros((self.td.K, self.td.P))
         compute_first_moment_array(first_moment_array,
-                                   self.td.RHDX,
+                                   self.td.RX,
                                    self.td.mask,
                                    self.td.W,
                                    self.td.N,
                                    self.td.K,
                                    self.td.Q,
                                    self.td.P)
-
-        print(first_moment_array)
-        self.assertTrue(True)
+        # too many irrationals to bother hard-coding. 
+        correct_first_moment_array = np.dot(self.td.W.T, self.td.RRTX) / \
+                                     np.dot(self.td.W.T, (self.td.RRTX!=0).astype(int))
+        self.assertTrue(np.allclose(first_moment_array, correct_first_moment_array, 
+                                    rtol=1e-6))
 
 if __name__ == '__main__':
     unittest.main()

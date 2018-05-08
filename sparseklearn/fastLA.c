@@ -722,6 +722,8 @@ void compute_first_moment_array(double *first_moment_array,
  *                     ith col is the weights associated with each row of
  *                     compressed_sample for the ith moment. 
  *
+ *     num_samp_comp : the number of samples (rows) in compressed_array
+ *
  *     num_samp_full : the number of moments to be updated. 
  *
  *     num_feat_comp : the number of features in a compressed sample. 
@@ -743,16 +745,28 @@ void compute_first_moment_array(double *first_moment_array,
     }
 
     int64_t ind_samp_comp; //indexes the rows of compressed_array
+    int64_t ind_samp_full; //indexes the rows of first_moment_array
+    int64_t ind_feat_full; //indexes the columns of first_moment_array
+    int64_t position_tracker; //indexes absolute position in first_moment_array
 
+    // update the moments and the normalizer for each sample
     for (ind_samp_comp = 0 ; ind_samp_comp < num_samp_comp ; ind_samp_comp++) {
         update_first_moment_array_single_sample(first_moment_array,
                                                 normalizer_array,
                                                 &compressed_array[ind_samp_comp*num_feat_comp],
                                                 &mask_array[ind_samp_comp*num_feat_comp],
-                                                &weights_array[ind_samp_comp*num_feat_full],
+                                                &weights_array[ind_samp_comp*num_samp_full],
                                                 num_samp_full,
                                                 num_feat_comp,
                                                 num_feat_full);
+    }
+    // divide by the normalizer
+    for (ind_samp_full = 0 ; ind_samp_full < num_samp_full ; ind_samp_full ++) {
+        for (ind_feat_full = 0 ; ind_feat_full < num_feat_full ; ind_feat_full++) {
+            position_tracker = ind_samp_full * num_feat_full + ind_feat_full;
+            if (normalizer_array[position_tracker] > 0) 
+                first_moment_array[position_tracker] *= 1/normalizer_array[position_tracker];
+        }
     }
 }
 
