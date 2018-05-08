@@ -9,12 +9,12 @@ from sparseklearn import mahalanobis_distance_spherical
 from sparseklearn import mahalanobis_distance_diagonal
 from sparseklearn import pairwise_mahalanobis_distances_spherical
 from sparseklearn import pairwise_mahalanobis_distances_diagonal
-from sparseklearn import update_first_moment_single_sample
-from sparseklearn import update_both_moments_single_sample
-from sparseklearn import update_first_moment_array_single_sample
-from sparseklearn import update_both_moment_arrays_single_sample
-from sparseklearn import compute_first_moment_array
-from sparseklearn import compute_both_moment_arrays
+from sparseklearn import update_weighted_first_moment
+from sparseklearn import update_weighted_first_and_second_moment
+from sparseklearn import update_weighted_first_moment_array
+from sparseklearn import update_weighted_first_and_second_moment_array
+from sparseklearn import compute_weighted_first_moment_array
+from sparseklearn import compute_weighted_first_and_second_moment_array
 
 class DataGenerator():
 
@@ -187,13 +187,13 @@ class TestFastLAMethods(unittest.TestCase):
         correct = np.sqrt(5/3*correct)
         self.assertTrue(np.allclose(correct, result, rtol=1e-6))
 
-    def test_update_first_moment_single_sample(self):
+    def test_update_weighted_first_moment(self):
         """ Update a (init to zero) weighted mean and normalizer using 
         X[1], W[1,0]. """
 
         first_moment_to_update = np.zeros(self.td.P)
         normalizer_to_update = np.zeros(self.td.P)
-        update_first_moment_single_sample(first_moment_to_update,
+        update_weighted_first_moment(first_moment_to_update,
                                           normalizer_to_update,
                                           self.td.RX[1],
                                           self.td.mask[1],
@@ -208,14 +208,14 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertTrue(np.allclose(correct_normalizer, normalizer_to_update, 
             rtol = 1e-6))
 
-    def test_update_both_moments_single_sample(self):
+    def test_update_weighted_first_and_second_moment(self):
         """ Update a (init to zero) weighted mean and normalizer using 
         X[1], W[1,0]. """
 
         first_moment_to_update = np.zeros(self.td.P)
         second_moment_to_update = np.zeros(self.td.P)
         normalizer_to_update = np.zeros(self.td.P)
-        update_both_moments_single_sample(first_moment_to_update,
+        update_weighted_first_and_second_moment(first_moment_to_update,
                                           second_moment_to_update,
                                           normalizer_to_update,
                                           self.td.RX[1],
@@ -234,11 +234,11 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertTrue(np.allclose(correct_normalizer, normalizer_to_update, 
             rtol = 1e-6))
 
-    def test_update_first_moment_array_single_sample(self):
+    def test_update_weighted_first_moment_array(self):
         """ Update a set of 3 zero-initialized means using X[2], W[2,:]."""
         first_moment_array = np.zeros((self.td.K, self.td.P))
         normalizer_array = np.zeros((self.td.K, self.td.P))
-        update_first_moment_array_single_sample(first_moment_array,
+        update_weighted_first_moment_array(first_moment_array,
                                                normalizer_array,
                                                self.td.RX[2],
                                                self.td.mask[2],
@@ -260,12 +260,12 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertTrue(np.allclose(correct_normalizer_array, normalizer_array, 
             rtol = 1e-6))
 
-    def test_update_both_moment_arrays_single_sample(self):
+    def test_update_weighted_first_and_second_moment_array(self):
         """ Update a set of 3 zero-initialized means using X[2], W[2,:]."""
         first_moment_array = np.zeros((self.td.K, self.td.P))
         second_moment_array = np.zeros((self.td.K, self.td.P))
         normalizer_array = np.zeros((self.td.K, self.td.P))
-        update_both_moment_arrays_single_sample(first_moment_array,
+        update_weighted_first_and_second_moment_array(first_moment_array,
                                                second_moment_array,
                                                normalizer_array,
                                                self.td.RX[2],
@@ -294,10 +294,10 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertTrue(np.allclose(correct_normalizer_array, normalizer_array, 
             rtol = 1e-6))
 
-    def test_compute_first_moment_array(self):
+    def test_compute_weighted_first_moment_array(self):
         """ Weighted first moments, one moment per col of W."""
         first_moment_array = np.zeros((self.td.K, self.td.P))
-        compute_first_moment_array(first_moment_array,
+        compute_weighted_first_moment_array(first_moment_array,
                                    self.td.RX,
                                    self.td.mask,
                                    self.td.W,
@@ -310,11 +310,11 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertTrue(np.allclose(first_moment_array, correct_first_moment_array, 
                                     rtol=1e-6))
 
-    def test_compute_both_moment_arrays(self):
+    def test_compute_weighted_first_and_second_moment_array(self):
         """ Weighted first and second moments, one moment per col of W."""
         first_moment_array = np.zeros((self.td.K, self.td.P))
         second_moment_array = np.zeros((self.td.K, self.td.P))
-        compute_both_moment_arrays(first_moment_array,
+        compute_weighted_first_and_second_moment_array(first_moment_array,
                                    second_moment_array,
                                    self.td.RX,
                                    self.td.mask,

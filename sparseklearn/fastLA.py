@@ -238,10 +238,10 @@ def pairwise_mahalanobis_distances_diagonal(result,
 
 
 ################################################################################
-## update_first_moment_single_sample
+## update_weighted_first_moment
 
-moms.update_first_moment_single_sample.restype = None
-moms.update_first_moment_single_sample.argtypes = [
+moms.update_weighted_first_moment.restype = None
+moms.update_weighted_first_moment.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_to_update
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #normalizer_to_update
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_sample
@@ -250,7 +250,7 @@ moms.update_first_moment_single_sample.argtypes = [
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def update_first_moment_single_sample(first_moment_to_update,
+def update_weighted_first_moment(first_moment_to_update,
                                       normalizer_to_update,
                                       comp_sample,
                                       mask,
@@ -258,7 +258,7 @@ def update_first_moment_single_sample(first_moment_to_update,
                                       num_feat_comp,
                                       num_feat_full):
 
-    return moms.update_first_moment_single_sample(first_moment_to_update,
+    return moms.update_weighted_first_moment(first_moment_to_update,
                                                     normalizer_to_update,
                                                     comp_sample,
                                                     mask,
@@ -267,10 +267,10 @@ def update_first_moment_single_sample(first_moment_to_update,
                                                     num_feat_full)
 
 ################################################################################
-## update_both_moments_single_sample
+## update_weighted_first_and_second_moment
 
-moms.update_both_moments_single_sample.restype = None
-moms.update_both_moments_single_sample.argtypes = [
+moms.update_weighted_first_and_second_moment.restype = None
+moms.update_weighted_first_and_second_moment.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_to_update
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #second_moment_to_update
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #normalizer_to_update
@@ -280,7 +280,7 @@ moms.update_both_moments_single_sample.argtypes = [
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def update_both_moments_single_sample(first_moment_to_update,
+def update_weighted_first_and_second_moment(first_moment_to_update,
                                       second_moment_to_update,
                                       normalizer_to_update,
                                       comp_sample,
@@ -289,7 +289,7 @@ def update_both_moments_single_sample(first_moment_to_update,
                                       num_feat_comp,
                                       num_feat_full):
 
-    return moms.update_both_moments_single_sample(first_moment_to_update,
+    return moms.update_weighted_first_and_second_moment(first_moment_to_update,
                                                     second_moment_to_update,
                                                     normalizer_to_update,
                                                     comp_sample,
@@ -299,10 +299,10 @@ def update_both_moments_single_sample(first_moment_to_update,
                                                     num_feat_full)
 
 ################################################################################
-## update_first_moment_array_single_sample
+## update_weighted_first_moment_array
 
-moms.update_first_moment_array_single_sample.restype = None
-moms.update_first_moment_array_single_sample.argtypes = [
+moms.update_weighted_first_moment_array.restype = None
+moms.update_weighted_first_moment_array.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #normalizer_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_sample
@@ -312,7 +312,7 @@ moms.update_first_moment_array_single_sample.argtypes = [
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def update_first_moment_array_single_sample(first_moment_array,
+def update_weighted_first_moment_array(first_moment_array,
                                            normalizer_array,
                                            comp_sample,
                                            mask,
@@ -321,7 +321,7 @@ def update_first_moment_array_single_sample(first_moment_array,
                                            num_feat_comp,
                                            num_feat_full):
 
-    return moms.update_first_moment_array_single_sample(first_moment_array,
+    return moms.update_weighted_first_moment_array(first_moment_array,
                                                          normalizer_array,
                                                          comp_sample,
                                                          mask,
@@ -331,10 +331,10 @@ def update_first_moment_array_single_sample(first_moment_array,
                                                          num_feat_full)
 
 ################################################################################
-## update_both_moment_arrays_single_sample
+## update_weighted_first_and_second_moment_array
 
-moms.update_both_moment_arrays_single_sample.restype = None
-moms.update_both_moment_arrays_single_sample.argtypes = [
+moms.update_weighted_first_and_second_moment_array.restype = None
+moms.update_weighted_first_and_second_moment_array.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #second_moment_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #normalizer_array
@@ -345,7 +345,7 @@ moms.update_both_moment_arrays_single_sample.argtypes = [
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def update_both_moment_arrays_single_sample(first_moment_array,
+def update_weighted_first_and_second_moment_array(first_moment_array,
                                            second_moment_array,
                                            normalizer_array,
                                            comp_sample,
@@ -355,7 +355,7 @@ def update_both_moment_arrays_single_sample(first_moment_array,
                                            num_feat_comp,
                                            num_feat_full):
 
-    return moms.update_both_moment_arrays_single_sample(first_moment_array,
+    return moms.update_weighted_first_and_second_moment_array(first_moment_array,
                                                          second_moment_array,
                                                          normalizer_array,
                                                          comp_sample,
@@ -366,10 +366,10 @@ def update_both_moment_arrays_single_sample(first_moment_array,
                                                          num_feat_full)
 
 ################################################################################
-## compute_first_moment_array
+## compute_weighted_first_moment_array
 
-moms.compute_first_moment_array.restype = None
-moms.compute_first_moment_array.argtypes = [
+moms.compute_weighted_first_moment_array.restype = None
+moms.compute_weighted_first_moment_array.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_array
     ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
@@ -379,7 +379,7 @@ moms.compute_first_moment_array.argtypes = [
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def compute_first_moment_array(first_moment_array,
+def compute_weighted_first_moment_array(first_moment_array,
                                comp_array,
                                mask_array,
                                weights_array,
@@ -388,7 +388,7 @@ def compute_first_moment_array(first_moment_array,
                                num_feat_comp,
                                num_feat_full):
 
-    return moms.compute_first_moment_array(first_moment_array,
+    return moms.compute_weighted_first_moment_array(first_moment_array,
                                              comp_array,
                                              mask_array,
                                              weights_array,
@@ -398,10 +398,10 @@ def compute_first_moment_array(first_moment_array,
                                              num_feat_full)
 
 ################################################################################
-## compute_both_moment_arrays
+## compute_weighted_first_and_second_moment_array
 
-moms.compute_both_moment_arrays.restype = None
-moms.compute_both_moment_arrays.argtypes = [
+moms.compute_weighted_first_and_second_moment_array.restype = None
+moms.compute_weighted_first_and_second_moment_array.argtypes = [
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #first_moment_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #second_moment_array
     ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #comp_array
@@ -412,7 +412,7 @@ moms.compute_both_moment_arrays.argtypes = [
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def compute_both_moment_arrays(first_moment_array,
+def compute_weighted_first_and_second_moment_array(first_moment_array,
                                second_moment_array,
                                comp_array,
                                mask_array,
@@ -422,7 +422,7 @@ def compute_both_moment_arrays(first_moment_array,
                                num_feat_comp,
                                num_feat_full):
 
-    return moms.compute_both_moment_arrays(first_moment_array,
+    return moms.compute_weighted_first_and_second_moment_array(first_moment_array,
                                              second_moment_array,
                                              comp_array,
                                              mask_array,
