@@ -17,46 +17,12 @@ from sparseklearn import update_weighted_first_and_second_moment
 from sparseklearn import update_weighted_first_and_second_moment_array
 from sparseklearn import compute_weighted_first_and_second_moment_array
 
-class DataGenerator():
-
-    def __init__(self):
-
-        self.RRTX = np.array([[0, 1, 9, 0, 8],
-                           [0, 0, 7, 4, 3],
-                           [2, 0, 8, 0, 7],
-                           [0, 4, 1, 3, 0]], dtype=np.float64)
-
-        self.RX = np.array([[1, 9, 8],
-                              [7, 4, 3],
-                              [2, 8, 7],
-                              [4, 1, 3]], dtype = np.float64)
-
-        self.mask = np.array([[1, 2, 4],
-                              [2, 3, 4],
-                              [0, 2, 4],
-                              [1, 2, 3]], dtype = np.int64)
-
-        self.W = np.array([[0, 2, 7],
-                           [4, 1, 8],
-                           [1, 6, 4],
-                           [3, 2, 8]], dtype = np.float64)
-
-        self.U = np.array([[0, 6, 8, 3, 1],
-                           [1, 3, 4, 7, 5],
-                           [8, 9, 0, 4, 2]], dtype = np.float64)
-
-        self.diagonal_covariances = np.array([[2, 3, 1, 1, 6],
-                                              [7, 2, 1, 5, 4],
-                                              [4, 2, 8, 9, 1]], dtype = np.float64)
-
-        self.spherical_covariances = np.array([2,3,4], dtype = np.float64)
-
-        self.N = 4
-        self.Q = 3
-        self.P = 5
-        self.K = 3
+from generate_test_data import DataGenerator
 
 class TestFastLAMethods(unittest.TestCase):
+
+    def assertArrayEqual(self, x, y):
+        self.assertTrue(np.allclose(x, y, rtol=1e-6))
 
     def setUp(self):
         self.td = DataGenerator()
@@ -91,13 +57,8 @@ class TestFastLAMethods(unittest.TestCase):
                                         self.td.N,
                                         self.td.Q,
                                         self.td.P)
-        correct = np.array([[0     , 5/2*29, 5/2*2 , 5/2*73],
-                            [5/2*29, 0     , 5/2*17, 5/2*37],
-                            [5/2*2 , 5/2*17, 0     , 5*49  ],
-                            [5/2*73, 5/2*37, 5*49  , 0     ]], 
-                            dtype = np.float64)
-        correct = np.sqrt(correct)
-        self.assertTrue(np.allclose(correct, result, rtol=1e-6))
+        correct = self.td.correct_pairwise_l2_distances_with_self
+        self.assertArrayEqual(correct, result)
 
     def test_pairwise_l2_distances_with_full(self):
         """Pairwise distances between rows of RX and rows of U."""
@@ -110,13 +71,8 @@ class TestFastLAMethods(unittest.TestCase):
                                         self.td.K,
                                         self.td.Q,
                                         self.td.P)
-        correct = np.array([[  75,  38, 181],
-                            [   6,  22,  50],
-                            [  40,  21, 125],
-                            [  53,  26,  27]],
-                            dtype = np.float64)
-        correct = np.sqrt(5/3*correct)
-        self.assertTrue(np.allclose(correct, result, rtol=1e-6))
+        correct = self.td.correct_pairwise_l2_distances_with_full
+        self.assertArrayEqual(correct, result)
 
     def test_mahalanobis_distance_spherical(self):
         """ Mahalanobis distance ||RX[1] - U[2]|| with spherical covariance
@@ -164,7 +120,7 @@ class TestFastLAMethods(unittest.TestCase):
                             [ 53/2,  26/3,  27/4]],
                             dtype = np.float64)
         correct = np.sqrt(5/3*correct)
-        self.assertTrue(np.allclose(correct, result, rtol=1e-6))
+        self.assertArrayEqual(correct, result)
 
     def test_pairwise_mahalanobis_distances_diagonal(self):
         """ Mahalanobis distances ||RX - U|| with diagonal_covariances.
@@ -186,7 +142,7 @@ class TestFastLAMethods(unittest.TestCase):
                             [  151/3,    12.7, 12+53/72]],
                             dtype = np.float64)
         correct = np.sqrt(5/3*correct)
-        self.assertTrue(np.allclose(correct, result, rtol=1e-6))
+        self.assertArrayEqual(correct, result)
 
     def test_update_weighted_first_moment(self):
         """ Update a (init to zero) weighted mean and normalizer using 
@@ -204,10 +160,8 @@ class TestFastLAMethods(unittest.TestCase):
         correct_moment = np.array([0, 0, 28, 16, 12], dtype = np.float64)
         correct_normalizer = np.array([0, 0, 4, 4, 4], dtype = np.float64)
 
-        self.assertTrue(np.allclose(correct_moment, first_moment_to_update, 
-            rtol = 1e-6))
-        self.assertTrue(np.allclose(correct_normalizer, normalizer_to_update, 
-            rtol = 1e-6))
+        self.assertArrayEqual(correct_moment, first_moment_to_update)
+        self.assertArrayEqual(correct_normalizer, normalizer_to_update)
 
     def test_update_weighted_first_and_second_moment(self):
         """ Update a (init to zero) weighted mean and normalizer using 
@@ -228,12 +182,9 @@ class TestFastLAMethods(unittest.TestCase):
         correct_second_moment = np.array([0, 0, 196, 64, 36])
         correct_normalizer = np.array([0, 0, 4, 4, 4], dtype = np.float64)
 
-        self.assertTrue(np.allclose(correct_first_moment, first_moment_to_update, 
-            rtol = 1e-6))
-        self.assertTrue(np.allclose(correct_second_moment, second_moment_to_update, 
-            rtol = 1e-6))
-        self.assertTrue(np.allclose(correct_normalizer, normalizer_to_update, 
-            rtol = 1e-6))
+        self.assertArrayEqual(correct_first_moment, first_moment_to_update)
+        self.assertArrayEqual(correct_second_moment, second_moment_to_update)
+        self.assertArrayEqual(correct_normalizer, normalizer_to_update)
 
     def test_update_weighted_first_moment_array(self):
         """ Update a set of 3 zero-initialized means using X[2], W[2,:]."""
@@ -256,10 +207,8 @@ class TestFastLAMethods(unittest.TestCase):
                                             [4,0,4,0,4]],
                                             dtype = np.float64)
 
-        self.assertTrue(np.allclose(correct_first_moment_array, first_moment_array, 
-            rtol = 1e-6))
-        self.assertTrue(np.allclose(correct_normalizer_array, normalizer_array, 
-            rtol = 1e-6))
+        self.assertArrayEqual(correct_first_moment_array, first_moment_array)
+        self.assertArrayEqual(correct_normalizer_array, normalizer_array)
 
     def test_update_weighted_first_and_second_moment_array(self):
         """ Update a set of 3 zero-initialized means using X[2], W[2,:]."""
@@ -288,12 +237,9 @@ class TestFastLAMethods(unittest.TestCase):
                                             [4,0,4,0,4]],
                                             dtype = np.float64)
 
-        self.assertTrue(np.allclose(correct_first_moment_array, first_moment_array, 
-            rtol = 1e-6))
-        self.assertTrue(np.allclose(correct_second_moment_array, second_moment_array, 
-            rtol = 1e-6))
-        self.assertTrue(np.allclose(correct_normalizer_array, normalizer_array, 
-            rtol = 1e-6))
+        self.assertArrayEqual(correct_first_moment_array, first_moment_array)
+        self.assertArrayEqual(correct_second_moment_array, second_moment_array)
+        self.assertArrayEqual(correct_normalizer_array, normalizer_array)
 
     def test_compute_weighted_first_moment_array(self):
         """ Weighted first moments, one moment per col of W."""
@@ -308,8 +254,7 @@ class TestFastLAMethods(unittest.TestCase):
                                    self.td.P)
         correct_first_moment_array = np.dot(self.td.W.T, self.td.RRTX) / \
                                      np.dot(self.td.W.T, (self.td.RRTX!=0).astype(int))
-        self.assertTrue(np.allclose(first_moment_array, correct_first_moment_array, 
-                                    rtol=1e-6))
+        self.assertArrayEqual(first_moment_array, correct_first_moment_array)
 
     def test_compute_weighted_first_and_second_moment_array(self):
         """ Weighted first and second moments, one moment per col of W."""
@@ -328,10 +273,8 @@ class TestFastLAMethods(unittest.TestCase):
                                      np.dot(self.td.W.T, (self.td.RRTX!=0).astype(int))
         correct_second_moment_array = np.dot(self.td.W.T, self.td.RRTX**2) / \
                                       np.dot(self.td.W.T, (self.td.RRTX!=0).astype(int))
-        self.assertTrue(np.allclose(first_moment_array, correct_first_moment_array, 
-                                    rtol=1e-6))
-        self.assertTrue(np.allclose(second_moment_array, correct_second_moment_array, 
-                                    rtol=1e-6))
+        self.assertArrayEqual(first_moment_array, correct_first_moment_array)
+        self.assertArrayEqual(second_moment_array, correct_second_moment_array)
 
 
 if __name__ == '__main__':

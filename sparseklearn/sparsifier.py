@@ -5,7 +5,9 @@ from scipy import sparse
 from scipy.fftpack import dct, idct
 from numpy.ctypeslib import ndpointer
 import ctypes as ct
-#from .fastLA import polynomial_combination, pairwise_distances
+
+from .fastLA import pairwise_l2_distances_with_self
+from .fastLA import pairwise_l2_distances_with_full
 
 class Sparsifier():
     """ Sparsifier.
@@ -164,6 +166,7 @@ class Sparsifier():
         #            'that the input is preconditioned but precond_D is not given.')
         #
         # RHDX and compression_target can't both be given
+        # mask and compression_target can't both be given
         return
 
     def _dimension_checker(self, compression, alpha, Q, Qs, N, P, X, HDX, RHDX):
@@ -334,7 +337,7 @@ class Sparsifier():
     ###########################################################################
     # Fitting
 
-    def _compute_constants(self, X, HDX, RHDX, compression_target, alpha_target, data_dim):
+    def _compute_constants(self, X, HDX, RHDX, mask, compression_target, alpha_target, data_dim):
         """ Compute the constants needed for the sparsifier. As usual, at least
         one of X, HDX, or RHDX must not be None. 
 
@@ -414,13 +417,18 @@ class Sparsifier():
             # otherwise use HDX's shape
             elif HDX is not None:
                 N,P = np.shape(HDX)
+
+            # if mask was passed use this to set Q
+            if mask is not None:
+                Q = mask.shape[1]
             # if compression_target is a float, find the number of dimensions:
-            if type(compression_target) is float:
+            elif type(compression_target) is float:
                 Q = int(np.floor(P * compression_target))
             # if compression_target is given as the num dim, find the ratio
-            if (type(compression_target) is int) or \
+            elif (type(compression_target) is int) or \
                 (type(compression_target) is np.int64):
                 Q = compression_target
+
             # compute number of shared and random subsampling
             if type(alpha_target) is float:
                 # then alpha is the ratio of shared indices
@@ -480,7 +488,8 @@ class Sparsifier():
         self._data_checker(X, HDX, RHDX, self.mask, self.data_dim, self.precond_D)
         # set model constants 
         self.compression, self.alpha, self.Q, self.Qs, self.Qr, self.N, self.P = \
-                self._compute_constants(X, HDX, RHDX, self.compression_target, self.alpha_target,
+                self._compute_constants(X, HDX, RHDX, self.mask, 
+                        self.compression_target, self.alpha_target,
                         self.data_dim)
         # run checks
         self._dimension_checker(self.compression, self.alpha, self.Q, 
@@ -502,181 +511,20 @@ class Sparsifier():
     ###########################################################################
     # Operations on masked data
 
-    def wrapped_ndptr(*args, **kwargs):
-        base = ndpointer(*args, **kwargs)
-        def from_param(cls, obj):
-            if obj is None:
-                return obj
-            return base.from_param(obj)
-        return type(base.__name__, (base,), {'from_param': classmethod(from_param)})
-    DoubleArrayType = wrapped_ndptr(dtype=np.float64, flags='C_CONTIGUOUS')
+    def pairwise_distances(self, Y = None):
 
-    def polynomial_combination(self, S = None, W = None, U = None, 
-        Sigma = None, power = 1):
-        """ Compute sum_n w_nk (x_n - R_n U_k)^power // Sigma_k
-
-        Inputs
-        ------
-
-        S : array of ints, optional
-            Subset of the data X to use. Each entry in S corresponds
-            to a row of X. If None, all rows of X are used.
-
-        W : array of floats, shape (N,K), optional
-            Data weights. If None, K is inferred from mu and W is taken to be all 1s.
-
-        U : array of floats, shape (K,P), optional
-            Offsets. If None, K is taken to be 1 and U is taken to be all 0s.
-
-        Sigma : array of floats, shape (K,P), optional
-            Dimension weights. If None, K is inferred from U and Sigma is taken to
-            be all 1s.
-
-        power : int, optional
-            Polynomial exponent, defaults to 1. 
-
-        Returns
-        -------
-
-        result : array of floats, shape (K, P)
-            The sum above.
-        """    
-        return polynomial_combination(self.RHDX, self.mask, self.P, S, W, U, Sigma, power)
-
-    def pairwise_distances(self, S = None, W = None, U = None, 
-        Sigma = None, power = 2):
-
-        return pairwise_distances(self.RHDX, self.mask, S, W, U, Sigma, power, self.P)
-
-
-    def polynomial_combination_old(self, W, power = 1):
-        """
-        Computes a weighted sum over the masked data, with powers.
-
-        .. math::
-
-           \sum_{n} W_{nk} R_n^T R_n{\mathbf{x}_n}^p
-
-        Parameters
-        ----------
-
-            W : nd.array, shape (N,k)
-                Weights to apply to the terms in the sum.
-            power : int or float, optional
-                The exponent, defaults to 1. 
-
-        Returns
-        -------
-
-            comb : nd.array, shape (k,P)
-                The weighted sum over the exponentiated data.
-
-        """
-        if W.ndim != 2:
-            raise Exception('W must be a 2D array')
-        _, K = np.shape(W)
-        comb = np.zeros((K, self.P))
-
-        if power == 1:
-            for k in range(K):
-                for n in range(self.N):
-                    comb[k][self.mask[n]] += W[n,k] * self.HDX_sub[n]
+        if Y is None:
+            result = np.zeros((self.N, self.N), dtype=np.float64)
+            pairwise_l2_distances_with_self(result, self.RHDX, self.mask, 
+                self.N, self.Q, self.P)
         else:
-            for k in range(K):
-                for n in range(self.N):
-                    comb[k][self.mask[n]] += W[n,k] * self.HDX_sub[n]**power
+            K = Y.shape[0]
+            result = np.zeros((self.N, K), dtype = np.float64)
+            pairwise_l2_distances_with_full(result, self.RHDX, Y, self.mask, 
+                self.N, K, self.Q, self.P)
 
-        return comb
+        return result
 
-
-    def pairwise_distances_old(self, Y = None, W = None, 
-            transform_Y = "R", transform_W = "R"):
-        """ Compute the pairwise distances between the masked X and Y.
-        REPLACE
-
-        fast_polynomial(....) = pairwise_distances(Y, W)
-            X in fast_polynomial is self.RHDX
-
-        X = self.RHDX
-        mask = self.mask
-        P = self.P
-
-        Parameters
-        ----------
-
-        Y : nd.array, shape (k,P) or (k,Q), optional
-            The array of vectors, each row is a point, default = None. If None,
-            is taken to be X. 
-        W : nd.array, shape (k,P) or (k,Q), optional
-            The weights for each point, default = None. If None, is taken to
-            be vector of ones.
-        transform_Y : str, temporary
-        transform_W : str, temporary
-
-        Returns
-        -------
-
-        dist : nd.array, shape (N,k)
-            The distances. dist[n,j] is the distance of the nth datapoint to Y[j].
-
-        """
-
-
-        X = self.RHDX
-
-        # transform Y if we need to
-        if "HD" in transform_Y and Y is not None:
-            Y = self.apply_HD(Y)
-        # assign Y to be X if we need to
-        elif Y is None:
-            Y = X
-        # augment Y if we need to
-        if Y.ndim == 1:
-            Y = Y[np.newaxis,:]
-        
-        # transform W if we need to
-        if "HD" in transform_W and W is not None:
-            W = self.apply_HD(W)
-
-        # set up the distances output array
-        K, _ = np.shape(Y)
-        dist = np.zeros((K, self.N))
-
-        # don't check this every time we go through the loop
-        if "R" in transform_Y:
-            subsample_Y = True
-        else:
-            subsample_Y = False
-
-        if "R" in transform_W:
-            subsample_W = True
-        else:
-            subsample_W = False
-
-        # compute the distances
-
-        # ... in two cases. First, if no weights are given
-        if W is None:
-            for k in range(K):
-                if subsample_Y:
-                    y = self.apply_mask(Y[k])
-                else:
-                    y = Y[k]
-                dist[k] = np.linalg.norm(y - X, axis = 1)
-        # ... or alternatively if they are given
-        else:
-            for k in range(K):
-                if subsample_Y:
-                    y = self.apply_mask(Y[k])
-                else:
-                    y = Y[k]
-                if subsample_W:
-                    w = self.apply_mask(W[k])
-                else:
-                    w = W[k]
-                Xmys = (X-y)**2
-                dist[k] = np.sqrt([np.dot(Xmys[n], w[n]) for n in range(self.N)])
-        return dist.T
 
     def _pick_K_datapoints(self, K):
         """ Picks K datapoints at random. If the Sparsifier has access to HDX,
