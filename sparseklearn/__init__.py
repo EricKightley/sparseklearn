@@ -8,11 +8,12 @@ from .fastLA import mahalanobis_distance_spherical
 from .fastLA import mahalanobis_distance_diagonal
 from .fastLA import pairwise_mahalanobis_distances_spherical
 from .fastLA import pairwise_mahalanobis_distances_diagonal
+
 from .fastLA import update_weighted_first_moment
-from .fastLA import update_weighted_first_and_second_moment
 from .fastLA import update_weighted_first_moment_array
-from .fastLA import update_weighted_first_and_second_moment_array
 from .fastLA import compute_weighted_first_moment_array
+from .fastLA import update_weighted_first_and_second_moment
+from .fastLA import update_weighted_first_and_second_moment_array
 from .fastLA import compute_weighted_first_and_second_moment_array
 #from .auxutils import generate_mnist_dataset
 #from .auxutils import load_mnist_dataset
