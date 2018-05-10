@@ -1,36 +1,27 @@
-
+import unittest
 import numpy as np
-import h5py
+from sparseklearn import Sparsifier, KMeans
 
-from sparseklearn import Sparsifier
-from sparseklearn import KMeans
-from auxutils import generate_mnist_dataset
+from generate_test_data import DataGenerator
 
+class TestSparsifier(unittest.TestCase):
 
-# set the random seed
-rs = 22
-np.random.seed(rs)
+    def assertArrayEqual(self, x, y):
+        self.assertTrue(np.allclose(x, y, rtol=1e-6))
 
-# load computed data
-hdf5_file = h5py.File('/home/eric/kmeansdata/sample_mnist.hdf5','r')
-X = hdf5_file['X'][:]
-HDX = hdf5_file['HDX'][:]
-RHDX = hdf5_file['RHDX'][:]
-mask = hdf5_file['mask'][:]
-precond_D = hdf5_file['precond_D'][:]
-labels = hdf5_file['labels'][:]
-# set P
-P = 784
+    def setUp(self):
+        self.td = DataGenerator()
+        kmeans = KMeans(mask = self.td.mask, data_dim = 5, transform = None)
+        kmeans.fit_sparsifier(X = self.td.X)
+        self.kmeans = kmeans
 
-#spr = Sparsifier(mask = mask, data_dim = P)
-#spr.fit_sparsifier(X = X)
+    def test_fit(self):
+        self.assertTrue(np.allclose(self.td.RX, self.kmeans.RHDX, rtol=1e-6))
+        self.assertTrue(np.allclose(self.td.mask, self.kmeans.mask, rtol=1e-6))
+        self.assertEqual(self.td.N, self.kmeans.N)
+        self.assertEqual(self.td.Q, self.kmeans.Q)
+        self.assertEqual(self.td.P, self.kmeans.P)
 
-#skm = KMeans(n_clusters = 3, compression_target = 0.1)
-#skm.fit(X=X)
+if __name__ == '__main__':
+    unittest.main()
 
-skm = KMeans(mask = mask, data_dim = P, precond_D = precond_D, n_clusters = 3)
-#skm = KMeans(n_clusters = 3, precond_D = precond_D)
-skm.fit(RHDX=RHDX)
-localpath = '/home/eric/Dropbox/EricStephenShare/sparseklearn/plots/'
-np.save(localpath+'kmeans_means.npy', skm.cluster_centers_)
-np.save(localpath+'kmeans_counts.npy', skm.n_per_cluster)

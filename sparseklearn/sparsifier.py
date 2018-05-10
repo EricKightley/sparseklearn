@@ -8,6 +8,8 @@ import ctypes as ct
 
 from .fastLA import pairwise_l2_distances_with_self
 from .fastLA import pairwise_l2_distances_with_full
+from .fastLA import compute_weighted_first_moment_array
+from .fastLA import compute_weighted_first_and_second_moment_array
 
 class Sparsifier():
     """ Sparsifier.
@@ -512,6 +514,24 @@ class Sparsifier():
     # Operations on masked data
 
     def pairwise_distances(self, Y = None):
+        """ Computes the pairwise distance between each sparsified sample,
+        or between each sparsified sample and each full sample in Y if 
+        Y is given. 
+
+        Inputs
+        ------
+
+        Y : nd.array, shape (K, P), optional
+            defaults to None. Full, transformed samples.
+
+        Returns
+        -------
+
+        distances : nd.array, shape(K or N, N)
+            distances between each pair of samples (if Y is None) or distances
+            between each sample and each row in Y. 
+
+        """
 
         if Y is None:
             result = np.zeros((self.N, self.N), dtype=np.float64)
@@ -525,6 +545,40 @@ class Sparsifier():
 
         return result
 
+    def weighted_means(self, W):
+        """ Computes weighted full means of sparsified samples. Currently this 
+        is also used to compute hard assignments but should be updated for 
+        speed later - zeros in W are multiplied through. 
+
+        Inputs
+        ------
+
+        W : nd.array, shape (N, K)
+            Weights. Each row corresponds to a sample, each column to a set of
+            weights. The columns of W should sum to 1. There is no necessary 
+            correspondence between the columns of W.
+
+        Returns
+        -------
+
+        means : nd.array, shape (K,P)
+            Weighted full means. Each row corresponds to a possible independent
+            set of weights (for example, a binary W with K columns would give
+            the means of K clusters). 
+        """
+
+        K = np.shape(W)[1]
+        means = np.zeros((K, self.P), dtype = np.float64)
+        compute_weighted_first_moment_array(
+                               means,
+                               self.RHDX,
+                               self.mask,
+                               W,
+                               self.N,
+                               K,
+                               self.Q,
+                               self.P)
+        return means
 
     def _pick_K_datapoints(self, K):
         """ Picks K datapoints at random. If the Sparsifier has access to HDX,
