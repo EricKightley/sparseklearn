@@ -580,6 +580,49 @@ class Sparsifier():
                                self.P)
         return means
 
+    def weighted_variances_and_means(self, W):
+        """ Computes weighted full means and variances of sparsified samples. 
+        Currently also used to compute hard assignments but should be updated 
+        for speed later - zeros in W are multiplied through. 
+
+        Inputs
+        ------
+
+        W : nd.array, shape (N, K)
+            Weights. Each row corresponds to a sample, each column to a set of
+            weights. The columns of W should sum to 1. There is no necessary 
+            correspondence between the columns of W.
+
+        Returns
+        -------
+
+        means : nd.array, shape (K,P)
+            Weighted full means. Each row corresponds to a possible independent
+            set of weights (for example, a binary W with K columns would give
+            the means of K clusters). 
+
+        variances : nd.array, shape (K,P)
+            Weighted full variances. Each row corresponds to a possible independent
+            set of weights (for example, a binary W with K columns would give
+            the variances of K clusters). 
+        """
+
+        K = np.shape(W)[1]
+        means = np.zeros((K, self.P), dtype = np.float64)
+        second_moments = np.zeros((K, self.P), dtype = np.float64)
+        compute_weighted_first_and_second_moment_array(
+                               means,
+                               second_moments,
+                               self.RHDX,
+                               self.mask,
+                               W,
+                               self.N,
+                               K,
+                               self.Q,
+                               self.P)
+        variances = second_moments - means**2
+        return[means, variances]
+
     def _pick_K_datapoints(self, K):
         """ Picks K datapoints at random. If the Sparsifier has access to HDX,
         it will choose from that; otherwise draws from RHDX and returns a dense
