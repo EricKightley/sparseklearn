@@ -157,7 +157,7 @@ class KMeans(Sparsifier):
 
         # now pick the remaining k-1 cluster_centers
         for k in range(1,self.K):
-            # squarred distance from all the data points to the last cluster added
+            # squared distance from all the data points to the last cluster added
             latest_cluster = self.cluster_centers_[k-1,np.newaxis]
             d_curr = self.pairwise_distances(Y = latest_cluster)[0,:]**2
             # ||x - U|| is either this distance or the current minimum
@@ -205,7 +205,7 @@ class KMeans(Sparsifier):
 
     def _compute_cluster_centers(self):
         """ Compute the means of each cluster."""
-        cluster_centers_ = np.zeros((self.K, self.P))
+        cluster_centers_ = np.zeros((self.K, self.P), dtype = np.float64)
         counters = np.zeros_like(cluster_centers_, dtype = int)
         for n in range(self.N):
             x = self.RHDX[n]

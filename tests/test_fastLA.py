@@ -114,12 +114,7 @@ class TestFastLAMethods(unittest.TestCase):
                                                  self.td.K,
                                                  self.td.Q,
                                                  self.td.P)
-        correct = np.array([[ 75/2,  38/3, 181/4],
-                            [  6/2,  22/3,  50/4],
-                            [ 40/2,  21/3, 125/4],
-                            [ 53/2,  26/3,  27/4]],
-                            dtype = np.float64)
-        correct = np.sqrt(5/3*correct)
+        correct = self.td.correct_pairwise_mahalanobis_distances_spherical
         self.assertArrayEqual(correct, result)
 
     def test_pairwise_mahalanobis_distances_diagonal(self):
@@ -136,12 +131,7 @@ class TestFastLAMethods(unittest.TestCase):
                                                 self.td.K,
                                                 self.td.Q,
                                                 self.td.P)
-        correct = np.array([[   17.5,   29.25, 78.125],
-                            [    8/3,    11.8,  7.125],
-                            [      8,  17+1/7,     42],
-                            [  151/3,    12.7, 12+53/72]],
-                            dtype = np.float64)
-        correct = np.sqrt(5/3*correct)
+        correct = self.td.correct_pairwise_mahalanobis_distances_diagonal
         self.assertArrayEqual(correct, result)
 
     def test_update_weighted_first_moment(self):

@@ -68,7 +68,27 @@ class DataGenerator():
                      )
                 )
 
+        self.correct_pairwise_mahalanobis_distances_spherical = \
+            np.sqrt(5/3 * 
+                np.array(
+                    [[ 75/2,  38/3, 181/4],
+                     [  6/2,  22/3,  50/4],
+                     [ 40/2,  21/3, 125/4],
+                     [ 53/2,  26/3,  27/4]],
+                     dtype = np.float64
+                     )
+                )
 
+        self.correct_pairwise_mahalanobis_distances_diagonal= \
+            np.sqrt(5/3*
+                np.array(
+                    [[  17.5,  29.25, 78.125],
+                     [   8/3,   11.8,  7.125],
+                     [     8, 17+1/7,     42],
+                     [ 151/3,   12.7, 12+53/72]],
+                     dtype = np.float64
+                     )
+                )
 
 
 

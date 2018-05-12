@@ -580,7 +580,7 @@ class Sparsifier():
                                self.P)
         return means
 
-    def weighted_variances_and_means(self, W):
+    def weighted_means_and_variances(self, W):
         """ Computes weighted full means and variances of sparsified samples. 
         Currently also used to compute hard assignments but should be updated 
         for speed later - zeros in W are multiplied through. 

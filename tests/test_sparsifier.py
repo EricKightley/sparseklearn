@@ -38,8 +38,8 @@ class TestSparsifier(unittest.TestCase):
                                      np.dot(self.td.W.T, (self.td.RRTX!=0).astype(int))
         self.assertArrayEqual(first_moment_array, correct_first_moment_array)
 
-    def test_weighted_variances_and_means(self):
-        means,variances = self.sparsifier.weighted_variances_and_means(self.td.W)
+    def test_weighted_means_and_variances(self):
+        means,variances = self.sparsifier.weighted_means_and_variances(self.td.W)
 
         correct_first_moment_array = np.dot(self.td.W.T, self.td.RRTX) / \
                                      np.dot(self.td.W.T, (self.td.RRTX!=0).astype(int))
