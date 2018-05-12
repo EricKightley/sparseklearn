@@ -79,7 +79,7 @@ class DataGenerator():
                      )
                 )
 
-        self.correct_pairwise_mahalanobis_distances_diagonal= \
+        self.correct_pairwise_mahalanobis_distances_diagonal = \
             np.sqrt(5/3*
                 np.array(
                     [[  17.5,  29.25, 78.125],

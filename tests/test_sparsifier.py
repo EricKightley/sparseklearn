@@ -49,6 +49,16 @@ class TestSparsifier(unittest.TestCase):
         self.assertArrayEqual(means, correct_first_moment_array)
         self.assertArrayEqual(variances, correct_variances)
 
+    def test_pairwise_mahalanobis_distances(self):
+        result_spherical = self.sparsifier.pairwise_mahalanobis_distances(\
+            self.td.U, self.td.spherical_covariances, 'spherical') 
+        result_diagonal = self.sparsifier.pairwise_mahalanobis_distances(\
+            self.td.U, self.td.diagonal_covariances, 'diag')
+        correct_spherical = self.td.correct_pairwise_mahalanobis_distances_spherical
+        correct_diagonal = self.td.correct_pairwise_mahalanobis_distances_diagonal
+        self.assertArrayEqual(result_spherical, correct_spherical)
+        self.assertArrayEqual(result_diagonal, correct_diagonal)
+
 if __name__ == '__main__':
     unittest.main()
 

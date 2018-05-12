@@ -352,19 +352,19 @@ void pairwise_mahalanobis_distances_spherical(double *result,
 /*  Computes the pairwise spherical mahalanobis distance between 
  *  the rows of comp_array and the rows of full_array by 
  *  masking each sample in full_array with each mask 
- *  in mask_array, finding the l2 distance in the comp domain, and then
+ *  in mask_array, finding the maha distance in the comp domain, and then
  *  scaling back up to approximate the distance in the full domain.
  *
  * Inputs
  * ------
  *
- *     comp_array : array, size num_samples by num_feat_comp. Each row is
+ *     comp_array : array, size num_samples_comp by num_feat_comp. Each row is
  *                        a datapoint in the comp domain.
  *
- *     full_means : array, size num_samples by num_feat_full. Each row is
+ *     full_means : array, size num_samples_full by num_feat_full. Each row is
  *                  a datapoint in the full domain.
  *
- *     mask_array : array, size num_samples by num_feat_comp. Each row is the indices 
+ *     mask_array : array, size num_samples_full by num_feat_comp. Each row is the indices 
  *                  indicating which entries were kept of the full datapoint from 
  *                  which the comp sample in comp_array was obtained.
  *
@@ -383,7 +383,7 @@ void pairwise_mahalanobis_distances_spherical(double *result,
  * Returns
  * -------
  *
- *     result : (modified) array, size num_samples by num_samples, the pairwise
+ *     result : (modified) array, size num_samples_comp by num_samples_full, the pairwise
  *              mahalanobis distance between each datapoint; i.e., result[i][j] 
  *              is the distance between the ith and jth row of comp_array. 
  */ 
@@ -416,7 +416,7 @@ void pairwise_mahalanobis_distances_diagonal(double *result,
 /*  Computes the pairwise mahalanobis distances, with diagonal covariances, 
  *  between the rows of comp_array and the rows of full_array by 
  *  masking each sample in full_array with each mask 
- *  in mask_array, finding the l2 distance in the comp domain, and then
+ *  in mask_array, finding the maha distance in the comp domain, and then
  *  scaling back up to approximate the distance in the full domain.
  *
  * Inputs

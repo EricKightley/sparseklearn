@@ -11,6 +11,9 @@ from .fastLA import pairwise_l2_distances_with_full
 from .fastLA import compute_weighted_first_moment_array
 from .fastLA import compute_weighted_first_and_second_moment_array
 
+from .fastLA import pairwise_mahalanobis_distances_spherical
+from .fastLA import pairwise_mahalanobis_distances_diagonal
+
 class Sparsifier():
     """ Sparsifier.
 
@@ -518,7 +521,7 @@ class Sparsifier():
         or between each sparsified sample and each full sample in Y if 
         Y is given. 
 
-        Inputs
+        Parameters
         ------
 
         Y : nd.array, shape (K, P), optional
@@ -550,7 +553,7 @@ class Sparsifier():
         is also used to compute hard assignments but should be updated for 
         speed later - zeros in W are multiplied through. 
 
-        Inputs
+        Parameters
         ------
 
         W : nd.array, shape (N, K)
@@ -585,7 +588,7 @@ class Sparsifier():
         Currently also used to compute hard assignments but should be updated 
         for speed later - zeros in W are multiplied through. 
 
-        Inputs
+        Parameters
         ------
 
         W : nd.array, shape (N, K)
@@ -622,6 +625,63 @@ class Sparsifier():
                                self.P)
         variances = second_moments - means**2
         return[means, variances]
+
+    def pairwise_mahalanobis_distances(self, means, covariances, covariance_type):
+        """ Computes the mahalanobis distance between each compressed sample and
+        each full mean (each row of means).
+
+        Parameters
+        ----------
+
+        means : nd.array, shape (K,P)
+            The means with which to take the mahalanobis distances. Each row of
+            ::means is a single mean in P-dimensional space. 
+
+        covariances : nd.array, shape (K,P) or shape (P,). 
+            The non-zero entries of the covariance matrix. If 
+            ::covariance_type is 'spherical', must be shape (P,). If
+            ::covariance_type is 'diag', must be shape (K,P)
+
+        covariance_type : string. Must be one of 
+        
+            'spherical' (each component has its own single variance)
+            'diag' (each component has its own diagonal covariance matrix)
+
+        Returns
+        -------
+
+        distances : nd.array, shape (N,K)
+            The pairwise mahalanobis distances. 
+
+        """
+        #TODO check that means is 2D and it has number of columns == self.P
+        #TODO check that covariances is the right shape for each case
+        #TODO add a test to catch the exception
+        K = means.shape[0]
+        distances = np.zeros((self.N, K), dtype = np.float64)
+        if covariance_type == 'spherical':
+            pairwise_mahalanobis_distances_spherical(distances,
+                                                     self.RHDX,
+                                                     means,
+                                                     self.mask,
+                                                     covariances,
+                                                     self.N,
+                                                     K,
+                                                     self.Q,
+                                                     self.P)
+        elif covariance_type == 'diag':
+            pairwise_mahalanobis_distances_diagonal(distances,
+                                                    self.RHDX,
+                                                    means,
+                                                    self.mask,
+                                                    covariances,
+                                                    self.N,
+                                                    K,
+                                                    self.Q,
+                                                    self.P)
+        else:
+            raise Exception("covariance_type must be 'spherical' or 'diag'")
+        return distances
 
     def _pick_K_datapoints(self, K):
         """ Picks K datapoints at random. If the Sparsifier has access to HDX,
