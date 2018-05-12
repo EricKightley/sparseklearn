@@ -1,5 +1,7 @@
 from .sparsifier import Sparsifier
 from .gmm import GaussianMixture
+from .kmeans import KMeans
+
 from .fastLA import dist_both_comp
 from .fastLA import dist_one_comp_one_full
 from .fastLA import pairwise_l2_distances_with_self
@@ -20,4 +22,3 @@ from .fastLA import compute_weighted_first_and_second_moment_array
 #from .auxutils import write_mnist_dataset
 #from .neighbors import KNeighborsClassifier
 #from .mixture import GaussianMixture
-from .kmeans import KMeans

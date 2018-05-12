@@ -18,9 +18,7 @@ class GaussianMixture(Sparsifier):
         best_means_ = None
         for n in range(self.n_init):
             log_prob_norm, counter = self.fit_single_trial()
-            print([log_prob_norm, counter])
             if log_prob_norm >= best_lpn:
-                print('Got a better fit')
                 best_lpn = log_prob_norm
                 best_counter = counter
                 best_means_ = self.means_
@@ -50,7 +48,7 @@ class GaussianMixture(Sparsifier):
         elif n_passes == 2:
             raise ValueError('Cannot currently handle 2-pass')
         else:
-            raise ValueError('n_passes needs to be 1 or 2, but its {}'.format(self.n_passes))
+            raise ValueError('n_passes needs to be 1 or 2, but is {}'.format(self.n_passes))
         return [means_, covariances_]
 
     def fit_single_trial(self):
@@ -176,7 +174,7 @@ class GaussianMixture(Sparsifier):
             converged = False
         return converged
 
-    def __init__(self, n_components = 1, covariance_type = 'full', tol = 0.001,
+    def __init__(self, n_components = 1, covariance_type = 'spher', tol = 0.001,
             reg_covar = 1e-06, max_iter = 100, n_init = 1, 
             init_params = 'kmeans', kmeans_init = 'random', kmeans_max_iter = 0, 
             weights_init = None, means_init = None, 
