@@ -120,6 +120,9 @@ class GaussianMixture(Sparsifier):
     # parameter and responsibiltiy computation
 
     # E-step
+    #def _compute_log_probability(self, means, covariances):
+    #    maha_dist_squared = self.pairwise_mahalanobis_distances(means, covariances)**2
+
     def _estimate_log_prob_resp(self, weights, means, cov):
         # compute the log probabilities
         const = self.M * np.log(2*np.pi)
@@ -131,7 +134,6 @@ class GaussianMixture(Sparsifier):
         lse = logsumexp(log_prob, b = weights, axis = 1)
         log_resp = np.log(weights) + log_prob - lse[:, np.newaxis]
         log_prob_norm = np.mean(lse)
-        print(log_prob_norm)
         return [log_prob, log_resp, log_prob_norm]
         
     # M-step

@@ -17,6 +17,8 @@ from sparseklearn import update_weighted_first_and_second_moment
 from sparseklearn import update_weighted_first_and_second_moment_array
 from sparseklearn import compute_weighted_first_and_second_moment_array
 
+from sparseklearn import apply_mask_to_full_sample
+
 from generate_test_data import DataGenerator
 
 class TestFastLAMethods(unittest.TestCase):
@@ -266,6 +268,17 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertArrayEqual(first_moment_array, correct_first_moment_array)
         self.assertArrayEqual(second_moment_array, correct_second_moment_array)
 
+    def test_apply_mask_to_full_sample(self):
+        """ Apply mask[2] to U[1]. """
+
+        compressed_sample = np.zeros(self.td.Q, dtype = np.float64)
+        apply_mask_to_full_sample(compressed_sample, 
+                                  self.td.U[1],
+                                  self.td.mask[2],
+                                  self.td.Q)
+
+        correct_compressed_sample = np.array([1,4,5], dtype = np.float64)
+        self.assertArrayEqual(compressed_sample, correct_compressed_sample)
 
 if __name__ == '__main__':
     unittest.main()
