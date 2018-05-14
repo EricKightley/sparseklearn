@@ -39,7 +39,7 @@ class GaussianMixture(Sparsifier):
 
     def reconstruct_parameters(self, n_passes):
         if n_passes == 1:
-            if self.precond:
+            if self.precond_D:
                 means_ = self.invert_HD(self.means_)
                 covariances_ = self.invert_HD(self.covariances_)
             else:
@@ -75,9 +75,9 @@ class GaussianMixture(Sparsifier):
         # compute the means and responsibilities first
         if self.init_params == 'kmeans':
             kmc = KMeans(n_clusters = self.n_components, tol = self.tol,
-                    init = self.kmeans_init, full_init = self.full_init, 
+                    init = self.kmeans_init, 
                     max_iter = self.kmeans_max_iter, 
-                    precond = self.precond,
+                    precond_D = self.precond_D,
                     n_passes = self.n_passes, n_init = 1)
             kmc.fit(self)
             resp = np.zeros((self.N, self.n_components))
@@ -96,7 +96,7 @@ class GaussianMixture(Sparsifier):
             if self.means_init is None:
                 self.means_ = self._estimate_gaussian_means(resp, rk, rkd)
             else:
-                self.means_ = (self.apply_HD(self.means_init) if self.precond else self.means_init)
+                self.means_ = (self.apply_HD(self.means_init) if self.precond_D else self.means_init)
 
         else:
             raise ValueError('Unimplemented initialization method: {}'.format(self.init_params))
@@ -107,7 +107,7 @@ class GaussianMixture(Sparsifier):
                     self.means_)
         else:
             self.covariances_ = (self.apply_HD(1/(self.precisions_init + self.reg_covar)) 
-                    if self.precond else 1/self.precisions_init)
+                    if self.precond_D else 1/self.precisions_init)
 
         # compute and assign the weights, overwriting if initialized
         weights = self._estimate_gaussian_weights(rk)
@@ -125,7 +125,7 @@ class GaussianMixture(Sparsifier):
 
     def _estimate_log_prob_resp(self, weights, means, cov):
         # compute the log probabilities
-        const = self.M * np.log(2*np.pi)
+        const = self.Q * np.log(2*np.pi)
         #det = np.sum(np.log(cov), axis=1)
         detn = self.mask_inverse.T.dot(np.log(cov).T)
         S = self.pairwise_distances(Y = means, W = 1/cov)**2
@@ -176,12 +176,12 @@ class GaussianMixture(Sparsifier):
             converged = False
         return converged
 
-    def __init__(self, n_components = 1, covariance_type = 'spher', tol = 0.001,
+    def __init__(self, n_components = 1, covariance_type = 'spherical', tol = 0.001,
             reg_covar = 1e-06, max_iter = 100, n_init = 1, 
             init_params = 'kmeans', kmeans_init = 'random', kmeans_max_iter = 0, 
             weights_init = None, means_init = None, 
             precisions_init = None, random_state = None, warm_start = False,
-            full_init = True, n_passes = 1,
+            n_passes = 1,
             **kwargs):
 
         self.init_params = init_params
@@ -189,7 +189,6 @@ class GaussianMixture(Sparsifier):
         self.tol = tol
         self.n_passes = n_passes
         self.n_init = n_init
-        self.full_init = full_init
         self.max_iter = max_iter
         self.means_init = means_init
         self.weights_init = weights_init

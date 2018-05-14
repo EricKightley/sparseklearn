@@ -30,3 +30,4 @@ void apply_mask_to_full_sample(double *result,
         result[ind_feat_comp] = samp_full[mask[ind_feat_comp]];
     }
 }
+

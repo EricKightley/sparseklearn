@@ -11,8 +11,11 @@ class KMeans(Sparsifier):
     n_clusters : int, default: 8
         The number of clusters.
 
-    init : {'k-means++', 'random'}, default: 'k-means++'
+    init : {ndarray, 'k-means++', 'random'}, default: 'k-means++'
         Initialization method:
+
+        ndarray : shape (n_clusters, P). Initial cluster centers, must be 
+        transformed already. 
 
         'k-means++': picks initial cluster centers from the data with
         probability proportional to the distance of each datapoint to the
@@ -27,11 +30,6 @@ class KMeans(Sparsifier):
     n_init : int, default: 10
         Number of times to run k-means on new initializations. The best results
         are kept.
-
-    n_passes : {1,2}, default: 1
-        Number of passes over X. If 1, the final centroids will be those 
-        returned by the algorithm. If 2, the final centroids will be recomputed
-        from X. In the latter case the sparsifier must have access to X or HDX.
 
     max_iter : int, default: 300
         Maximum number of iterations for each run.
@@ -86,10 +84,7 @@ class KMeans(Sparsifier):
             self.inertia_ = best_inertia
             self.counter = best_counter
        
-        # postprocessing
-
         self.cluster_centers_ = self._reconstruct_cluster_centers(self.n_passes)
-
 
         # set how many of each example belong to each mean
         self.n_per_cluster = np.zeros(self.n_clusters, dtype = int)
@@ -102,7 +97,7 @@ class KMeans(Sparsifier):
             cluster_centers_ = self.invert_HD(self.cluster_centers_)
         elif n_passes == 2:
             cluster_centers_ = np.zeros_like(self.cluster_centers_)
-            for k in range(self.K):
+            for k in range(self.n_clusters):
                 cluster_members = np.where(self.labels_ == k)
                 cluster_centers_[k] = np.mean(self.X[cluster_members], axis = 0)
         else:
@@ -113,10 +108,8 @@ class KMeans(Sparsifier):
 
     def _initialize_cluster_centers(self):
         """ Initialize the cluster guesses. """
-        if type(self.init) is np.ndarray:
-            self.cluster_centers_ = \
-                (self.apply_HD(self.init) if self.precond else self.init)
-            #self.cluster_centers_ = self.init
+        if self.init is not None:
+            self.cluster_centers_ = self.init
             cluster_indices = []
         elif self.init == 'k-means++':
             self.cluster_centers_, cluster_indices = self._initialize_cluster_centers_kmpp()
@@ -131,15 +124,15 @@ class KMeans(Sparsifier):
    
     def _initialize_cluster_centers_random(self):
         """ Initialize the cluster centers with K random datapoints."""
-        cluster_centers_, cluster_indices = self._pick_K_datapoints(self.K)
+        cluster_centers_, cluster_indices = self._pick_K_datapoints(self.n_clusters)
         return [cluster_centers_, cluster_indices]
 
 
     def _initialize_cluster_centers_kmpp(self):
         """ Initialize the cluster centers using the k-means++ algorithm."""
 
-        cluster_indices = np.zeros(self.K, dtype = int)
-        self.cluster_centers_ = np.zeros((self.K, self.P))
+        cluster_indices = np.zeros(self.n_clusters, dtype = int)
+        self.cluster_centers_ = np.zeros((self.n_clusters, self.P))
 
         # pick the first one at random from the data
         cluster_indices[0] = np.random.choice(self.N)
@@ -156,7 +149,7 @@ class KMeans(Sparsifier):
         d_prev = np.ones(self.N) * float_info.max
 
         # now pick the remaining k-1 cluster_centers
-        for k in range(1,self.K):
+        for k in range(1,self.n_clusters):
             # squared distance from all the data points to the last cluster added
             latest_cluster = self.cluster_centers_[k-1,np.newaxis]
             d_curr = self.pairwise_distances(Y = latest_cluster)[0,:]**2
@@ -205,14 +198,14 @@ class KMeans(Sparsifier):
 
     def _compute_cluster_centers(self):
         """ Compute the means of each cluster."""
-        cluster_centers_ = np.zeros((self.K, self.P), dtype = np.float64)
+        cluster_centers_ = np.zeros((self.n_clusters, self.P), dtype = np.float64)
         counters = np.zeros_like(cluster_centers_, dtype = int)
         for n in range(self.N):
             x = self.RHDX[n]
             l = self.labels_[n]
             cluster_centers_[l][self.mask[n]] += x
             counters[l][self.mask[n]] += 1
-        for k in range(self.K):
+        for k in range(self.n_clusters):
             nonzeros = np.where(cluster_centers_[k]!=0)[0]
             cluster_centers_[k][nonzeros] *= 1 / counters[k][nonzeros]
         return cluster_centers_
@@ -242,17 +235,12 @@ class KMeans(Sparsifier):
         self.counter = current_iter
 
     def __init__(self, n_clusters = 8, init = 'k-means++', tol = 1e-4, 
-                 full_init = True, n_init = 10, max_iter = 300, 
-                 n_passes = 1, **kwargs):
+                 n_init = 10, max_iter = 300, **kwargs):
 
         super(KMeans, self).__init__(**kwargs)
 
-        self.K = n_clusters
-        # for compatibility with sklearn.cluster.KMeans
         self.n_clusters = n_clusters
         self.init = init
-        self.full_init = full_init
         self.n_init = n_init
         self.max_iter = max_iter
-        self.n_passes = n_passes
         self.tol = tol

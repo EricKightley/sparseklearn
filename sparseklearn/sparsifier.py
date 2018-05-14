@@ -23,23 +23,20 @@ class Sparsifier():
     Parameters
     ----------
 
-    compression_target : float or int, defaults to 1.0.
-        The target compression factor, indicating either the target ratio of 
-        dimensions to keep (if a float in (0,1]) or the number of dimensions
-        to keep (if an integer). Note that passing integer 1 will keep 1 
-        dimension, whereas passing float 1.0 will keep all dimensions. 
+    num_feat_full : int
+        Dimension of a full sample.
 
-    alpha_target : float or int, defaults to 0.0.
-        The shared compression factor target, indicating either the target
-        ratio of preserved dimensions to be common across all data points
-        (if a float in (0,1]), or the number of dimensions to be shared
-        (if an integer). 
+    num_feat_comp : int
+        The number of dimensions to keep in the compressed data. 
+
+    num_samp : int
+        The number of samples in the dataset. 
 
     transform : {'dct', None}, defaults to 'dct'.
         The preconditioning transform.
         Determines what form of H to use in the preconditioning transform HD. 
         Any method other than None will also use the diagonal D matrix (which 
-        can be set using the precond_D parameter). Must be one of::
+        can be set using the D_indices parameter). Must be one of::
             
             'dct'  discrete cosine transform
             None no transform
@@ -48,195 +45,64 @@ class Sparsifier():
         defaults to None. The user-provided mask. If None, mask is
         generated using the generate_mask method.
 
-    precond_D : nd.array, shape (n_datapoints,), optional
-        defaults to None. The user-provided diagonal of the preconditioning matrix D. 
-        If None, generated using the generate_D method. 
+    num_feat_shared : int, defaults to 0.
+        The minimum number of dimensions to be shared across all samples in the
+        compressed data.
 
-    data_dim : int, required and allowed if and only if transform is 'R' or 'RHD'
-        defaults to None. 
-        Dimension of each data point in the original, dense space. Will be taken
-        to be the number of columns of the data if the dense data is passed in.
+    D_indices : nd.array, shape (n_datapoints,), optional
+        defaults to None. The user-provided diagonal of the preconditioning matrix D. 
+        If None, generated using the generate_D_indices method. 
+
 
     Attributes
     ----------
 
-    mask : nd.array, shape (n_datapoints, dim_mask)
+    mask : nd.array, shape (num_samp, num_feat_comp)
         The mask used to sparsify the data. Array of integers, each row is the
-        indices specifying which entries of X[row] were kept. 
+        indices specifying which entries that sample were kept. 
 
     D_indices : nd.array, shape (n_signflips,)
         Defines the preconditioning matrix D. Array of integers, 
         the indices of the preconditioning matrix D with sign -1.
 
-    compression : float
-        The compression factor. Computed as Q/P where Q as been chosen to 
-        make Q/P as close to compression_target as possible.
-
-    alpha : float
-        The shared compression factor. Computed as Qs/Q where Qs has been
-        chosen to make Qs/Q as close to alpha_target as possible
-
-    Q : int
-        Dimensionality of the mask, i.e., the number of dimensions preserved
-        in each datapoint.
-
-    Qs : int
-        The number of dimensions in the mask guaranteed to be shared by all
-        datapoints.
-
     """
-
-    ###########################################################################
-    # Input Checks
-
-    def _input_checker_sparsifier(self, compression_target, alpha_target, transform, 
-            mask, precond_D, data_dim):
-        """ Check the input parameters for errors or contradictions. Only performs checks
-        that can be run at instantiation. More will happen during fitting. 
-        """
-
-        # Check type and bounds on compression_target
-        if (type(compression_target) is float and (compression_target <= 0 or compression_target > 1)) or \
-            (type(compression_target) is int and compression_target <= 0) or \
-            (type(compression_target) not in [int, float, np.int64]):
-                raise ValueError('compression_target = {}, '.format(compression_target) + 
-                    'but must be a positive integer or a float 0 < c <= 1')
-
-        # Check type and bounds on alpha_target
-        if (type(alpha_target) is float and alpha_target < 0 or alpha_target > 1) or \
-            (type(alpha_target) is int and (alpha_target <= 0)) or \
-            (type(alpha_target) not in [int, float]):
-                raise ValueError('alpha_target = {}, '.format(alpha_target) +
-                    'but must be a positive integer or a float 0 <= c <= 1')
-
-        # Check that alpha_target <= compression_target if both are ints
-        if (type(compression_target) is int and type(alpha_target) is int) \
-            and alpha_target > compression_target:
-            raise ValueError(
-                'alpha_target = {} > {} = compression_target'.format(alpha_target, compression_target))
-
-        # Make sure precond_D is a 1-D array of integers
-        if (precond_D is not None):
-            if (type(precond_D) is not np.ndarray) or (precond_D.ndim !=1) or \
-                (not np.issubdtype(precond_D.dtype, np.integer)):
-                raise ValueError('precond_D must be an array of integers.')
-
-        # Make sure transform is valid
-        if transform not in ['dct', None]:
-            raise ValueError('Transform parameter {} is not one of the '.format(transform) +
-                    'available methods. See documentation.')
-
-        # Make sure mask is a 2-D array of integers if it's given
-        if (mask is not None):
-            if (type(mask) is not np.ndarray) or mask.ndim != 2 or \
-                (not np.issubdtype(mask.dtype, np.integer)):
-                raise ValueError('Mask must be a 2D array of 64-bit integers.')
-
-
-    def _data_checker(self, X, HDX, RHDX, mask, data_dim, precond_D):
-        """ Perform checks on input data to make sure correct combinations
-        were passed. Dimension checks occur in _dimension_checker. 
-        """
-
-        # if RHDX was passed, mask must also be passed
-        if RHDX is not None and mask is None:
-            raise ValueError('Subsampled data RHDX passed as input, this ' + 
-                    'requires that mask also be passed.')
-        # if RHDX was passed we need a way to find the ambient dimension.
-        # we can do this using X or HDX if they were passed, but if they
-        # weren't then we need data_dim.
-        if RHDX is not None and HDX is None and X is None and data_dim is None:
-            raise ValueError('Subsampled data RHDX passed as input without ' +
-                    'X or HDX, so data_dim must be specified.')
-
-        # if HDX was passed we also need precond_D to have been passed
-        if HDX is not None and precond_D is None:
-            raise ValueError('Preconditioned data HDX passed as input without ' +
-                    'precond_D.')
-        #TODO
-        ## X must be a 2-D numpy array
-        #if (type(X) is not np.ndarray) or (X.ndim != 2):
-        #    raise ValueError('X must be a 2-D array.')
-        # If the data is already subsampled, we need to know the mask
-        #if transform in ['R', 'RHD'] and mask is None:
-        #    raise ValueError('Transform parameter {} indicates'.format(transform) +
-        #            'that the input is subsampled but mask is not given.')
-        # Make sure data_dim is given if we need it and not if we don't
-        #if ((transform in ['R', 'RHD']) and (type(data_dim) is not int)) or \
-        #        (transform not in ['R', 'RHD'] and data_dim is not None):
-        #    raise ValueError('P must be given if and only if X is already subsampled.')
-        # If the data is already preconditioned, we need to know the D matrix
-        #if transform == 'dct' and precond_D is None:
-        #    raise ValueError('Transform parameter {} indicates '.format(transform) +
-        #            'that the input is preconditioned but precond_D is not given.')
-        #
-        # RHDX and compression_target can't both be given
-        # mask and compression_target can't both be given
-        return
-
-    def _dimension_checker(self, compression, alpha, Q, Qs, N, P, X, HDX, RHDX):
-        #TODO
-        # check that data_dim and HDX and X shape agree if they are both passed
-        # require data_dim if RHDX is passed but neither HDX nor X were
-        return
 
     ###########################################################################
     # Preconditoning and mask generation
 
-    def _generate_D(self, transform, P):
+    def _generate_D_indices(self):
         """ Randomly generate the D matrix in the HD transform. Store only the 
-        indices where D == -1.
-        """
-        # ... generate it randomly if we are using it ...
-        if transform in ['dct']:
-            D_indices = np.array([i for i in range(P) 
+        indices where D == -1. """
+        if self.transform in ['dct']:
+            D_indices = np.array([i for i in range(self.num_feat_full) 
                 if np.random.choice([0,1])])
-        # ... or set it empty if we are not using it.
-        else:
+        elif self.transform is None:
             D_indices = np.array([])
         return D_indices
 
-    def _set_D(self, transform, precond_D, P):
-        """ Wrapper for _generate_D, which will take the user-specified
-        precond_D if given. 
-        """
-        if precond_D is None:
-            D_indices = self._generate_D(transform, P)
-        else:
-            D_indices = precond_D
-        return D_indices
-
-    def _generate_mask(self, P, Qs, Qr, N):
-        """ Randomly generate the sparsifying mask.
-        """
-        inds = [p for p in range(P)]
-        np.random.shuffle(inds)
-        shared_mask = inds[:Qs]
-        inds = inds[Qs:]
-        # if there are any random indices to generate, do so
-        if Qr > 0:
-            # generate the random masks
-            random_masks = [np.random.choice(inds, Qr, replace=False)
-                            for n in range(N)]
-            # concatenate them with the shared masks
+    def _generate_mask(self):
+        """Generate a sparsifying mask."""
+        # pick the shared indices
+        all_indicies = list(range(self.num_feat_full))
+        np.random.shuffle(all_indices)
+        shared_mask = all_indices[:self.num_feat_shared]
+        # pick what's left randomly
+        remaining_indices = all_indices[self.num_feat_shared:]
+        num_left_to_draw = self.num_feat_comp - self.num_feat_shared
+        if num_left_to_draw > 0:
+            random_masks = [np.random.choice(remaining_indices, 
+                num_left_to_draw, replace=False) for n in range(self.num_samp)]
             mask = np.concatenate((random_masks, 
-                   np.tile(shared_mask, (N,1)).astype(int)), axis = 1)
+                np.tile(shared_mask, (self.num_samp,1)).astype(int)), axis = 1)
         else:
-            # then there are no random ones to generate
-            mask = np.tile(shared_mask, (N,1)).astype(int)
+            # then all dimensions are shared
+            mask = np.tile(shared_mask, (self.num_samp,1)).astype(int)
 
         mask.sort(axis=1)
         return mask
 
-    def _set_mask(self, mask, P, Qs, Qr, N):
-        """ Wrapper for _generate_mask, which will take the user-specified mask
-        instead if given.
-        """
-        if mask is not None:
-            return mask
-        else:
-            return self._generate_mask(P, Qs, Qr, N)
-
+    ###########################################################################
+    # Transform and masking tools
 
     def apply_mask(self, X):
         """ Apply the mask to X.
@@ -312,7 +178,6 @@ class Sparsifier():
         X[:,self.D_indices] *= -1
         return X
 
-
     def invert_mask_bool(self):
         """ Compute the mask inverse.
 
@@ -331,126 +196,17 @@ class Sparsifier():
             in other words, 1 if i is in the list mask[j].
             
         """
-        col_inds = [n for n in range(self.N) for m in range(self.M)]
+        col_inds = [n for n in range(self.num_samp) for m in range(self.Q)]
         row_inds = list(self.mask.flatten())
         data = np.ones_like(row_inds)
         mask_binary = sparse.csr_matrix( (data, (row_inds, col_inds)), 
-                      shape = (self.P,self.N), dtype = bool)
+                      shape = (self.P,self.num_samp), dtype = bool)
         return mask_binary
 
 
     ###########################################################################
     # Fitting
 
-    def _compute_constants(self, X, HDX, RHDX, mask, compression_target, alpha_target, data_dim):
-        """ Compute the constants needed for the sparsifier. As usual, at least
-        one of X, HDX, or RHDX must not be None. 
-
-        Parameters
-        ----------
-
-        X : nd.array, (N, P)
-            Dense, raw data. Can be None.
-
-        HDX : nd.array, (N,P)
-            Dense, transformed data. Can be None.
-
-        RHDX : nd.array, (N,Q)
-            Subsampled, transformed data. Can be None. 
-
-        compression_target : see _init_
-
-        alpha_target : see _init_
-
-        Returns
-        -------
-
-
-        compression_adjusted : float
-            The compression factor. Computed as Q/P where Q as been chosen to 
-            make Q/P as close to compression_target as possible.
-
-        alpha_adjusted : float
-            The shared compression factor. Computed as Qs/Q where Qs has been
-            chosen to make Qs/Q as close to compression_target as possible
-
-        Q : int
-            Dimensionality of the mask, i.e., the number of dimensions preserved
-            in each datapoint.
-
-        Qs : int
-            The number of dimensions in the mask guaranteed to be shared by all
-            datapoints.
-
-        Qr : int
-            The number of dimensions in the mask chosen at random. Some may
-            still be shared by all datapoints by chance. 
-
-        N : int
-            The number of datapoints, computed as the number of rows in the
-            input X, HDX, or RHDX.
-
-        P : int
-            The dimension of each dense datapoint (aka the ambient or latent 
-            dimension). Taken to be the number of columns of X or HDX, or
-            required as input if only RHDX is given. 
-        """
-        # if RHDX is given, use this to compute the compression factor.
-        if RHDX is not None:
-            # RHDX is reduced, so this sets Q
-            N,Q = np.shape(RHDX)
-            # Get P from HDX if we can:
-            if HDX is not None:
-                P = HDX.shape[1]
-            # ... or from X
-            elif X is not None:
-                P = X.shape[1]
-            # ... or finally from user-specified P if we need to
-            else:
-                P = data_dim
-            # We don't need shared/random split for the mask.
-            Qs = None
-            Qr = None
-            compression_adjusted = Q/P
-            alpha_adjusted = None
-
-        # if RHDX was not given, we need to compute the subsampling constants
-        else:
-            # if we have X use its shape
-            if X is not None:
-                N,P = np.shape(X)
-            # otherwise use HDX's shape
-            elif HDX is not None:
-                N,P = np.shape(HDX)
-
-            # if mask was passed use this to set Q
-            if mask is not None:
-                Q = mask.shape[1]
-            # if compression_target is a float, find the number of dimensions:
-            elif type(compression_target) is float:
-                Q = int(np.floor(P * compression_target))
-            # if compression_target is given as the num dim, find the ratio
-            elif (type(compression_target) is int) or \
-                (type(compression_target) is np.int64):
-                Q = compression_target
-
-            # compute number of shared and random subsampling
-            if type(alpha_target) is float:
-                # then alpha is the ratio of shared indices
-                Qs = int(np.ceil(Q * alpha_target))
-            elif type(alpha_target) is int or type(alpha_target) is np.int64:
-                # then alpha is the number of shared indices
-                Qs = alpha_target
-            # if we are not compressing then set Qs to Q
-            if compression_target == 1.0:
-                Qs = Q
-            Qr = Q - Qs
-            # recompute alpha and compression (either because they were ints or to 
-            # account for rounding from floor function above)
-            compression_adjusted = Q/P
-            alpha_adjusted = Qs/Q
-        return([compression_adjusted, alpha_adjusted, Q, Qs, Qr, N, P])
-    
     def _set_HDX(self, transform, X, HDX, RHDX):
         """ Wrapper to compute HDX from X or assign it if user-specified. """
         if HDX is not None:
@@ -484,25 +240,12 @@ class Sparsifier():
 
         RHDX : nd.array, shape (N, Q), optional
             defaults to None. Subsampled, transformed data.
-
-
-
         """
 
-        # check input data
-        self._data_checker(X, HDX, RHDX, self.mask, self.data_dim, self.precond_D)
-        # set model constants 
-        self.compression, self.alpha, self.Q, self.Qs, self.Qr, self.N, self.P = \
-                self._compute_constants(X, HDX, RHDX, self.mask, 
-                        self.compression_target, self.alpha_target,
-                        self.data_dim)
-        # run checks
-        self._dimension_checker(self.compression, self.alpha, self.Q, 
-                self.Qs, self.N, self.P, X, HDX, RHDX)
         # set D_indices
-        self.D_indices = self._set_D(self.transform, self.precond_D, self.P)
+        self.D_indices = self._set_D(self.transform, self.D_indices, self.P)
         # set mask
-        self.mask = self._set_mask(self.mask, self.P, self.Qs, self.Qr, self.N) 
+        self.mask = self._set_mask(self.mask, self.P, self.Qs, self.Qr, self.num_samp) 
         # compute HDX and RHDX
         HDX = self._set_HDX(self.transform, X, HDX, RHDX)
         RHDX = self._set_RHDX(X, HDX, RHDX)
@@ -510,9 +253,7 @@ class Sparsifier():
         self.X = X
         self.HDX = HDX
         self.RHDX = RHDX
-
-
-
+        
     ###########################################################################
     # Operations on masked data
 
@@ -537,14 +278,14 @@ class Sparsifier():
         """
 
         if Y is None:
-            result = np.zeros((self.N, self.N), dtype=np.float64)
+            result = np.zeros((self.num_samp, self.num_samp), dtype=np.float64)
             pairwise_l2_distances_with_self(result, self.RHDX, self.mask, 
-                self.N, self.Q, self.P)
+                self.num_samp, self.Q, self.P)
         else:
             K = Y.shape[0]
-            result = np.zeros((self.N, K), dtype = np.float64)
+            result = np.zeros((self.num_samp, K), dtype = np.float64)
             pairwise_l2_distances_with_full(result, self.RHDX, Y, self.mask, 
-                self.N, K, self.Q, self.P)
+                self.num_samp, K, self.Q, self.P)
 
         return result
 
@@ -577,7 +318,7 @@ class Sparsifier():
                                self.RHDX,
                                self.mask,
                                W,
-                               self.N,
+                               self.num_samp,
                                K,
                                self.Q,
                                self.P)
@@ -619,7 +360,7 @@ class Sparsifier():
                                self.RHDX,
                                self.mask,
                                W,
-                               self.N,
+                               self.num_samp,
                                K,
                                self.Q,
                                self.P)
@@ -658,14 +399,14 @@ class Sparsifier():
         #TODO check that covariances is the right shape for each case
         #TODO add a test to catch the exception
         K = means.shape[0]
-        distances = np.zeros((self.N, K), dtype = np.float64)
+        distances = np.zeros((self.num_samp, K), dtype = np.float64)
         if covariance_type == 'spherical':
             pairwise_mahalanobis_distances_spherical(distances,
                                                      self.RHDX,
                                                      means,
                                                      self.mask,
                                                      covariances,
-                                                     self.N,
+                                                     self.num_samp,
                                                      K,
                                                      self.Q,
                                                      self.P)
@@ -675,7 +416,7 @@ class Sparsifier():
                                                     means,
                                                     self.mask,
                                                     covariances,
-                                                    self.N,
+                                                    self.num_samp,
                                                     K,
                                                     self.Q,
                                                     self.P)
@@ -688,7 +429,7 @@ class Sparsifier():
         it will choose from that; otherwise draws from RHDX and returns a dense
         vector (with zeros outside the mask). """
         # pick K data points at random uniformly
-        cluster_indices = np.random.choice(self.N, K, replace = False)
+        cluster_indices = np.random.choice(self.num_samp, K, replace = False)
         cluster_indices.sort()
         # assign the cluster_centers as dense members of HDX ...
         if self.HDX is not None:
@@ -702,18 +443,28 @@ class Sparsifier():
         return [cluster_centers_, cluster_indices]
 
 
-    def __init__(self, compression_target = 1.0, alpha_target = 0.0, transform = 'dct',
-            mask = None, precond_D = None, data_dim = None):
+    def __init__(self, num_feat_full, num_feat_comp, num_feat_shared, num_samp,
+                 D_indices, transform, mask):
 
-        self.compression_target = compression_target
-        self.alpha_target = alpha_target
+        self.num_feat_full = num_feat_full
+        self.num_feat_comp = num_feat_comp
+        self.num_feat_shared = num_feat_shared
+        self.num_samp = num_samp
         self.transform = transform
-        self.mask = mask
-        self.precond_D = precond_D
-        self.data_dim = data_dim
 
-        self._input_checker_sparsifier(compression_target, alpha_target, transform, mask, 
-                precond_D, data_dim)
+        #TODO implement default arguments for several of these
+
+        # assign mask
+        if mask is None:
+            self.mask = self._generate_mask()
+        else:
+            self.mask = mask
+
+        # assign D_indices
+        if D_indices is None:
+            self.D_indices = self._generate_D_indices()
+        else:
+            self.D_indices = D_indices
 
 
 

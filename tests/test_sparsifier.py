@@ -11,12 +11,36 @@ class TestSparsifier(unittest.TestCase):
 
     def setUp(self):
         self.td = DataGenerator()
-        spa = Sparsifier(mask = self.td.mask, data_dim = 5, transform = None)
-        spa.fit_sparsifier(X = self.td.X)
-        self.sparsifier = spa
+        #spa = Sparsifier(mask = self.td.mask, data_dim = 5, transform = None)
+        #spa.fit_sparsifier(HDX = self.td.HDX)
+        #self.sparsifier = spa
 
+    def test__generate_D_indices(self):
+        spa = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         mask = self.td.mask)
+        np.random.seed(0)
+        result = spa._generate_D_indices()
+        correct = [1,2,4]
+        self.assertArrayEqual(result, correct)
+
+    def test_apply_HD(self):
+        spa = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         mask = self.td.mask)
+        result = spa.apply_HD(self.td.X)
+        self.assertArrayEqual(self.td.HDX, result)
+
+    def test_invert_HD(self):
+        spa = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         mask = self.td.mask)
+        result = spa.invert_HD(self.td.HDX)
+        self.assertArrayEqual(self.td.X, result)
+
+    """
     def test_fit(self):
-        self.assertTrue(np.allclose(self.td.RX, self.sparsifier.RHDX, rtol=1e-6))
+        self.assertTrue(np.allclose(self.td.RHDX, self.sparsifier.RHDX, rtol=1e-6))
         self.assertTrue(np.allclose(self.td.mask, self.sparsifier.mask, rtol=1e-6))
         self.assertEqual(self.td.N, self.sparsifier.N)
         self.assertEqual(self.td.Q, self.sparsifier.Q)
@@ -34,17 +58,17 @@ class TestSparsifier(unittest.TestCase):
 
     def test_weighted_means(self):
         first_moment_array = self.sparsifier.weighted_means(self.td.W)
-        correct_first_moment_array = np.dot(self.td.W.T, self.td.RRTX) / \
-                                     np.dot(self.td.W.T, (self.td.RRTX!=0).astype(int))
+        correct_first_moment_array = np.dot(self.td.W.T, self.td.RRTHDX) / \
+                                     np.dot(self.td.W.T, (self.td.RRTHDX!=0).astype(int))
         self.assertArrayEqual(first_moment_array, correct_first_moment_array)
 
     def test_weighted_means_and_variances(self):
         means,variances = self.sparsifier.weighted_means_and_variances(self.td.W)
 
-        correct_first_moment_array = np.dot(self.td.W.T, self.td.RRTX) / \
-                                     np.dot(self.td.W.T, (self.td.RRTX!=0).astype(int))
-        correct_second_moment_array = np.dot(self.td.W.T, self.td.RRTX**2) / \
-                                      np.dot(self.td.W.T, (self.td.RRTX!=0).astype(int))
+        correct_first_moment_array = np.dot(self.td.W.T, self.td.RRTHDX) / \
+                                     np.dot(self.td.W.T, (self.td.RRTHDX!=0).astype(int))
+        correct_second_moment_array = np.dot(self.td.W.T, self.td.RRTHDX**2) / \
+                                      np.dot(self.td.W.T, (self.td.RRTHDX!=0).astype(int))
         correct_variances = correct_second_moment_array - correct_first_moment_array**2
         self.assertArrayEqual(means, correct_first_moment_array)
         self.assertArrayEqual(variances, correct_variances)
@@ -58,6 +82,7 @@ class TestSparsifier(unittest.TestCase):
         correct_diagonal = self.td.correct_pairwise_mahalanobis_distances_diagonal
         self.assertArrayEqual(result_spherical, correct_spherical)
         self.assertArrayEqual(result_diagonal, correct_diagonal)
+        """
 
 if __name__ == '__main__':
     unittest.main()
