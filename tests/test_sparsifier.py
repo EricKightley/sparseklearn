@@ -11,9 +11,11 @@ class TestSparsifier(unittest.TestCase):
 
     def setUp(self):
         self.td = DataGenerator()
-        #spa = Sparsifier(mask = self.td.mask, data_dim = 5, transform = None)
-        #spa.fit_sparsifier(HDX = self.td.HDX)
-        #self.sparsifier = spa
+        sparsifier = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         mask = self.td.mask)
+        sparsifier.fit_sparsifier(X = self.td.X)
+        self.sparsifier = sparsifier
 
     def test__generate_D_indices(self):
         spa = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
@@ -57,13 +59,14 @@ class TestSparsifier(unittest.TestCase):
         self.assertArrayEqual(self.td.RHDX, spa.RHDX)
 
 
-    """
     def test_fit(self):
         self.assertTrue(np.allclose(self.td.RHDX, self.sparsifier.RHDX, rtol=1e-6))
+        self.assertTrue(np.allclose(self.td.HDX, self.sparsifier.HDX, rtol=1e-6))
+        self.assertTrue(np.allclose(self.td.X, self.sparsifier.X, rtol=1e-6))
         self.assertTrue(np.allclose(self.td.mask, self.sparsifier.mask, rtol=1e-6))
-        self.assertEqual(self.td.N, self.sparsifier.N)
-        self.assertEqual(self.td.Q, self.sparsifier.Q)
-        self.assertEqual(self.td.P, self.sparsifier.P)
+        self.assertEqual(self.td.N, self.sparsifier.num_samp)
+        self.assertEqual(self.td.Q, self.sparsifier.num_feat_comp)
+        self.assertEqual(self.td.P, self.sparsifier.num_feat_full)
 
     def test_pairwise_distances(self):
         result_self = self.sparsifier.pairwise_distances()
@@ -101,7 +104,6 @@ class TestSparsifier(unittest.TestCase):
         correct_diagonal = self.td.correct_pairwise_mahalanobis_distances_diagonal
         self.assertArrayEqual(result_spherical, correct_spherical)
         self.assertArrayEqual(result_diagonal, correct_diagonal)
-        """
 
 if __name__ == '__main__':
     unittest.main()

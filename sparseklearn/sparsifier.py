@@ -196,11 +196,11 @@ class Sparsifier():
             in other words, 1 if i is in the list mask[j].
             
         """
-        col_inds = [n for n in range(self.num_samp) for m in range(self.Q)]
+        col_inds = [n for n in range(self.num_samp) for m in range(self.num_feat_comp)]
         row_inds = list(self.mask.flatten())
         data = np.ones_like(row_inds)
         mask_binary = sparse.csr_matrix( (data, (row_inds, col_inds)), 
-                      shape = (self.P,self.num_samp), dtype = bool)
+                      shape = (self.num_feat_full,self.num_samp), dtype = bool)
         return mask_binary
 
 
@@ -243,9 +243,9 @@ class Sparsifier():
         """
 
         # set D_indices
-        # self.D_indices = self._set_D(self.transform, self.D_indices, self.P)
+        # self.D_indices = self._set_D(self.transform, self.D_indices, self.num_feat_full)
         # set mask
-        # self.mask = self._set_mask(self.mask, self.P, self.Qs, self.Qr, self.num_samp) 
+        # self.mask = self._set_mask(self.mask, self.num_feat_full, self.num_feat_comps, self.num_feat_compr, self.num_samp) 
         # compute HDX and RHDX
         HDX = self._set_HDX(self.transform, X, HDX, RHDX)
         RHDX = self._set_RHDX(X, HDX, RHDX)
@@ -280,12 +280,12 @@ class Sparsifier():
         if Y is None:
             result = np.zeros((self.num_samp, self.num_samp), dtype=np.float64)
             pairwise_l2_distances_with_self(result, self.RHDX, self.mask, 
-                self.num_samp, self.Q, self.P)
+                self.num_samp, self.num_feat_comp, self.num_feat_full)
         else:
             K = Y.shape[0]
             result = np.zeros((self.num_samp, K), dtype = np.float64)
             pairwise_l2_distances_with_full(result, self.RHDX, Y, self.mask, 
-                self.num_samp, K, self.Q, self.P)
+                self.num_samp, K, self.num_feat_comp, self.num_feat_full)
 
         return result
 
@@ -312,7 +312,7 @@ class Sparsifier():
         """
 
         K = np.shape(W)[1]
-        means = np.zeros((K, self.P), dtype = np.float64)
+        means = np.zeros((K, self.num_feat_full), dtype = np.float64)
         compute_weighted_first_moment_array(
                                means,
                                self.RHDX,
@@ -320,8 +320,8 @@ class Sparsifier():
                                W,
                                self.num_samp,
                                K,
-                               self.Q,
-                               self.P)
+                               self.num_feat_comp,
+                               self.num_feat_full)
         return means
 
     def weighted_means_and_variances(self, W):
@@ -352,8 +352,8 @@ class Sparsifier():
         """
 
         K = np.shape(W)[1]
-        means = np.zeros((K, self.P), dtype = np.float64)
-        second_moments = np.zeros((K, self.P), dtype = np.float64)
+        means = np.zeros((K, self.num_feat_full), dtype = np.float64)
+        second_moments = np.zeros((K, self.num_feat_full), dtype = np.float64)
         compute_weighted_first_and_second_moment_array(
                                means,
                                second_moments,
@@ -362,8 +362,8 @@ class Sparsifier():
                                W,
                                self.num_samp,
                                K,
-                               self.Q,
-                               self.P)
+                               self.num_feat_comp,
+                               self.num_feat_full)
         variances = second_moments - means**2
         return[means, variances]
 
@@ -395,7 +395,7 @@ class Sparsifier():
             The pairwise mahalanobis distances. 
 
         """
-        #TODO check that means is 2D and it has number of columns == self.P
+        #TODO check that means is 2D and it has number of columns == self.num_feat_full
         #TODO check that covariances is the right shape for each case
         #TODO add a test to catch the exception
         K = means.shape[0]
@@ -408,8 +408,8 @@ class Sparsifier():
                                                      covariances,
                                                      self.num_samp,
                                                      K,
-                                                     self.Q,
-                                                     self.P)
+                                                     self.num_feat_comp,
+                                                     self.num_feat_full)
         elif covariance_type == 'diag':
             pairwise_mahalanobis_distances_diagonal(distances,
                                                     self.RHDX,
@@ -418,8 +418,8 @@ class Sparsifier():
                                                     covariances,
                                                     self.num_samp,
                                                     K,
-                                                    self.Q,
-                                                    self.P)
+                                                    self.num_feat_comp,
+                                                    self.num_feat_full)
         else:
             raise Exception("covariance_type must be 'spherical' or 'diag'")
         return distances
@@ -436,7 +436,7 @@ class Sparsifier():
             cluster_centers_ = np.array(self.HDX[cluster_indices])
         # or assign just the M entries specified by the mask
         else:
-            cluster_centers_ = np.zeros((self.K,self.P))
+            cluster_centers_ = np.zeros((self.K,self.num_feat_full))
             for k in range(K):
                 cluster_centers_[k][mask[cluster_indices[k]]] = \
                         self.RHDX[cluster_indices[k]]
