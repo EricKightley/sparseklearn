@@ -198,6 +198,7 @@ class KMeans(Sparsifier):
 
     def _compute_cluster_centers(self):
         """ Compute the means of each cluster."""
+        #TODO: replace this with call to C function
         cluster_centers_ = np.zeros((self.n_clusters, self.P), dtype = np.float64)
         counters = np.zeros_like(cluster_centers_, dtype = int)
         for n in range(self.N):
@@ -235,7 +236,7 @@ class KMeans(Sparsifier):
         self.counter = current_iter
 
     def __init__(self, n_clusters = 8, init = 'k-means++', tol = 1e-4, 
-                 n_init = 10, max_iter = 300, **kwargs):
+                 n_init = 10, n_passes = 1, max_iter = 300, **kwargs):
 
         super(KMeans, self).__init__(**kwargs)
 
@@ -244,3 +245,4 @@ class KMeans(Sparsifier):
         self.n_init = n_init
         self.max_iter = max_iter
         self.tol = tol
+        self.n_passes = n_passes

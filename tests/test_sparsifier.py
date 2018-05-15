@@ -38,6 +38,25 @@ class TestSparsifier(unittest.TestCase):
         result = spa.invert_HD(self.td.HDX)
         self.assertArrayEqual(self.td.X, result)
 
+    def test_fit_all_passed(self):
+        spa = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         mask = self.td.mask)
+        spa.fit_sparsifier(X=self.td.X, HDX = self.td.HDX, RHDX = self.td.RHDX)
+        self.assertArrayEqual(self.td.X, spa.X)
+        self.assertArrayEqual(self.td.HDX, spa.HDX)
+        self.assertArrayEqual(self.td.RHDX, spa.RHDX)
+        
+    def test_fit_just_X_passed(self):
+        spa = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         mask = self.td.mask)
+        spa.fit_sparsifier(X=self.td.X)
+        self.assertArrayEqual(self.td.X, spa.X)
+        self.assertArrayEqual(self.td.HDX, spa.HDX)
+        self.assertArrayEqual(self.td.RHDX, spa.RHDX)
+
+
     """
     def test_fit(self):
         self.assertTrue(np.allclose(self.td.RHDX, self.sparsifier.RHDX, rtol=1e-6))

@@ -213,8 +213,8 @@ class Sparsifier():
             return HDX
         elif (X is not None and transform == 'dct'):
             return self.apply_HD(X)
-        else:
-            return None
+        elif (X is not None and transform is None):
+            return X
 
     def _set_RHDX(self, X, HDX, RHDX):
         """ Wrapper to compute RHDX from HDX or assign it if user-specified. """
@@ -243,9 +243,9 @@ class Sparsifier():
         """
 
         # set D_indices
-        self.D_indices = self._set_D(self.transform, self.D_indices, self.P)
+        # self.D_indices = self._set_D(self.transform, self.D_indices, self.P)
         # set mask
-        self.mask = self._set_mask(self.mask, self.P, self.Qs, self.Qr, self.num_samp) 
+        # self.mask = self._set_mask(self.mask, self.P, self.Qs, self.Qr, self.num_samp) 
         # compute HDX and RHDX
         HDX = self._set_HDX(self.transform, X, HDX, RHDX)
         RHDX = self._set_RHDX(X, HDX, RHDX)
