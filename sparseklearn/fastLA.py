@@ -452,3 +452,32 @@ def apply_mask_to_full_sample(result,
                                          samp_full,
                                          mask,
                                          num_feat_comp)
+
+################################################################################
+## logdet_cov_diag
+
+aux.logdet_cov_diag.restype = None
+aux.logdet_cov_diag.argtypes = [
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #result
+    ndpointer(ct.c_double, flags='C_CONTIGUOUS'), #cov_array
+    ndpointer(ct.c_int64, flags='C_CONTIGUOUS'),  #mask
+    ct.c_int64,                                   #num_samp_comp
+    ct.c_int64,                                   #num_cov
+    ct.c_int64,                                   #num_feat_comp
+    ct.c_int64]                                   #num_feat_full
+
+def logdet_cov_diag(result,
+                    cov_array,
+                    mask,
+                    num_samp_comp,
+                    num_cov,
+                    num_feat_comp,
+                    num_feat_full):
+
+    return aux.logdet_cov_diag(result,
+                               cov_array,
+                               mask,
+                               num_samp_comp,
+                               num_cov,
+                               num_feat_comp,
+                               num_feat_full)

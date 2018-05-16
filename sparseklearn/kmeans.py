@@ -108,7 +108,7 @@ class KMeans(Sparsifier):
 
     def _initialize_cluster_centers(self):
         """ Initialize the cluster guesses. """
-        if self.init is not None:
+        if type(self.init) is np.ndarray:
             self.cluster_centers_ = self.init
             cluster_indices = []
         elif self.init == 'k-means++':
@@ -132,10 +132,10 @@ class KMeans(Sparsifier):
         """ Initialize the cluster centers using the k-means++ algorithm."""
 
         cluster_indices = np.zeros(self.n_clusters, dtype = int)
-        self.cluster_centers_ = np.zeros((self.n_clusters, self.P))
+        self.cluster_centers_ = np.zeros((self.n_clusters, self.num_feat_full))
 
         # pick the first one at random from the data
-        cluster_indices[0] = np.random.choice(self.N)
+        cluster_indices[0] = np.random.choice(self.num_samp)
         # ... loading the full datapoint, or ...
         if self.HDX is not None:
             self.cluster_centers_[0] = self.HDX[cluster_indices[0]]
@@ -146,13 +146,13 @@ class KMeans(Sparsifier):
 
         # initialize the previous distance counter to max float
         # (so it's guaranteed to be overwritten in the loop)
-        d_prev = np.ones(self.N) * float_info.max
+        d_prev = np.ones(self.num_samp) * float_info.max
 
         # now pick the remaining k-1 cluster_centers
         for k in range(1,self.n_clusters):
             # squared distance from all the data points to the last cluster added
             latest_cluster = self.cluster_centers_[k-1,np.newaxis]
-            d_curr = self.pairwise_distances(Y = latest_cluster)[0,:]**2
+            d_curr = self.pairwise_distances(Y = latest_cluster)[:,0]**2
             # ||x - U|| is either this distance or the current minimum
             # overwrite current distances where we haven't improved
             where_we_have_not_improved = np.where(d_curr > d_prev)[0]
@@ -168,11 +168,11 @@ class KMeans(Sparsifier):
             # pick a datapoint at random with prob proportional to its distance
             # from the current cluster set
             if d_curr_sum > 0:
-                cluster_indices[k] = np.random.choice(self.N, p = d_curr/d_curr_sum)
+                cluster_indices[k] = np.random.choice(self.num_samp, p = d_curr/d_curr_sum)
             else:
                 # then the mask obliterated all distance information, so just
                 # pick one uniformly at random that's not already been chosen
-                available_indices = set(range(self.N)).difference(set(cluster_indices))
+                available_indices = set(range(self.num_samp)).difference(set(cluster_indices))
                 cluster_indices[k] = np.random.choice(list(available_indices))
             # finally, assign the cluster, either by setting all P entires 
             # from the dense HDX ...
@@ -191,17 +191,17 @@ class KMeans(Sparsifier):
 
     def _compute_labels(self):
         """ Compute the labels of each datapoint."""
-        d = self.pairwise_distances(Y=self.cluster_centers_).T
+        d = self.pairwise_distances(Y=self.cluster_centers_)
         labels_ = d.argsort(axis=1)[:,0]
-        inertia_ = np.sum([d[n,labels_[n]] for n in range(self.N)])
+        inertia_ = np.sum([d[n,labels_[n]] for n in range(self.num_samp)])
         return [labels_, inertia_]
 
     def _compute_cluster_centers(self):
         """ Compute the means of each cluster."""
         #TODO: replace this with call to C function
-        cluster_centers_ = np.zeros((self.n_clusters, self.P), dtype = np.float64)
+        cluster_centers_ = np.zeros((self.n_clusters, self.num_feat_full), dtype = np.float64)
         counters = np.zeros_like(cluster_centers_, dtype = int)
-        for n in range(self.N):
+        for n in range(self.num_samp):
             x = self.RHDX[n]
             l = self.labels_[n]
             cluster_centers_[l][self.mask[n]] += x

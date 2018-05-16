@@ -99,6 +99,20 @@ class DataGenerator():
                      )
                 )
 
+        self.correct_logdet_spherical = \
+            np.tile(
+                    np.log(np.array([2**3, 3**3, 4**3], dtype = np.float64)),
+                    (4,1))
+
+        self.correct_logdet_diag = \
+            np.log(np.array(
+                [[  18,   8,  16],
+                 [   6,  20,  72],
+                 [  12,  28,  32],
+                 [   3,  10, 144]], 
+                dtype = np.float64
+                )
+            )
 
 
 

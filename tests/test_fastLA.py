@@ -18,6 +18,7 @@ from sparseklearn import update_weighted_first_and_second_moment_array
 from sparseklearn import compute_weighted_first_and_second_moment_array
 
 from sparseklearn import apply_mask_to_full_sample
+from sparseklearn import logdet_cov_diag
 
 from generate_test_data import DataGenerator
 
@@ -279,6 +280,18 @@ class TestFastLAMethods(unittest.TestCase):
 
         correct_compressed_sample = np.array([1,4,5], dtype = np.float64)
         self.assertArrayEqual(compressed_sample, correct_compressed_sample)
+
+    def test_logdet_cov_diag(self):
+        logdet = np.zeros((self.td.N, self.td.K), dtype = np.float64)
+        logdet_cov_diag(logdet,
+                        self.td.diagonal_covariances,
+                        self.td.mask,
+                        self.td.N,
+                        self.td.K,
+                        self.td.Q,
+                        self.td.P)
+        self.assertArrayEqual(logdet, self.td.correct_logdet_diag)
+
 
 if __name__ == '__main__':
     unittest.main()

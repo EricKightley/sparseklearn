@@ -19,6 +19,7 @@ from .fastLA import update_weighted_first_and_second_moment_array
 from .fastLA import compute_weighted_first_and_second_moment_array
 
 from .fastLA import apply_mask_to_full_sample
+from .fastLA import logdet_cov_diag
 
 #from .auxutils import generate_mnist_dataset
 #from .auxutils import load_mnist_dataset

@@ -59,11 +59,11 @@ class TestSparsifier(unittest.TestCase):
         self.assertArrayEqual(self.td.RHDX, spa.RHDX)
 
 
-    def test_fit(self):
-        self.assertTrue(np.allclose(self.td.RHDX, self.sparsifier.RHDX, rtol=1e-6))
-        self.assertTrue(np.allclose(self.td.HDX, self.sparsifier.HDX, rtol=1e-6))
-        self.assertTrue(np.allclose(self.td.X, self.sparsifier.X, rtol=1e-6))
-        self.assertTrue(np.allclose(self.td.mask, self.sparsifier.mask, rtol=1e-6))
+    def test_fit_sparsifier(self):
+        self.assertArrayEqual(self.td.RHDX, self.sparsifier.RHDX)
+        self.assertArrayEqual(self.td.HDX, self.sparsifier.HDX)
+        self.assertArrayEqual(self.td.X, self.sparsifier.X)
+        self.assertArrayEqual(self.td.mask, self.sparsifier.mask)
         self.assertEqual(self.td.N, self.sparsifier.num_samp)
         self.assertEqual(self.td.Q, self.sparsifier.num_feat_comp)
         self.assertEqual(self.td.P, self.sparsifier.num_feat_full)
