@@ -83,7 +83,7 @@ class Sparsifier():
     def _generate_mask(self):
         """Generate a sparsifying mask."""
         # pick the shared indices
-        all_indicies = list(range(self.num_feat_full))
+        all_indices = list(range(self.num_feat_full))
         np.random.shuffle(all_indices)
         shared_mask = all_indices[:self.num_feat_shared]
         # pick what's left randomly

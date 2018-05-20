@@ -11,8 +11,6 @@ class GaussianMixture(Sparsifier):
     def fit(self, X, y = None):
 
         self.fit_sparsifier(X)
-        # this method requires the mask inverse
-        self.mask_inverse = self.invert_mask_bool()
 
         best_lpn = -float_info.max
 
@@ -60,10 +58,10 @@ class GaussianMixture(Sparsifier):
         while not self.converged and counter < self.max_iter:
             # E-step
             log_prob, log_resp, log_prob_norm = self._estimate_log_prob_resp(self.weights_, 
-                    self.means_, self.covariances_)
+                    self.means_, self.covariances_, self.covariance_type)
             # M-step
             self.weights_, self.means_, self.covariances_ = self._estimate_gaussian_parameters(
-                    np.exp(log_resp))
+                    np.exp(log_resp), self.covariance_type)
             # convergence check
             self.converged = self._convergence_check(log_prob_norm)
             self.log_prob_norm_ = log_prob_norm
@@ -72,8 +70,7 @@ class GaussianMixture(Sparsifier):
 
 
     def _initialize_parameters(self):
-
-        # compute the means and responsibilities first
+        #TODO: check the apply_HD conditional in sparsifier
         if self.init_params == 'kmeans':
             kmc = KMeans(num_feat_full = self.num_feat_full,
                          num_feat_comp = self.num_feat_comp,
@@ -91,44 +88,35 @@ class GaussianMixture(Sparsifier):
             kmc.fit(X = self.X, HDX = self.HDX, RHDX = self.RHDX)
             resp = np.zeros((self.num_samp, self.n_components))
             resp[np.arange(self.num_samp), kmc.labels_] = 1
-            rk, rkd = self._estimate_rkd(resp)
-            #self.means_ = self._estimate_gaussian_means(resp, rk, rkd)
-            self.means_ = self._estimate_gaussian_means(resp)
-            self.kmc = kmc
+            self.means_, self.covariances_ = self._estimate_gaussian_means_and_covariances(resp,
+                    self.covariance_type)
 
         elif self.init_params == 'random':
             resp = np.random.rand(self.num_samp, self.n_components)
-            resp /= resp.sum(axis=1)[:, np.newaxis]
-            rk, rkd = self._estimate_rkd(resp)
-            # only overwrite the computed means if init is random
-            # (note: this may lead to unexpected behavior in kmeans init, 
-            # should take a look at that)
-            if self.means_init is None:
-                self.means_ = self._estimate_gaussian_means(resp, rk, rkd)
-            else:
-                self.means_ = (self.apply_HD(self.means_init) if self.D_indices else self.means_init)
+            resp = resp/resp.sum(axis=1)[:,np.newaxis]
+            self.means_, self.covariances_ = self._estimate_gaussian_means_and_covariances(resp,
+                    self.covariance_type)
+            if self.means_init is not None:
+                self.means_ = (self.apply_HD(self.means_init) if self.transform in ['dct']
+                                else self.means_init)
 
         else:
             raise ValueError('Unimplemented initialization method: {}'.format(self.init_params))
 
-        # compute and assign the covariances, overwriting if initialized
-        if self.precisions_init is None:
-            _, self.covariances_ = self._estimate_gaussian_means_and_covariances(resp)
-        else:
-            self.covariances_ = (self.apply_HD(1/(self.precisions_init + self.reg_covar)) 
-                    if self.D_indices else 1/self.precisions_init)
-
-        # compute and assign the weights, overwriting if initialized
-        weights = self._estimate_gaussian_weights(rk)
+        weights = self._estimate_gaussian_weights(resp)
         self.weights_ = (weights if self.weights_init is None else self.weights_init)
-
-
         self.log_prob_norm_ = -float_info.max
 
 
     # parameter and responsibiltiy computation
 
     # E-step
+
+    def _estimate_log_prob_resp(self, weights, means, covariances, covariance_type):
+        log_prob = self._compute_log_prob(means, covariances, covariance_type)
+        log_resp, log_prob_norm = self._compute_log_resp(weights, log_prob)
+        return [log_prob, log_resp, log_prob_norm]
+
     def _compute_logdet_array(self, covariances, covariance_type):
         #TODO: consider moving the diag part to sparsifier for consistency
         if covariance_type == 'spherical':
@@ -147,75 +135,48 @@ class GaussianMixture(Sparsifier):
             raise Exception('covariance_type {} not implemented'.format(covariance_type))
         return logdetS
 
-    def _compute_logprob_array(self, means, covariances, covariance_type):
+    def _compute_log_prob(self, means, covariances, covariance_type):
         maha_dist_squared = self.pairwise_mahalanobis_distances(means, 
                                 covariances, covariance_type)**2
         logconst = self.num_feat_comp*np.log(2*np.pi)
-        logdet = self._compute_logdet_array(covariances, covariance_type)
-        logprog = -.5 * (logconst + 2*logdetS + maha_dist_squared)
-        return logprob
+        logdetS = self._compute_logdet_array(covariances, covariance_type)
+        log_prob = -.5 * (logconst + 2*logdetS + maha_dist_squared)
+        return log_prob
 
-
-    #def _estimate_log_prob(self, weights, )
-
-    """
-    def _estimate_log_prob_resp(self, weights, means, cov):
-        # compute the log probabilities
-        const = self.num_feat_comp * np.log(2*np.pi)
-        #det = np.sum(np.log(cov), axis=1)
-        import pdb; pdb.set_trace()
-        detn = self.mask_inverse.T.dot(np.log(cov).T)
-        S = self.pairwise_mahalanobis_distances(means, cov, self.covariance_type)**2
-        #S = self.pairwise_distances(Y = means, W = 1/cov)**2
-        log_prob = -.5 * (const + detn + S)
-        # compute the log responsibilities
+    def _compute_log_resp(self, weights, log_prob):
         lse = logsumexp(log_prob, b = weights, axis = 1)
         log_resp = np.log(weights) + log_prob - lse[:, np.newaxis]
         log_prob_norm = np.mean(lse)
-        return [log_prob, log_resp, log_prob_norm]
-    """
+        return [log_resp, log_prob_norm]
         
     # M-step
-    def _estimate_gaussian_parameters(self, resp):
-        rk, rkd = self._estimate_rkd(resp)
-        weights = self._estimate_gaussian_weights(rk)
-        means, covariances = self._estimate_gaussian_means_and_covariances(resp)
+    def _estimate_gaussian_parameters(self, resp, covariance_type):
+        weights = self._estimate_gaussian_weights(resp)
+        means, covariances = self._estimate_gaussian_means_and_covariances(resp, covariance_type)
         return [weights, means, covariances]
 
     # subroutines for the M-step
-    def _estimate_rkd(self, resp):
-        rk = np.sum(resp, axis=0) + 10 * np.finfo(resp.dtype).eps
-        rkd = self.mask_inverse.dot(resp).transpose() + \
-              10 * np.finfo(resp.dtype).eps
-        return [rk, rkd]
-
-    def _estimate_gaussian_means_and_covariances(self, resp):
-        means, covariances = self.weighted_means_and_variances(resp)
+    def _estimate_gaussian_means_and_covariances(self, resp, covariance_type):
+        if covariance_type == 'diag':
+            means, covariances = self.weighted_means_and_variances(resp)
+        elif covariance_type == 'spherical':
+            means, covariances = self.weighted_means_and_variances(resp)
+            covariances = np.mean(covariances, axis=1)
+        covariances += self.reg_covar
         return [means, covariances]
 
-
-    #def _estimate_gaussian_means(self, resp, rk, rkd):
-    #    means = self.polynomial_combination(resp)
-    #    means /= rkd
-    #    return means
-
-    def _estimate_gaussian_means(self, resp):
-        return self.weighted_means(resp)
-
-    def _estimate_gaussian_weights(self, rk):
+    def _estimate_gaussian_weights(self, resp):
+        rk = np.sum(resp, axis=0) + 10 * np.finfo(resp.dtype).eps
         weights = rk/self.num_samp
         return weights
-
-    #def _estimate_gaussian_covariances(self, resp, rkd, means):
-    #    covariances = self.polynomial_combination(resp, power = 2)
-    #    covariances /= rkd
-    #    covariances += - means**2 + self.reg_covar
-    #    if np.any(covariances <= 0):
-    #        raise Exception('Something is wrong; got a negative variance.')
-    #    return covariances
         
     def _convergence_check(self, log_prob_norm):
-        diff = np.abs((log_prob_norm - self.log_prob_norm_)/log_prob_norm)
+        with np.errstate(over='raise'):
+            try:
+                diff = np.abs((log_prob_norm - self.log_prob_norm_)/log_prob_norm)
+            except FloatingPointError:
+                #overflow from initializing self.log_prob_norm_ to -max float
+                diff = np.abs(self.log_prob_norm_)
         if diff < self.tol:
             converged = True
         else:
@@ -225,9 +186,7 @@ class GaussianMixture(Sparsifier):
     def __init__(self, n_components = 1, covariance_type = 'spherical', tol = 0.001,
             reg_covar = 1e-06, max_iter = 100, n_init = 1, 
             init_params = 'kmeans', kmeans_init = 'random', kmeans_max_iter = 0, 
-            weights_init = None, means_init = None, 
-            precisions_init = None, random_state = None, warm_start = False,
-            n_passes = 1,
+            weights_init = None, means_init = None, n_passes = 1,
             **kwargs):
 
         self.init_params = init_params
@@ -238,7 +197,6 @@ class GaussianMixture(Sparsifier):
         self.max_iter = max_iter
         self.means_init = means_init
         self.weights_init = weights_init
-        self.precisions_init = precisions_init
         self.covariance_type = covariance_type
         self.reg_covar = reg_covar
         self.kmeans_max_iter = kmeans_max_iter
@@ -250,5 +208,3 @@ class GaussianMixture(Sparsifier):
 
         super(GaussianMixture, self).__init__(**kwargs)
 
-        #TODO don't use this, find another way
-        self.mask_inverse = self.invert_mask_bool()

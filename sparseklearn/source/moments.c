@@ -383,9 +383,10 @@ void compute_weighted_first_and_second_moment_array(double *first_moment_array,
     for (ind_samp_full = 0 ; ind_samp_full < num_samp_full ; ind_samp_full ++) {
         for (ind_feat_full = 0 ; ind_feat_full < num_feat_full ; ind_feat_full++) {
             position_tracker = ind_samp_full * num_feat_full + ind_feat_full;
-            if (normalizer_array[position_tracker] > 0) 
+            if (normalizer_array[position_tracker] > 0) {
                 first_moment_array[position_tracker] *= 1/normalizer_array[position_tracker];
                 second_moment_array[position_tracker] *= 1/normalizer_array[position_tracker];
+            }
         }
     }
 }
