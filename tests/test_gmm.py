@@ -85,18 +85,24 @@ class TestGaussianMixture(unittest.TestCase):
                 num_feat_full = 4, num_feat_comp = 2,
                 num_feat_shared = 1, num_samp = 3, transform = None, D_indices = None,
                 mask = None, reg_covar = reg_covar, init_params = 'random', max_iter = 5)
-        gmm.fit(X)
+        gmm.fit(X=X)
         correct_means = np.array([[0, 0, 1, 0],
                                   [1, 0, 0, 0]], dtype = np.float64)
         correct_covariances = np.ones_like(correct_means)*reg_covar
         self.assertArrayEqual(gmm.means_, correct_means)
         self.assertArrayEqual(gmm.covariances_, correct_covariances)
 
-
-
-
-    #def test_fit(self):
-        #self.gmm.fit(X = self.td.X)
+    def test__predict_training_data(self):
+        #TODO
+        X = np.array([[0,1,0,0],
+                      [1,0,0,0],
+                      [0,0,1,2]], dtype = np.float64)
+        gmm = GaussianMixture(n_components = 2, covariance_type = 'diag',
+                num_feat_full = 4, num_feat_comp = 2,
+                num_feat_shared = 1, num_samp = 3, transform = None, D_indices = None,
+                mask = None, reg_covar = 1e-6, init_params = 'random', max_iter = 5)
+        gmm.fit(X=X)
+        labels = gmm._predict_training_data()
 
 if __name__ == '__main__':
     unittest.main()

@@ -68,29 +68,53 @@ class Sparsifier():
     """
 
     ###########################################################################
+    # Temp - set random seed
+
+    def check_random_state(self, seed):
+        """Turn seed into a np.random.RandomState instance
+        Parameters
+        ----------
+        seed : None | int | instance of RandomState
+            If seed is None, return the RandomState singleton used by np.random.
+            If seed is an int, return a new RandomState instance seeded with seed.
+            If seed is already a RandomState instance, return it.
+            Otherwise raise ValueError.
+        """
+        if seed is None or seed is np.random:
+            return np.random.mtrand._rand
+        if isinstance(seed, (numbers.Integral, np.integer)):
+            return np.random.RandomState(seed)
+        if isinstance(seed, np.random.RandomState):
+            return seed
+        raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
+                         ' instance' % seed)
+
+    ###########################################################################
     # Preconditoning and mask generation
 
     def _generate_D_indices(self):
         """ Randomly generate the D matrix in the HD transform. Store only the 
         indices where D == -1. """
+        rng = self.check_random_state(self.random_state)
         if self.transform in ['dct']:
             D_indices = np.array([i for i in range(self.num_feat_full) 
-                if np.random.choice([0,1])])
+                if rng.choice([0,1])])
         elif self.transform is None:
             D_indices = np.array([])
         return D_indices
 
     def _generate_mask(self):
         """Generate a sparsifying mask."""
+        rng = self.check_random_state(self.random_state)
         # pick the shared indices
         all_indices = list(range(self.num_feat_full))
-        np.random.shuffle(all_indices)
+        rng.shuffle(all_indices)
         shared_mask = all_indices[:self.num_feat_shared]
         # pick what's left randomly
         remaining_indices = all_indices[self.num_feat_shared:]
         num_left_to_draw = self.num_feat_comp - self.num_feat_shared
         if num_left_to_draw > 0:
-            random_masks = [np.random.choice(remaining_indices, 
+            random_masks = [rng.choice(remaining_indices, 
                 num_left_to_draw, replace=False) for n in range(self.num_samp)]
             mask = np.concatenate((random_masks, 
                 np.tile(shared_mask, (self.num_samp,1)).astype(int)), axis = 1)
@@ -429,7 +453,8 @@ class Sparsifier():
         it will choose from that; otherwise draws from RHDX and returns a dense
         vector (with zeros outside the mask). """
         # pick K data points at random uniformly
-        cluster_indices = np.random.choice(self.num_samp, K, replace = False)
+        rng = self.check_random_state(self.random_state)
+        cluster_indices = rng.choice(self.num_samp, K, replace = False)
         cluster_indices.sort()
         # assign the cluster_centers as dense members of HDX ...
         if self.HDX is not None:
@@ -444,13 +469,14 @@ class Sparsifier():
 
 
     def __init__(self, num_feat_full, num_feat_comp, num_feat_shared, num_samp,
-                 D_indices, transform, mask):
+                 D_indices, transform, mask, random_state = None):
 
         self.num_feat_full = num_feat_full
         self.num_feat_comp = num_feat_comp
         self.num_feat_shared = num_feat_shared
         self.num_samp = num_samp
         self.transform = transform
+        self.random_state = random_state
 
         #TODO implement default arguments for several of these
 

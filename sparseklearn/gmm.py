@@ -8,9 +8,9 @@ from .fastLA import logdet_cov_diag
 
 class GaussianMixture(Sparsifier):
 
-    def fit(self, X, y = None):
+    def fit(self, X = None, HDX = None, RHDX = None, y = None):
 
-        self.fit_sparsifier(X)
+        self.fit_sparsifier(X = X, HDX = HDX, RHDX = RHDX)
 
         best_lpn = -float_info.max
 
@@ -49,6 +49,13 @@ class GaussianMixture(Sparsifier):
         else:
             raise ValueError('n_passes needs to be 1 or 2, but is {}'.format(self.n_passes))
         return [means_, covariances_]
+
+    def _predict_training_data(self):
+        _, logresp, _ = self._estimate_log_prob_resp(self.weights_, 
+                                     self.means_,
+                                     self.covariances_,
+                                     self.covariance_type)
+        return np.argmax(logresp + np.log(self.weights_) ,axis=1)
 
     def fit_single_trial(self):
         self.converged = False
