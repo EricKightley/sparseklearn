@@ -131,11 +131,12 @@ class KMeans(Sparsifier):
     def _initialize_cluster_centers_kmpp(self):
         """ Initialize the cluster centers using the k-means++ algorithm."""
 
+        rng = self.check_random_state(self.random_state)
         cluster_indices = np.zeros(self.n_clusters, dtype = int)
         self.cluster_centers_ = np.zeros((self.n_clusters, self.num_feat_full))
 
         # pick the first one at random from the data
-        cluster_indices[0] = np.random.choice(self.num_samp)
+        cluster_indices[0] = rng.choice(self.num_samp)
         # ... loading the full datapoint, or ...
         if self.HDX is not None:
             self.cluster_centers_[0] = self.HDX[cluster_indices[0]]
@@ -168,7 +169,7 @@ class KMeans(Sparsifier):
             # pick a datapoint at random with prob proportional to its distance
             # from the current cluster set
             if d_curr_sum > 0:
-                cluster_indices[k] = np.random.choice(self.num_samp, p = d_curr/d_curr_sum)
+                cluster_indices[k] = rng.choice(self.num_samp, p = d_curr/d_curr_sum)
             else:
                 # then the mask obliterated all distance information, so just
                 # pick one uniformly at random that's not already been chosen

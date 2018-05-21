@@ -78,6 +78,7 @@ class GaussianMixture(Sparsifier):
 
     def _initialize_parameters(self):
         #TODO: check the apply_HD conditional in sparsifier
+        rng = self.check_random_state(self.random_state)
         if self.init_params == 'kmeans':
             kmc = KMeans(num_feat_full = self.num_feat_full,
                          num_feat_comp = self.num_feat_comp,
@@ -99,7 +100,7 @@ class GaussianMixture(Sparsifier):
                     self.covariance_type)
 
         elif self.init_params == 'random':
-            resp = np.random.rand(self.num_samp, self.n_components)
+            resp = rng.rand(self.num_samp, self.n_components)
             resp = resp/resp.sum(axis=1)[:,np.newaxis]
             self.means_, self.covariances_ = self._estimate_gaussian_means_and_covariances(resp,
                     self.covariance_type)
