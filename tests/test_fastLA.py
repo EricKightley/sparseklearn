@@ -292,6 +292,45 @@ class TestFastLAMethods(unittest.TestCase):
                         self.td.P)
         self.assertArrayEqual(logdet, self.td.correct_logdet_diag)
 
+    def test_logdet_cov_diag2(self):
+        # previous test passes but something's wrong with this example
+        
+        covariances = np.array([[ 0.61872803,  0.65838535,  0.56656821,  0.72817234],
+                                [ 0.72459339,  0.70119177,  0.44789491,  0.63625363]],
+                                dtype = np.float64)
+
+        mask = np.array([[0,1,2,3],
+                         [0,1,2,3],
+                         [0,1,2,3],
+                         [0,1,2,3]],
+                         dtype = int)
+
+        N = 4
+        K = 2
+        Q = 4
+        P = 4
+
+        logdet = np.zeros((N, K), dtype = np.float64)
+
+        logdet_cov_diag(logdet,
+                        covariances,
+                        mask,
+                        N,
+                        K,
+                        Q,
+                        P)
+
+        correct_logdet_diag = np.array([
+            [-1.78342968, -1.93247314],
+            [-1.78342968, -1.93247314],
+            [-1.78342968, -1.93247314],
+            [-1.78342968, -1.93247314]], 
+            dtype = np.float64)
+
+
+        self.assertArrayEqual(logdet, correct_logdet_diag)
+
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -78,7 +78,7 @@ void logdet_cov_diag(double *result,
             // index of this entry of result
             ind_result_entry = ind_samp_comp * num_cov + ind_cov;
             // update result with all covariances preserved by this mask row
-            for (ind_feat_comp = 0 ; ind_feat_comp < num_cov ; ind_feat_comp ++) {
+            for (ind_feat_comp = 0 ; ind_feat_comp < num_feat_comp ; ind_feat_comp ++) {
                 ind_mask_entry = ind_samp_comp * num_feat_comp + ind_feat_comp;
                 ind_cov_entry = ind_cov * num_feat_full + mask_array[ind_mask_entry];
                 result[ind_result_entry] += log(diagonal_covariance_array[ind_cov_entry]);

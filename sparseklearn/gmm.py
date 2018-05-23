@@ -105,8 +105,7 @@ class GaussianMixture(Sparsifier):
             self.means_, self.covariances_ = self._estimate_gaussian_means_and_covariances(resp,
                     self.covariance_type)
             if self.means_init is not None:
-                self.means_ = (self.apply_HD(self.means_init) if self.transform in ['dct']
-                                else self.means_init)
+                self.means_ = self.means_init
 
         else:
             raise ValueError('Unimplemented initialization method: {}'.format(self.init_params))
@@ -149,6 +148,7 @@ class GaussianMixture(Sparsifier):
         logconst = self.num_feat_comp*np.log(2*np.pi)
         logdetS = self._compute_logdet_array(covariances, covariance_type)
         log_prob = -.5 * (logconst + 2*logdetS + maha_dist_squared)
+        #log_prob = -.5 * (logconst + maha_dist_squared) + logdetS
         return log_prob
 
     def _compute_log_resp(self, weights, log_prob):
