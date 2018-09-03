@@ -57,6 +57,7 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertArrayEqual(log_prob_test, log_prob_true)
 
     def test__compute_log_prob_diagonal_no_compression(self):
+        """ test """
         cov_type = 'diag'
         gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
                 num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
