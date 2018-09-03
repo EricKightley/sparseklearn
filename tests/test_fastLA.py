@@ -293,7 +293,10 @@ class TestFastLAMethods(unittest.TestCase):
         self.assertArrayEqual(logdet, self.td.correct_logdet_diag)
 
     def test_logdet_cov_diag2(self):
-        # previous test passes but something's wrong with this example
+        """ Previous test passses but something was wrong. Turns out it was the
+        upper bound on the inner loop in auxiliary.c.
+        """
+        #TODO: merge this with test_logdet_diag
         
         covariances = np.array([[ 0.61872803,  0.65838535,  0.56656821,  0.72817234],
                                 [ 0.72459339,  0.70119177,  0.44789491,  0.63625363]],

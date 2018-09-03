@@ -3,6 +3,8 @@ import numpy as np
 class DataGenerator():
 
     def __init__(self):
+        """ I think means and covariances correspond to sparsified ones. 
+        """
 
         self.X = np.array([
             [ -8.85515933,  -5.34190685,   0.70918525,   3.6793991 , -6.16516529],

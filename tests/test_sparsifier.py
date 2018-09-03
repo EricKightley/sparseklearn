@@ -76,7 +76,6 @@ class TestSparsifier(unittest.TestCase):
         correct_full = self.td.correct_pairwise_l2_distances_with_full
 
         self.assertArrayEqual(result_self, correct_self)
-        #self.assertAlmostEqual(correct,result,places=6)
 
     def test_weighted_means(self):
         first_moment_array = self.sparsifier.weighted_means(self.td.W)

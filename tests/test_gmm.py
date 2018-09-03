@@ -1,5 +1,7 @@
 import unittest
 import numpy as np
+from sklearn.mixture.gaussian_mixture import _compute_precision_cholesky
+from sklearn.mixture.gaussian_mixture import _estimate_log_gaussian_prob
 from sparseklearn import GaussianMixture
 
 from generate_test_data import DataGenerator
@@ -11,11 +13,11 @@ class TestGaussianMixture(unittest.TestCase):
 
     def setUp(self):
         self.td = DataGenerator()
-        gmm = GaussianMixture(n_components = 3, 
-                        num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-                        num_samp = 4, transform = 'dct', 
-                        D_indices = self.td.D_indices, mask = self.td.mask)
-        self.gmm = gmm
+        #gmm = GaussianMixture(n_components = 3, 
+        #                num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
+        #                num_samp = 4, transform = 'dct', 
+        #                D_indices = self.td.D_indices, mask = self.td.mask)
+        #self.gmm = gmm
 
     def test_fit_sparsifier(self):
         gmm = GaussianMixture(n_components = 3, 
@@ -41,10 +43,34 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertArrayEqual(self.td.correct_logdet_spherical, logdet_spherical)
         self.assertArrayEqual(self.td.correct_logdet_diag, logdet_diag)
 
-    def test__compute_log_prob(self):
-        #TODO
-        return 1
-        
+    def test__compute_log_prob_spherical_no_compression(self):
+        cov_type = 'spherical'
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+                num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
+                mask = None, D_indices = None, covariance_type = cov_type)
+        gmm.fit_sparsifier(X = self.td.X)
+        means = np.random.rand(gmm.n_components, gmm.num_feat_comp)
+        covariances = np.random.rand(gmm.n_components)
+        log_prob_test = gmm._compute_log_prob(means, covariances, cov_type)
+        precisions = _compute_precision_cholesky(covariances, cov_type)
+        log_prob_true = _estimate_log_gaussian_prob(self.td.X, means, precisions, cov_type) 
+        self.assertArrayEqual(log_prob_test, log_prob_true)
+
+    def test__compute_log_prob_diagonal_no_compression(self):
+        cov_type = 'diag'
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+                num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
+                mask = None, D_indices = None, covariance_type = cov_type)
+        gmm.fit_sparsifier(X = self.td.X)
+        means = np.random.rand(gmm.n_components, gmm.num_feat_comp)
+        covariances = np.random.rand(gmm.n_components, gmm.num_feat_comp)
+        log_prob_test = gmm._compute_log_prob(means, covariances, cov_type)
+        precisions = _compute_precision_cholesky(covariances, cov_type)
+        log_prob_true = _estimate_log_gaussian_prob(self.td.X, means, precisions, cov_type) 
+        self.assertArrayEqual(log_prob_test, log_prob_true)
+
+
+
     def test__compute_log_resp(self):
         #TODO
         return 1
