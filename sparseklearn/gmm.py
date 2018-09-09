@@ -147,7 +147,7 @@ class GaussianMixture(Sparsifier):
                                 covariances, covariance_type)**2
         logconst = self.num_feat_comp*np.log(2*np.pi)
         logdetS = self._compute_logdet_array(covariances, covariance_type)
-        log_prob = -.5 * (logconst + maha_dist_squared) -.5 * logdetS
+        log_prob = -.5 * (logconst + maha_dist_squared + logdetS)
         return log_prob
 
     def _compute_log_resp(self, weights, log_prob):

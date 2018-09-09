@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 from sklearn.mixture.gaussian_mixture import _compute_precision_cholesky
 from sklearn.mixture.gaussian_mixture import _estimate_log_gaussian_prob
+from sklearn.mixture import GaussianMixture as GMSKL
 from sparseklearn import GaussianMixture
 
 from generate_test_data import DataGenerator
@@ -44,6 +45,9 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertArrayEqual(self.td.correct_logdet_diag, logdet_diag)
 
     def test__compute_log_prob_spherical_no_compression(self):
+        """ Compare the log_prob computation to that of sklearn with no 
+        compression. Implemented as a precursor to testing it with 
+        compression, to follow. Spherical covariances. """
         cov_type = 'spherical'
         gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
                 num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
@@ -57,7 +61,9 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertArrayEqual(log_prob_test, log_prob_true)
 
     def test__compute_log_prob_diagonal_no_compression(self):
-        """ test """
+        """ Compare the log_prob computation to that of sklearn with no 
+        compression. Implemented as a precursor to testing it with 
+        compression, to follow. Diagonal covariances. """
         cov_type = 'diag'
         gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
                 num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
@@ -70,10 +76,87 @@ class TestGaussianMixture(unittest.TestCase):
         log_prob_true = _estimate_log_gaussian_prob(self.td.X, means, precisions, cov_type) 
         self.assertArrayEqual(log_prob_test, log_prob_true)
 
+    def test__compute_log_prob(self):
+        """ This test should probably get implemented eventually. It corresponds 
+        to testing the wrapper around fastLA.pairwise_mahalanobis_distances and 
+        gmm._compute_logdet_array. Each of these has tests for spherical and
+        diagonal cases with sparsification.
+        
+        Currently we have tests of:
+
+            - component functions in _compute_log_prob
+              includes diag and spherical on compressed data with 
+              sparsification
+            - _compute_log_prob on dense data
+              tests against sklearn
+        
+        I can't currently think of a way to implement a test for this that isn't
+        a trivial replication of those earlier tests.
+        
+        """
+        #TODO
+
+    def test__estimate_log_prob_resp_spherical_no_compression(self):
+        cov_type = 'spherical'
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+                num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
+                mask = None, D_indices = None, covariance_type = cov_type)
+        gmm.fit_sparsifier(X = self.td.X)
+        means = np.random.rand(gmm.n_components, gmm.num_feat_comp)
+        covariances = np.random.rand(gmm.n_components)
+        weights = np.random.rand(gmm.n_components)
+        weights /= weights.sum()
+        log_prob_test, log_resp_test, log_prob_norm_test = gmm._estimate_log_prob_resp(
+            weights, means, covariances, cov_type)
+        # find skl's values, pretty ugly to do. 
+        precisions = _compute_precision_cholesky(covariances, cov_type)
+        gmm_skl = GMSKL(n_components = 3, covariance_type = cov_type)
+        gmm_skl.means_ = means
+        gmm_skl.precisions_cholesky_ = precisions
+        gmm_skl.weights_ = weights
+        gmm_skl.covariance_type_ = cov_type
+        log_prob_norm_true, log_resp_true = gmm_skl._estimate_log_prob_resp(self.td.X)
+        # if anything is bad later this overwrite with mean seems suspect:
+        log_prob_norm_true = log_prob_norm_true.mean() 
+        # now get the log_prob from another function
+        log_prob_true = _estimate_log_gaussian_prob(self.td.X, means, precisions, cov_type) 
+        # run the tests
+        self.assertArrayEqual(log_prob_test, log_prob_true)
+        self.assertArrayEqual(log_prob_norm_true, log_prob_norm_test)
+        self.assertArrayEqual(log_resp_true, log_resp_test)
+
+    def test__estimate_log_prob_resp_diagonal_no_compression(self):
+        cov_type = 'diag'
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+                num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
+                mask = None, D_indices = None, covariance_type = cov_type)
+        gmm.fit_sparsifier(X = self.td.X)
+        means = np.random.rand(gmm.n_components, gmm.num_feat_comp)
+        covariances = np.random.rand(gmm.n_components, gmm.num_feat_comp)
+        weights = np.random.rand(gmm.n_components)
+        weights /= weights.sum()
+        log_prob_test, log_resp_test, log_prob_norm_test = gmm._estimate_log_prob_resp(
+            weights, means, covariances, cov_type)
+        # find skl's values, pretty ugly to do. 
+        precisions = _compute_precision_cholesky(covariances, cov_type)
+        gmm_skl = GMSKL(n_components = 3, covariance_type = cov_type)
+        gmm_skl.means_ = means
+        gmm_skl.precisions_cholesky_ = precisions
+        gmm_skl.weights_ = weights
+        gmm_skl.covariance_type_ = cov_type
+        log_prob_norm_true, log_resp_true = gmm_skl._estimate_log_prob_resp(self.td.X)
+        # if anything is bad later this overwrite with mean seems suspect:
+        log_prob_norm_true = log_prob_norm_true.mean() 
+        # now get the log_prob from another function
+        log_prob_true = _estimate_log_gaussian_prob(self.td.X, means, precisions, cov_type) 
+        # run the tests
+        self.assertArrayEqual(log_prob_test, log_prob_true)
+        self.assertArrayEqual(log_prob_norm_true, log_prob_norm_test)
+        self.assertArrayEqual(log_resp_true, log_resp_test)
+
 
 
     def test__compute_log_resp(self):
-        #TODO
         return 1
 
     def test__estimate_gaussian_means_and_covariances(self):
