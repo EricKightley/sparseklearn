@@ -118,7 +118,6 @@ class GaussianMixture(Sparsifier):
     # parameter and responsibiltiy computation
 
     # E-step
-
     def _estimate_log_prob_resp(self, weights, means, covariances, covariance_type):
         log_prob = self._compute_log_prob(means, covariances, covariance_type)
         log_resp, log_prob_norm = self._compute_log_resp(weights, log_prob)
@@ -162,7 +161,6 @@ class GaussianMixture(Sparsifier):
         means, covariances = self._estimate_gaussian_means_and_covariances(resp, covariance_type)
         return [weights, means, covariances]
 
-    # subroutines for the M-step
     def _estimate_gaussian_means_and_covariances(self, resp, covariance_type):
         if covariance_type == 'diag':
             means, covariances = self.weighted_means_and_variances(resp)
@@ -173,6 +171,10 @@ class GaussianMixture(Sparsifier):
         return [means, covariances]
 
     def _estimate_gaussian_weights(self, resp):
+        """ 
+        Note: sklearn returns the counts instead of weights, i.e., no
+        division by self.num_samp. 
+        """
         rk = np.sum(resp, axis=0) + 10 * np.finfo(resp.dtype).eps
         weights = rk/self.num_samp
         return weights

@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 from sklearn.mixture.gaussian_mixture import _compute_precision_cholesky
 from sklearn.mixture.gaussian_mixture import _estimate_log_gaussian_prob
+from sklearn.mixture.gaussian_mixture import _estimate_gaussian_parameters
 from sklearn.mixture import GaussianMixture as GMSKL
 from sparseklearn import GaussianMixture
 
@@ -33,6 +34,13 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertEqual(self.td.N, gmm.num_samp)
         self.assertEqual(self.td.Q, gmm.num_feat_comp)
         self.assertEqual(self.td.P, gmm.num_feat_full)
+
+
+    ###########################################################################
+    ###########################################################################
+    #####                             E-STEP                             ######
+    ###########################################################################
+    ###########################################################################
 
     def test__compute_logdet_array(self):
         gmm = GaussianMixture(n_components = 3, 
@@ -155,11 +163,63 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertArrayEqual(log_resp_true, log_resp_test)
 
 
+    ###########################################################################
+    ###########################################################################
+    #####                             M-STEP                             ######
+    ###########################################################################
+    ###########################################################################
 
-    def test__compute_log_resp(self):
-        return 1
+    def test__estimate_gaussian_parameters_spherical_no_compression(self):
+        """ Test _estiamte_gaussian_parameters against sklearn's
+        implementation. Spherical covariances, no compression. 
+        """
+        cov_type = 'spherical'
+        reg_covar = 1e-6
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+                num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
+                mask = None, D_indices = None, covariance_type = cov_type, 
+                reg_covar = reg_covar)
+        gmm.fit_sparsifier(X = self.td.X)
+        resp = np.random.rand(gmm.num_samp, gmm.n_components)
+        weights_test, means_test, covariances_test = gmm._estimate_gaussian_parameters(resp, cov_type)
+        # skl
+        counts_true, means_true, covariances_true = _estimate_gaussian_parameters(
+                self.td.X, resp, reg_covar, cov_type) 
+        # skl returns counts instead of weights. 
+        weights_true = counts_true / gmm.num_samp
 
-    def test__estimate_gaussian_means_and_covariances(self):
+        self.assertArrayEqual(weights_test, weights_true)
+        self.assertArrayEqual(means_test, means_true)
+        self.assertArrayEqual(covariances_test, covariances_true)
+
+    def test__estimate_gaussian_parameters_diagonal_no_compression(self):
+        """ Test _estiamte_gaussian_parameters against sklearn's
+        implementation. Diagonal covariances, no compression. 
+        """
+        cov_type = 'diag'
+        reg_covar = 1e-6
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+                num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
+                mask = None, D_indices = None, covariance_type = cov_type, 
+                reg_covar = reg_covar)
+        gmm.fit_sparsifier(X = self.td.X)
+        resp = np.random.rand(gmm.num_samp, gmm.n_components)
+        weights_test, means_test, covariances_test = gmm._estimate_gaussian_parameters(resp, cov_type)
+        # skl
+        counts_true, means_true, covariances_true = _estimate_gaussian_parameters(
+                self.td.X, resp, reg_covar, cov_type) 
+        # skl returns counts instead of weights. 
+        weights_true = counts_true / gmm.num_samp
+
+        self.assertArrayEqual(weights_test, weights_true)
+        self.assertArrayEqual(means_test, means_true)
+        self.assertArrayEqual(covariances_test, covariances_true)
+
+    def test__estimate_gaussian_means_and_covariances_diagonal_no_compression(self):
+        """ Test _estimate_gaussian_means_and_covariances against hard-coded 
+        example. Should be redundant with test__estimate_gaussian_parameters_*
+        tests above, which test against sklearn's results. """
+
         X = np.array([[0,1,0,0],
                       [1,0,0,0],
                       [0,0,1,2]], dtype = np.float64)
@@ -181,8 +241,13 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertArrayEqual(correct_covariances, covariances)
 
     def test__estimate_gaussian_weights(self):
+        """ Weights are testsed in test__estimate_gaussian_parameters_* above.
+        Should not need to implement this unless we want to further test on
+        compressed case. 
+        """
         #TODO
         return 1
+
 
     def test_fit(self):
         """ Catches a case where covariance goes to 0."""
