@@ -233,6 +233,8 @@ class Sparsifier():
     # Fitting
 
     def _set_HDX(self, transform, X, HDX, RHDX):
+        # TODO: Shouldn't be checking for transform here, that could break 
+        # stuff later. 
         """ Wrapper to compute HDX from X or assign it if user-specified. """
         if HDX is not None:
             return HDX
@@ -449,24 +451,95 @@ class Sparsifier():
             raise Exception("covariance_type must be 'spherical' or 'diag'")
         return distances
 
+
+    def _pick_K_dense_datapoints_kmpp(self, K):
+        """ Picks K datapoints randomly according to the kmpp method.
+
+        Parameters
+        ----------
+
+        K : int
+            The number of datapoints to pick. 
+
+
+        Returns
+        -------
+
+        datapoints : nd.array, shape (K,P)
+            Each row is a point in dense space. If HDX is given,
+            uses this. Otherwise, maps RHDX to dense space and fills in zeros.
+        """
+
+        rng = self.check_random_state(self.random_state)
+        datapoint_indices = np.zeros(K, dtype = int)
+        datapoints = np.zeros((K, self.num_feat_full))
+
+        # pick the first one at random from the data
+        datapoint_indices[0] = rng.choice(self.num_samp)
+        # ... loading the full datapoint, or ...
+        if self.HDX is not None:
+            datapoints[0] = self.HDX[datapoint_indices[0]]
+        # ... using the masked one
+        else:
+            datapoints[0][self.mask[datapoint_indices[0]]] = \
+                self.RHDX[datapoint_indices[0]]
+
+        # initialize the previous distance counter to max float
+        # (so it's guaranteed to be overwritten in the loop)
+        d_prev = np.ones(self.num_samp) * np.finfo(float).max
+
+        # now pick the remaining k-1 cluster_centers
+        for k in range(1,K):
+            # squared distance from all the data points to the last cluster added
+            latest_cluster = datapoints[k-1,np.newaxis]
+            d_curr = self.pairwise_distances(Y = latest_cluster)[:,0]**2
+            # ||x - U|| is either this distance or the current minimum
+            where_we_have_not_improved = np.where(d_curr > d_prev)[0]
+            d_curr[where_we_have_not_improved] = d_prev[where_we_have_not_improved]
+            d_prev = np.copy(d_curr)
+
+            d_curr_sum = d_curr.sum()
+
+            # if the mask didn't obliterate all distance information, then
+            # pick a datapoint at random with prob proportional to its squared
+            # distance from the current cluster set
+            if d_curr_sum > 0:
+                datapoint_indices[k] = rng.choice(self.num_samp, p = d_curr/d_curr_sum)
+            else:
+                # then the mask obliterated all distance information, so just
+                # pick one uniformly at random that's not already been chosen
+                available_indices = set(range(self.num_samp)).difference(set(datapoint_indices))
+                datapoint_indices[k] = np.random.choice(list(available_indices))
+            # finally, assign the cluster, either by setting all P entires 
+            # from the dense HDX ...
+            if self.HDX is not None:
+                datapoints[k] = self.HDX[datapoint_indices[k]]
+            # ... or by setting only M entries from the sparse RHDX
+            else:
+                datapoints[k][self.mask[datapoint_indices[k]]] = \
+                    self.RHDX[datapoint_indices[k]]
+
+        return [datapoints, datapoint_indices]
+
+
     def _pick_K_datapoints(self, K):
         """ Picks K datapoints at random. If the Sparsifier has access to HDX,
         it will choose from that; otherwise draws from RHDX and returns a dense
         vector (with zeros outside the mask). """
         # pick K data points at random uniformly
         rng = self.check_random_state(self.random_state)
-        cluster_indices = rng.choice(self.num_samp, K, replace = False)
-        cluster_indices.sort()
+        datapoint_indices = rng.choice(self.num_samp, K, replace = False)
+        datapoint_indices.sort()
         # assign the cluster_centers as dense members of HDX ...
         if self.HDX is not None:
-            cluster_centers_ = np.array(self.HDX[cluster_indices])
+            datapoints = np.array(self.HDX[datapoint_indices])
         # or assign just the M entries specified by the mask
         else:
-            cluster_centers_ = np.zeros((self.K,self.num_feat_full))
+            datapoints = np.zeros((self.K,self.num_feat_full))
             for k in range(K):
-                cluster_centers_[k][mask[cluster_indices[k]]] = \
-                        self.RHDX[cluster_indices[k]]
-        return [cluster_centers_, cluster_indices]
+                datapoints[k][mask[datapoint_indices[k]]] = \
+                        self.RHDX[datapoint_indices[k]]
+        return [datapoints, datapoint_indices]
 
 
     def __init__(self, num_feat_full, num_feat_comp, num_feat_shared, num_samp,

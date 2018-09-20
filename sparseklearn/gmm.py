@@ -114,6 +114,29 @@ class GaussianMixture(Sparsifier):
         self.weights_ = (weights if self.weights_init is None else self.weights_init)
         self.log_prob_norm_ = -float_info.max
 
+    def _init_resp_from_means(self, means):
+        """ Initialize the responsibility matrix from dense means by doing hard 
+        assignment.
+
+        Parameters
+        ----------
+
+        means : nd.array, shape (K,P)
+            The dense array of initial means (from random sampling or kmpp). 
+
+        Returns
+        -------
+
+        resp : nd.array, shape (N,K)
+            The responsibility matrix.
+
+        """
+        distances = self.pairwise_distances(means)
+        resp = np.zeros((self.num_samp, self.n_components), dtype = int)
+        closest = np.argmin(distances, axis = 1)
+        resp[np.arange(self.num_samp), closest] = 1
+        return resp
+
 
     # parameter and responsibiltiy computation
 

@@ -104,6 +104,18 @@ class TestSparsifier(unittest.TestCase):
         self.assertArrayEqual(result_spherical, correct_spherical)
         self.assertArrayEqual(result_diagonal, correct_diagonal)
 
+    def test__pick_K_dense_datapoints_kmpp(self):
+        """ This test makes sure that the values found and returned are indeed
+        rows from HDX, but does NOT test that the kmpp probability distribution
+        is correct. To test this requires a rewrite of this function in 
+        Sparsifier. """
+        spa = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         mask = self.td.mask)
+        spa.fit_sparsifier(X=self.td.X)
+        K = 3
+        means, indices = spa._pick_K_dense_datapoints_kmpp(K)
+        self.assertArrayEqual(spa.HDX[indices], means)
 if __name__ == '__main__':
     unittest.main()
 

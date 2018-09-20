@@ -249,6 +249,39 @@ class TestGaussianMixture(unittest.TestCase):
         return 1
 
 
+    ###########################################################################
+    ###########################################################################
+    #####                         Initialization                         ######
+    ###########################################################################
+    ###########################################################################
+
+
+    def test__init_resp_from_means(self):
+        #TODO: Write a test. This just makes sure it runs.
+        cov_type = 'diag'
+        reg_covar = 1e-6
+        gmm = GaussianMixture(n_components = 3, 
+                        num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
+                        num_samp = 4, transform = 'dct', 
+                        D_indices = self.td.D_indices, mask = self.td.mask)
+        gmm.fit_sparsifier(X=self.td.X)
+        resp_test = gmm._init_resp_from_means(self.td.U)
+        resp_correct = np.array([[0, 1, 0],
+                                 [1, 0, 0],
+                                 [0, 1, 0],
+                                 [0, 1, 0]], dtype = int)
+        self.assertArrayEqual(resp_test, resp_correct)
+
+
+
+    ###########################################################################
+    ###########################################################################
+    #####                         To be Assigned                         ######
+    ###########################################################################
+    ###########################################################################
+
+
+
     def test_fit(self):
         """ Catches a case where covariance goes to 0."""
         reg_covar = 1e-6
