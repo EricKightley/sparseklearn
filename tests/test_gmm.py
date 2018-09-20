@@ -269,19 +269,20 @@ class TestGaussianMixture(unittest.TestCase):
                                  [0, 1, 0]], dtype = int)
         self.assertArrayEqual(resp_test, resp_correct)
 
-    def test__init_resp_kmeans(self):
+    def test__init_resp_kmpp(self):
         """ Does not compare against true result, instead checks that
         responsibility matrix is of correct form and has rows of all
         zeros with a single one.
         """
-        init_params = 'kmeans'
+        init_params = 'kmpp'
+        means_init = None
         gmm = GaussianMixture(n_components = 3, 
             num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
             num_samp = 4, transform = 'dct', 
             D_indices = self.td.D_indices, mask = self.td.mask,
             init_params = init_params)
         gmm.fit_sparsifier(HDX=self.td.HDX)
-        resp = gmm._init_resp()
+        resp = gmm._init_resp(init_params, means_init)
         # check shape
         self.assertArrayEqual(resp.shape, [gmm.num_samp, gmm.n_components])
         # check number of nonzeros
@@ -300,13 +301,14 @@ class TestGaussianMixture(unittest.TestCase):
         zeros with a single non-zero.
         """
         init_params = 'random'
+        means_init = None
         gmm = GaussianMixture(n_components = 3, 
             num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
             num_samp = 4, transform = 'dct', 
             D_indices = self.td.D_indices, mask = self.td.mask,
             init_params = init_params)
         gmm.fit_sparsifier(HDX=self.td.HDX)
-        resp = gmm._init_resp()
+        resp = gmm._init_resp(init_params, means_init)
         # check shape
         self.assertArrayEqual(resp.shape, [gmm.num_samp, gmm.n_components])
         # check number of nonzeros
@@ -318,6 +320,21 @@ class TestGaussianMixture(unittest.TestCase):
         rowsum_test = resp.sum(axis=1)
         rowsum_correct = np.ones(gmm.num_samp)
         self.assertArrayEqual(rowsum_test, rowsum_correct)
+
+
+    def test__initialize_parameters(self):
+        """ Only tests if it runs. """
+        init_params = 'random'
+        means_init = None
+        gmm = GaussianMixture(n_components = 3, 
+            num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
+            num_samp = 4, transform = 'dct', 
+            D_indices = self.td.D_indices, mask = self.td.mask,
+            init_params = init_params,
+            means_init = means_init)
+        gmm.fit_sparsifier(HDX=self.td.HDX)
+        gmm._initialize_parameters(gmm.init_params, gmm.means_init, 
+                                   gmm.covariance_type)
 
     ###########################################################################
     ###########################################################################

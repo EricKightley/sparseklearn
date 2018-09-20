@@ -12,7 +12,7 @@ class GaussianMixture(Sparsifier):
 
         self.fit_sparsifier(X = X, HDX = HDX, RHDX = RHDX)
 
-        best_lpn = -float_info.max
+        best_lpn = -np.finfo(float).max
 
         best_means_ = None
         for n in range(self.n_init):
@@ -59,9 +59,10 @@ class GaussianMixture(Sparsifier):
 
     def fit_single_trial(self):
         self.converged = False
-        self._initialize_parameters()
+        self._initialize_parameters(self.init_params, 
+                self.means_init, self.covariance_type)
         counter = 0
-        log_prob_norm = -float_info.max
+        log_prob_norm = -np.finfo(float).max
         while not self.converged and counter < self.max_iter:
             # E-step
             log_prob, log_resp, log_prob_norm = self._estimate_log_prob_resp(self.weights_, 
@@ -76,9 +77,27 @@ class GaussianMixture(Sparsifier):
         return [log_prob_norm, counter]
 
 
-    def _initialize_parameters(self):
-        #TODO: check the apply_HD conditional in sparsifier
-        rng = self.check_random_state(self.random_state)
+    def _initialize_parameters(self, init_params, means_init, covariance_type):
+        """ Initialize the parameters. Sets self.weights_, self.means_, and 
+        self.covariances_. Initializes resp using means_init, or if this is
+        None, using the method prescribed by init_params. resp is then used
+        to intialize the parameters. Also sets self.log_prob_norm_ to max
+        float. 
+
+        Parameters
+        ----------
+
+        init_params : {'kmpp', 'random'}
+
+        means_init : nd.array or None
+
+        covariance_type : {'spherical', 'diag'}
+        """
+        resp = self._init_resp(init_params, means_init) 
+        self.weights_, self.means_, self.covariances_ = \
+                self._estimate_gaussian_parameters(resp, covariance_type)
+        self.log_prob_norm_ = -np.finfo(float).max
+        """
         if self.init_params == 'kmeans':
             kmc = KMeans(num_feat_full = self.num_feat_full,
                          num_feat_comp = self.num_feat_comp,
@@ -112,22 +131,28 @@ class GaussianMixture(Sparsifier):
 
         weights = self._estimate_gaussian_weights(resp)
         self.weights_ = (weights if self.weights_init is None else self.weights_init)
-        self.log_prob_norm_ = -float_info.max
-
-
-    def _init_resp(self):
-        """ Initialize the responsibiltiy matrix. 
         """
 
-        if self.init_params == "kmeans":
-            means, indices = self._pick_K_dense_datapoints_kmpp(self.n_components)
-        elif self.init_params == "random":
-            means, indices = self._pick_K_dense_datapoints_random(self.n_components)
+
+    def _init_resp(self, init_params, means_init):
+        """ Initialize the responsibiltiy matrix. If means_init is
+        not None then it is used to compute resp, otherwise init_params
+        specifies which method (kmpp or random) to use for sampling means at 
+        random. 
+        """
+
+        if init_params == "kmpp" and means_init is None:
+            means, _ = self._pick_K_dense_datapoints_kmpp(self.n_components)
+        elif init_params == "random" and means_init is None:
+            means, _ = self._pick_K_dense_datapoints_random(self.n_components)
+        elif means_init is not None:
+            means = means_init
+
         resp = self._init_resp_from_means(means)
         return resp
 
 
-    def _init_resp_from_means(self, means):
+    def _init_resp_from_means(self, means_init):
         """ Initialize the responsibility matrix from dense means by doing hard 
         assignment.
 
@@ -145,8 +170,8 @@ class GaussianMixture(Sparsifier):
             The responsibility matrix.
 
         """
-        distances = self.pairwise_distances(means)
-        resp = np.zeros((self.num_samp, self.n_components), dtype = int)
+        distances = self.pairwise_distances(means_init)
+        resp = np.zeros((self.num_samp, self.n_components))
         closest = np.argmin(distances, axis = 1)
         resp[np.arange(self.num_samp), closest] = 1
         return resp
@@ -231,10 +256,11 @@ class GaussianMixture(Sparsifier):
 
     def __init__(self, n_components = 1, covariance_type = 'spherical', tol = 0.001,
             reg_covar = 1e-06, max_iter = 100, n_init = 1, 
-            init_params = 'kmeans', kmeans_init = 'random', kmeans_max_iter = 0, 
+            init_params = 'kmpp', 
             weights_init = None, means_init = None, n_passes = 1,
             **kwargs):
 
+        #kmeans_init = 'random' and 'kmeans_max_iter' = 0
         self.init_params = init_params
         self.n_components = n_components
         self.tol = tol
@@ -245,12 +271,12 @@ class GaussianMixture(Sparsifier):
         self.weights_init = weights_init
         self.covariance_type = covariance_type
         self.reg_covar = reg_covar
-        self.kmeans_max_iter = kmeans_max_iter
+        #self.kmeans_max_iter = kmeans_max_iter
         # overwrite kmeans_init for compatibility with the KMeans classifer
-        if means_init is None:
-            self.kmeans_init = kmeans_init
-        else:
-            self.kmeans_init = means_init
+        #if means_init is None:
+        #    self.kmeans_init = kmeans_init
+        #else:
+        #    self.kmeans_init = means_init
 
         super(GaussianMixture, self).__init__(**kwargs)
 
