@@ -468,6 +468,9 @@ class Sparsifier():
         datapoints : nd.array, shape (K,P)
             Each row is a point in dense space. If HDX is given,
             uses this. Otherwise, maps RHDX to dense space and fills in zeros.
+
+        datapoint_indices : nd.array, shape (K,)
+            The indices of the datapoints in self.X.
         """
 
         rng = self.check_random_state(self.random_state)
@@ -522,7 +525,7 @@ class Sparsifier():
         return [datapoints, datapoint_indices]
 
 
-    def _pick_K_datapoints(self, K):
+    def _pick_K_dense_datapoints_random(self, K):
         """ Picks K datapoints at random. If the Sparsifier has access to HDX,
         it will choose from that; otherwise draws from RHDX and returns a dense
         vector (with zeros outside the mask). """

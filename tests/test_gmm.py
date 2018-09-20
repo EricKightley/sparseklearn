@@ -257,9 +257,6 @@ class TestGaussianMixture(unittest.TestCase):
 
 
     def test__init_resp_from_means(self):
-        #TODO: Write a test. This just makes sure it runs.
-        cov_type = 'diag'
-        reg_covar = 1e-6
         gmm = GaussianMixture(n_components = 3, 
                         num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
                         num_samp = 4, transform = 'dct', 
@@ -272,7 +269,55 @@ class TestGaussianMixture(unittest.TestCase):
                                  [0, 1, 0]], dtype = int)
         self.assertArrayEqual(resp_test, resp_correct)
 
+    def test__init_resp_kmeans(self):
+        """ Does not compare against true result, instead checks that
+        responsibility matrix is of correct form and has rows of all
+        zeros with a single one.
+        """
+        init_params = 'kmeans'
+        gmm = GaussianMixture(n_components = 3, 
+            num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
+            num_samp = 4, transform = 'dct', 
+            D_indices = self.td.D_indices, mask = self.td.mask,
+            init_params = init_params)
+        gmm.fit_sparsifier(HDX=self.td.HDX)
+        resp = gmm._init_resp()
+        # check shape
+        self.assertArrayEqual(resp.shape, [gmm.num_samp, gmm.n_components])
+        # check number of nonzeros
+        nonzeros_per_row_test = (np.abs(resp)>0).sum(axis=1)
+        nonzeros_per_row_correct = np.ones(gmm.num_samp)
+        self.assertArrayEqual(nonzeros_per_row_test, 
+                              nonzeros_per_row_correct)
+        # check row sums
+        rowsum_test = resp.sum(axis=1)
+        rowsum_correct = np.ones(gmm.num_samp)
+        self.assertArrayEqual(rowsum_test, rowsum_correct)
 
+    def test__init_resp_random(self):
+        """ Does not compare against true result, instead checks that
+        responsibility matrix is of correct form and has rows of all
+        zeros with a single non-zero.
+        """
+        init_params = 'random'
+        gmm = GaussianMixture(n_components = 3, 
+            num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
+            num_samp = 4, transform = 'dct', 
+            D_indices = self.td.D_indices, mask = self.td.mask,
+            init_params = init_params)
+        gmm.fit_sparsifier(HDX=self.td.HDX)
+        resp = gmm._init_resp()
+        # check shape
+        self.assertArrayEqual(resp.shape, [gmm.num_samp, gmm.n_components])
+        # check number of nonzeros
+        nonzeros_per_row_test = (np.abs(resp)>0).sum(axis=1)
+        nonzeros_per_row_correct = np.ones(gmm.num_samp)
+        self.assertArrayEqual(nonzeros_per_row_test, 
+                              nonzeros_per_row_correct)
+        # check row sums
+        rowsum_test = resp.sum(axis=1)
+        rowsum_correct = np.ones(gmm.num_samp)
+        self.assertArrayEqual(rowsum_test, rowsum_correct)
 
     ###########################################################################
     ###########################################################################

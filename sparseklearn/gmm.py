@@ -114,6 +114,19 @@ class GaussianMixture(Sparsifier):
         self.weights_ = (weights if self.weights_init is None else self.weights_init)
         self.log_prob_norm_ = -float_info.max
 
+
+    def _init_resp(self):
+        """ Initialize the responsibiltiy matrix. 
+        """
+
+        if self.init_params == "kmeans":
+            means, indices = self._pick_K_dense_datapoints_kmpp(self.n_components)
+        elif self.init_params == "random":
+            means, indices = self._pick_K_dense_datapoints_random(self.n_components)
+        resp = self._init_resp_from_means(means)
+        return resp
+
+
     def _init_resp_from_means(self, means):
         """ Initialize the responsibility matrix from dense means by doing hard 
         assignment.
@@ -122,7 +135,8 @@ class GaussianMixture(Sparsifier):
         ----------
 
         means : nd.array, shape (K,P)
-            The dense array of initial means (from random sampling or kmpp). 
+            The dense, transformed array of initial means (from random sampling
+            or kmpp).
 
         Returns
         -------
