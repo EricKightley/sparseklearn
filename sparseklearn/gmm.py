@@ -34,13 +34,15 @@ class GaussianMixture(Sparsifier):
             self.counter = best_counter
 
         #log_prob_norm, counter = self.fit_single_trial()
-        self.means_, self.covariances_ = self.reconstruct_parameters(self.n_passes)
+        #self.means_, self.covariances_ = self.reconstruct_parameters(self.n_passes)
 
     def reconstruct_parameters(self, n_passes):
+        #TODO: fix covariance inversion
         if n_passes == 1:
             if self.transform in ['dct']:
                 means_ = self.invert_HD(self.means_)
-                covariances_ = self.invert_HD(self.covariances_)
+                covariances_ = self.covariances_
+                #covariances_ = self.invert_HD(self.covariances_)
             else:
                 means_ = self.means_
                 covariances_ = self.covariances_

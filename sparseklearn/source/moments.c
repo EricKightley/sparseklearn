@@ -132,8 +132,8 @@ void compute_weighted_first_moment_array(double *first_moment_array,
  * Inputs
  * ------
  *
- *     compressed_array : array, size num_samples by num_feat_comp. Each row is
- *                        a datapoint in the compressed domain.
+ *     compressed_array : array, size num_samp_comp by num_feat_comp. Each row 
+ *                        is a datapoint in the compressed domain.
  *
  *     mask_array : array, size num_samples by num_feat_comp. Each row is the indices 
  *                  indicating which entries were kept of the full datapoint from 
@@ -173,13 +173,13 @@ void compute_weighted_first_moment_array(double *first_moment_array,
     // update the moments and the normalizer for each sample
     for (ind_samp_comp = 0 ; ind_samp_comp < num_samp_comp ; ind_samp_comp++) {
         update_weighted_first_moment_array(first_moment_array,
-                                                normalizer_array,
-                                                &compressed_array[ind_samp_comp*num_feat_comp],
-                                                &mask_array[ind_samp_comp*num_feat_comp],
-                                                &weights_array[ind_samp_comp*num_samp_full],
-                                                num_samp_full,
-                                                num_feat_comp,
-                                                num_feat_full);
+                                           normalizer_array,
+                                           &compressed_array[ind_samp_comp*num_feat_comp],
+                                           &mask_array[ind_samp_comp*num_feat_comp],
+                                           &weights_array[ind_samp_comp*num_samp_full],
+                                           num_samp_full,
+                                           num_feat_comp,
+                                           num_feat_full);
     }
     // divide by the normalizer
     for (ind_samp_full = 0 ; ind_samp_full < num_samp_full ; ind_samp_full ++) {
