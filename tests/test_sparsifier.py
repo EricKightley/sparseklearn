@@ -116,6 +116,7 @@ class TestSparsifier(unittest.TestCase):
         K = 3
         means, indices = spa._pick_K_dense_datapoints_kmpp(K)
         self.assertArrayEqual(spa.HDX[indices], means)
+
 if __name__ == '__main__':
     unittest.main()
 

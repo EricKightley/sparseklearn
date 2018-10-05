@@ -269,6 +269,7 @@ class TestGaussianMixture(unittest.TestCase):
                                  [0, 1, 0]], dtype = int)
         self.assertArrayEqual(resp_test, resp_correct)
 
+
     def test__init_resp_kmpp(self):
         """ Does not compare against true result, instead checks that
         responsibility matrix is of correct form and has rows of all

@@ -149,7 +149,6 @@ class GaussianMixture(Sparsifier):
             means, _ = self._pick_K_dense_datapoints_random(self.n_components)
         elif means_init is not None:
             means = means_init
-
         resp = self._init_resp_from_means(means)
         return resp
 
@@ -273,6 +272,7 @@ class GaussianMixture(Sparsifier):
         self.weights_init = weights_init
         self.covariance_type = covariance_type
         self.reg_covar = reg_covar
+        self.means_init_counter = 0
         #self.kmeans_max_iter = kmeans_max_iter
         # overwrite kmeans_init for compatibility with the KMeans classifer
         #if means_init is None:
