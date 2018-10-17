@@ -137,18 +137,24 @@ class GaussianMixture(Sparsifier):
 
 
     def _init_resp(self, init_params, means_init):
-        """ Initialize the responsibiltiy matrix. If means_init is
-        not None then it is used to compute resp, otherwise init_params
-        specifies which method (kmpp or random) to use for sampling means at 
-        random. 
+        """ Initialize the responsibiltiy matrix. If means_init or 
+        means_init_array is not None then these are used to compute resp, 
+        otherwise init_params specifies which method (kmpp or random) to use 
+        for sampling means at random. 
+        TODO: document this flow properly, it's been modified to permit
+        multiple inits.
         """
-
-        if init_params == "kmpp" and means_init is None:
-            means, _ = self._pick_K_dense_datapoints_kmpp(self.n_components)
-        elif init_params == "random" and means_init is None:
-            means, _ = self._pick_K_dense_datapoints_random(self.n_components)
+        means_init_array = self.means_init_array
+        if means_init is None and means_init_array is None:
+            if init_params == "kmpp":
+                means, _ = self._pick_K_dense_datapoints_kmpp(self.n_components)
+            elif init_params == "random":
+                means, _ = self._pick_K_dense_datapoints_random(self.n_components)
         elif means_init is not None:
             means = means_init
+        elif means_init_array is not None:
+            means = means_init_array[self.means_init_array_counter]
+            self.means_init_array_counter += 1
         resp = self._init_resp_from_means(means)
         return resp
 
@@ -258,7 +264,8 @@ class GaussianMixture(Sparsifier):
     def __init__(self, n_components = 1, covariance_type = 'spherical', tol = 0.001,
             reg_covar = 1e-06, max_iter = 100, n_init = 1, 
             init_params = 'kmpp', 
-            weights_init = None, means_init = None, n_passes = 1,
+            weights_init = None, means_init = None, means_init_array = None,
+            n_passes = 1,
             **kwargs):
 
         #kmeans_init = 'random' and 'kmeans_max_iter' = 0
@@ -272,7 +279,8 @@ class GaussianMixture(Sparsifier):
         self.weights_init = weights_init
         self.covariance_type = covariance_type
         self.reg_covar = reg_covar
-        self.means_init_counter = 0
+        self.means_init_array = means_init_array
+        self.means_init_array_counter = 0
         #self.kmeans_max_iter = kmeans_max_iter
         # overwrite kmeans_init for compatibility with the KMeans classifer
         #if means_init is None:
