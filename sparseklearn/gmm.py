@@ -99,41 +99,6 @@ class GaussianMixture(Sparsifier):
         self.weights_, self.means_, self.covariances_ = \
                 self._estimate_gaussian_parameters(resp, covariance_type)
         self.log_prob_norm_ = -np.finfo(float).max
-        """
-        if self.init_params == 'kmeans':
-            kmc = KMeans(num_feat_full = self.num_feat_full,
-                         num_feat_comp = self.num_feat_comp,
-                         num_feat_shared = self.num_feat_shared,
-                         num_samp = self.num_samp,
-                         transform = self.transform,
-                         mask = self.mask,
-                         D_indices = self.D_indices,
-                         n_clusters = self.n_components, 
-                         tol = self.tol,
-                         init = self.kmeans_init, 
-                         max_iter = self.kmeans_max_iter, 
-                         n_passes = self.n_passes, 
-                         n_init = 1)
-            kmc.fit(X = self.X, HDX = self.HDX, RHDX = self.RHDX)
-            resp = np.zeros((self.num_samp, self.n_components))
-            resp[np.arange(self.num_samp), kmc.labels_] = 1
-            self.means_, self.covariances_ = self._estimate_gaussian_means_and_covariances(resp,
-                    self.covariance_type)
-
-        elif self.init_params == 'random':
-            resp = rng.rand(self.num_samp, self.n_components)
-            resp = resp/resp.sum(axis=1)[:,np.newaxis]
-            self.means_, self.covariances_ = self._estimate_gaussian_means_and_covariances(resp,
-                    self.covariance_type)
-            if self.means_init is not None:
-                self.means_ = self.means_init
-
-        else:
-            raise ValueError('Unimplemented initialization method: {}'.format(self.init_params))
-
-        weights = self._estimate_gaussian_weights(resp)
-        self.weights_ = (weights if self.weights_init is None else self.weights_init)
-        """
 
 
     def _init_resp(self, init_params, means_init):
