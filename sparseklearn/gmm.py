@@ -33,31 +33,13 @@ class GaussianMixture(Sparsifier):
             self.log_prob_norm_ = best_lpn
             self.counter = best_counter
 
-        #log_prob_norm, counter = self.fit_single_trial()
-        #self.means_, self.covariances_ = self.reconstruct_parameters(self.n_passes)
-
-    def reconstruct_parameters(self, n_passes):
-        #TODO: fix covariance inversion
-        if n_passes == 1:
-            if self.transform in ['dct']:
-                means_ = self.invert_HD(self.means_)
-                covariances_ = self.covariances_
-                #covariances_ = self.invert_HD(self.covariances_)
-            else:
-                means_ = self.means_
-                covariances_ = self.covariances_
-        elif n_passes == 2:
-            raise ValueError('Cannot currently handle 2-pass')
-        else:
-            raise ValueError('n_passes needs to be 1 or 2, but is {}'.format(self.n_passes))
-        return [means_, covariances_]
-
     def _predict_training_data(self):
         _, logresp, _ = self._estimate_log_prob_resp(self.weights_, 
                                      self.means_,
                                      self.covariances_,
                                      self.covariance_type)
-        return np.argmax(logresp + np.log(self.weights_) ,axis=1)
+        #return np.argmax(logresp + np.log(self.weights_) ,axis=1)
+        return np.argmax(logresp, axis=1)
 
     def fit_single_trial(self):
         self.converged = False
