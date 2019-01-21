@@ -33,13 +33,6 @@ class GaussianMixture(Sparsifier):
             self.log_prob_norm_ = best_lpn
             self.counter = best_counter
 
-    def _predict_training_data(self):
-        _, logresp, _ = self._estimate_log_prob_resp(self.weights_, 
-                                     self.means_,
-                                     self.covariances_,
-                                     self.covariance_type)
-        #return np.argmax(logresp + np.log(self.weights_) ,axis=1)
-        return np.argmax(logresp, axis=1)
 
     def fit_single_trial(self):
         self.converged = False
@@ -54,11 +47,23 @@ class GaussianMixture(Sparsifier):
             # M-step
             self.weights_, self.means_, self.covariances_ = self._estimate_gaussian_parameters(
                     np.exp(log_resp), self.covariance_type)
+            # Desperate times call for desperate debugging measures. Delete this later.
+            #self.weights_ = np.array([1,1,1])/3.
+            #self.covariances_ = np.array([1,1,1])*3700.
+            print(self.covariances_)
             # convergence check
             self.converged = self._convergence_check(log_prob_norm)
             self.log_prob_norm_ = log_prob_norm
             counter += 1
         return [log_prob_norm, counter]
+
+    def predict(self, X):
+        """ Predict class for each example in X. Assumes X is preconditioned 
+        and subsampled if necessary. 
+        """
+        _, logresp, _ = self._estimate_log_prob_resp(self.weights_, 
+                self.means_, self.covariances_, self.covariance_type )
+        return np.argmax(logresp, axis=1) 
 
 
     def _initialize_parameters(self, init_params, means_init, covariance_type):
@@ -84,24 +89,13 @@ class GaussianMixture(Sparsifier):
 
 
     def _init_resp(self, init_params, means_init):
-        """ Initialize the responsibiltiy matrix. If means_init or 
-        means_init_array is not None then these are used to compute resp, 
-        otherwise init_params specifies which method (kmpp or random) to use 
-        for sampling means at random. 
-        TODO: document this flow properly, it's been modified to permit
-        multiple inits.
-        """
-        means_init_array = self.means_init_array
-        if means_init is None and means_init_array is None:
+        if means_init is None:
             if init_params == "kmpp":
                 means, _ = self._pick_K_dense_datapoints_kmpp(self.n_components)
             elif init_params == "random":
                 means, _ = self._pick_K_dense_datapoints_random(self.n_components)
         elif means_init is not None:
             means = means_init
-        elif means_init_array is not None:
-            means = means_init_array[self.means_init_array_counter]
-            self.means_init_array_counter += 1
         resp = self._init_resp_from_means(means)
         return resp
 
@@ -211,7 +205,7 @@ class GaussianMixture(Sparsifier):
     def __init__(self, n_components = 1, covariance_type = 'spherical', tol = 0.001,
             reg_covar = 1e-06, max_iter = 100, n_init = 1, 
             init_params = 'kmpp', 
-            weights_init = None, means_init = None, means_init_array = None,
+            means_init = None, 
             n_passes = 1,
             **kwargs):
 
@@ -223,17 +217,7 @@ class GaussianMixture(Sparsifier):
         self.n_init = n_init
         self.max_iter = max_iter
         self.means_init = means_init
-        self.weights_init = weights_init
         self.covariance_type = covariance_type
         self.reg_covar = reg_covar
-        self.means_init_array = means_init_array
-        self.means_init_array_counter = 0
-        #self.kmeans_max_iter = kmeans_max_iter
-        # overwrite kmeans_init for compatibility with the KMeans classifer
-        #if means_init is None:
-        #    self.kmeans_init = kmeans_init
-        #else:
-        #    self.kmeans_init = means_init
-
         super(GaussianMixture, self).__init__(**kwargs)
 

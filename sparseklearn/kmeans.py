@@ -84,27 +84,10 @@ class KMeans(Sparsifier):
             self.inertia_ = best_inertia
             self.counter = best_counter
        
-        #self.cluster_centers_ = self._reconstruct_cluster_centers(self.n_passes)
-
         # set how many of each example belong to each mean
         self.n_per_cluster = np.zeros(self.n_components, dtype = int)
         for k in range(self.n_components):
             self.n_per_cluster[k] = sum(self.labels_==k)
-
-
-    #def _reconstruct_cluster_centers(self, n_passes):
-    #    if n_passes == 1 and self.transform is not None:
-    #        cluster_centers_ = self.invert_HD(self.cluster_centers_)
-    #    elif n_passes == 2:
-    #        cluster_centers_ = np.zeros_like(self.cluster_centers_)
-    #        for k in range(self.n_components):
-    #            cluster_members = np.where(self.labels_ == k)
-    #            cluster_centers_[k] = np.mean(self.X[cluster_members], axis = 0)
-    #    else:
-    #        cluster_centers_ = self.cluster_centers_
-    #    return cluster_centers_
-
-    # Initialization functions
 
     def _initialize_cluster_centers(self, init):
         """ Initialize the cluster guesses.
