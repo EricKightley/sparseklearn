@@ -47,10 +47,6 @@ class GaussianMixture(Sparsifier):
             # M-step
             self.weights_, self.means_, self.covariances_ = self._estimate_gaussian_parameters(
                     np.exp(log_resp), self.covariance_type)
-            # Desperate times call for desperate debugging measures. Delete this later.
-            #self.weights_ = np.array([1,1,1])/3.
-            #self.covariances_ = np.array([1,1,1])*3700.
-            print(self.covariances_)
             # convergence check
             self.converged = self._convergence_check(log_prob_norm)
             self.log_prob_norm_ = log_prob_norm
@@ -157,6 +153,7 @@ class GaussianMixture(Sparsifier):
         logconst = self.num_feat_comp*np.log(2*np.pi)
         logdetS = self._compute_logdet_array(covariances, covariance_type)
         log_prob = -.5 * (logconst + maha_dist_squared + logdetS)
+        #import pdb; pdb.set_trace()
         return log_prob
 
     def _compute_log_resp(self, weights, log_prob):
