@@ -13,25 +13,29 @@ class GaussianMixture(Sparsifier):
         self.fit_sparsifier(X = X, HDX = HDX, RHDX = RHDX)
 
         best_lpn = -np.finfo(float).max
-
         best_means_ = None
+
+        results = []
         for n in range(self.n_init):
             log_prob_norm, counter = self.fit_single_trial()
-            if log_prob_norm >= best_lpn:
-                best_lpn = log_prob_norm
-                best_counter = counter
-                best_means_ = self.means_
-                best_covariances_ = self.covariances_
-                best_weights_ = self.weights_
-                best_converged = self.converged
+            this_run = {'log_prob_norm' : log_prob_norm,
+                        'counter' : counter,
+                        'means' : self.means_,
+                        'covariances' : self.covariances_,
+                        'weights' : self.weights_,
+                        'converged' : self.converged}
+        results.append(this_run)
 
-        if best_means_ is not None:
-            self.converged = best_converged
-            self.means_ = best_means_
-            self.covariances_ = best_covariances_
-            self.weights_ = best_weights_
-            self.log_prob_norm_ = best_lpn
-            self.counter = best_counter
+        self.results = results
+
+        # choose the best ones
+        best_run_index = np.argmax([d['log_prob_norm'] for d in results])
+        self.converged = results[best_run_index]['converged']
+        self.means_ = results[best_run_index]['means']
+        self.covariances_ = results[best_run_index]['covariances']
+        self.weights_ = results[best_run_index]['weights']
+        self.log_prob_norm_ = results[best_run_index]['log_prob_norm']
+        self.counter = results[best_run_index]['counter']
 
 
     def fit_single_trial(self):
@@ -207,7 +211,6 @@ class GaussianMixture(Sparsifier):
             n_passes = 1,
             **kwargs):
 
-        #kmeans_init = 'random' and 'kmeans_max_iter' = 0
         self.init_params = init_params
         self.n_components = n_components
         self.tol = tol
