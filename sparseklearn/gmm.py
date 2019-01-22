@@ -12,8 +12,8 @@ class GaussianMixture(Sparsifier):
 
         self.fit_sparsifier(X = X, HDX = HDX, RHDX = RHDX)
 
-        best_lpn = -np.finfo(float).max
-        best_means_ = None
+        #best_lpn = -np.finfo(float).max
+        #best_means_ = None
 
         results = []
         for n in range(self.n_init):
@@ -24,7 +24,9 @@ class GaussianMixture(Sparsifier):
                         'covariances' : self.covariances_,
                         'weights' : self.weights_,
                         'converged' : self.converged}
-        results.append(this_run)
+            if self.predict_training_data == True:
+                this_run['labels_predicted'] = self.predict(self.RHDX)
+            results.append(this_run)
 
         self.results = results
 
@@ -36,6 +38,8 @@ class GaussianMixture(Sparsifier):
         self.weights_ = results[best_run_index]['weights']
         self.log_prob_norm_ = results[best_run_index]['log_prob_norm']
         self.counter = results[best_run_index]['counter']
+        if self.predict_training_data == True:
+            self.labels_predicted = results[best_run_index]['labels_predicted']
 
 
     def fit_single_trial(self):
@@ -209,6 +213,7 @@ class GaussianMixture(Sparsifier):
             init_params = 'kmpp', 
             means_init = None, 
             n_passes = 1,
+            predict_training_data = False,
             **kwargs):
 
         self.init_params = init_params
@@ -220,5 +225,6 @@ class GaussianMixture(Sparsifier):
         self.means_init = means_init
         self.covariance_type = covariance_type
         self.reg_covar = reg_covar
+        self.predict_training_data = predict_training_data
         super(GaussianMixture, self).__init__(**kwargs)
 
