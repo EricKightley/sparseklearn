@@ -2,6 +2,11 @@ import numpy as np
 
 class DataGenerator():
 
+    def get_centered_datapoint(self,i,k):
+        """ Compute R_i^T (HDx_i - U_k). Helper for some other nasty 
+        computations. """
+        return self.RHDX[i] - self.U[k][self.mask[i]]
+
     def __init__(self):
         """ I think means and covariances correspond to sparsified ones. 
         """
@@ -43,6 +48,8 @@ class DataGenerator():
         self.U = np.array([[0, 6, 8, 3, 1],
                            [1, 3, 4, 7, 5],
                            [8, 9, 0, 4, 2]], dtype = np.float64)
+
+
 
         self.diagonal_covariances = np.array([[2, 3, 1, 1, 6],
                                               [7, 2, 1, 5, 4],

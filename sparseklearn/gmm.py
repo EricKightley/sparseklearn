@@ -150,10 +150,11 @@ class GaussianMixture(Sparsifier):
     def _compute_log_prob(self, means, covariances, covariance_type):
         maha_dist_squared = self.pairwise_mahalanobis_distances(means, 
                                 covariances, covariance_type)**2
+        # undo the rescaling due to compression (this is just how the pdf worked out)
+        maha_dist_squared *= self.num_feat_comp / self.num_feat_full
         logconst = self.num_feat_comp*np.log(2*np.pi)
         logdetS = self._compute_logdet_array(covariances, covariance_type)
         log_prob = -.5 * (logconst + maha_dist_squared + logdetS)
-        #import pdb; pdb.set_trace()
         return log_prob
 
     def _compute_log_resp(self, weights, log_prob):

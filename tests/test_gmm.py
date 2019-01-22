@@ -42,7 +42,96 @@ class TestGaussianMixture(unittest.TestCase):
     ###########################################################################
     ###########################################################################
 
+    def test_pairwise_mahalanobis_distances(self):
+        """ pairwise_mahalanobis_distances is a Sparsifier function, but a use
+        case here made me suspect that it's wrong. To confirm this I'm putting
+        a test here first. Will need to make a new one (and probably ammend
+        existing ones that are currently passing but shouldn't be) in that
+        test suite once I am convinced it's the culprit. """
+
+        cov_type = 'spherical'
+        rs = np.random.RandomState(10)
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+                num_feat_comp = 3, num_feat_shared = 2, num_samp = 4, transform = None,
+                mask = None, D_indices = None, covariance_type = cov_type,
+                random_state = rs)
+        gmm.fit_sparsifier(X = self.td.X)
+        means = rs.rand(gmm.n_components, gmm.num_feat_full)
+        covariances = rs.rand(gmm.n_components)
+        mahadist_test = gmm.pairwise_mahalanobis_distances(means, covariances,
+            cov_type)**2
+        #undo the rescaling due to compression
+        mahadist_test *= gmm.num_feat_comp/gmm.num_feat_full
+       
+        mahadist_true = np.zeros_like(mahadist_test)
+        for data_ind in range(gmm.num_samp):
+            for comp_ind in range(gmm.n_components):
+                mahadist_true[data_ind, comp_ind] = 1/covariances[comp_ind] * \
+                    np.linalg.norm(gmm.RHDX[data_ind] - 
+                        means[comp_ind][gmm.mask[data_ind]])**2
+
+        self.assertArrayEqual(mahadist_test, mahadist_true)
+
+    def test_hand_computation_of_log_prob_vs_sklearn(self):
+        """ Something seems wrong with my mahadist computation. Before digging
+        further into the C library to find the error, I want to make sure that
+        the results I think it should give are right. One way to gather
+        evidence in favor of this conclusion is to use the result in the
+        computation of the log probability (this is what led me here in the 
+        first place). This test does so, and consequently doesn't actually 
+        test any of the code in gmm.py. For this to work the mask must be
+        entirely shared. """
+        cov_type = 'spherical'
+        rs = np.random.RandomState(10)
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+                num_feat_comp = 3, num_feat_shared = 3, num_samp = 4, transform = None,
+                mask = None, D_indices = None, covariance_type = cov_type,
+                random_state = rs)
+        gmm.fit_sparsifier(X = self.td.X)
+        means = rs.rand(gmm.n_components, gmm.num_feat_full)
+        covariances = rs.rand(gmm.n_components)
+        precisions = _compute_precision_cholesky(covariances, cov_type)
+
+        # this is where we need the mask to be shared, so that all mask rows 
+        # equal mask[0]
+        masked_means = means[:, gmm.mask[0]]
+        log_prob_true = _estimate_log_gaussian_prob(gmm.RHDX, masked_means, 
+                precisions, cov_type) 
+        
+        log_prob_test = np.zeros((gmm.num_samp, gmm.n_components))
+        for data_ind in range(gmm.num_samp):
+            for comp_ind in range(gmm.n_components):
+                test_const = gmm.num_feat_comp * np.log(2*np.pi)
+                test_logdet = gmm.num_feat_comp * np.log(covariances[comp_ind])
+                test_mahadist = 1/covariances[comp_ind] * \
+                    np.linalg.norm(gmm.RHDX[data_ind] - 
+                        means[comp_ind][gmm.mask[data_ind]])**2
+                log_prob_test[data_ind, comp_ind] = -.5*(test_const + \
+                    test_logdet + test_mahadist)
+        self.assertArrayEqual(log_prob_test, log_prob_true)
+
+
+    def test__compute_logdet_array_spherical(self):
+        """ Test spherical logdet under compression on an example 
+        computed here. Redundant with test__compute_logdet_array below but was
+        implemented to confirm that test is correct. """
+        cov_type = 'spherical'
+        rs = np.random.RandomState(10)
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+                num_feat_comp = 3, num_feat_shared = 2, num_samp = 4, transform = None,
+                mask = None, D_indices = None, covariance_type = cov_type,
+                random_state = rs)
+        gmm.fit_sparsifier(X = self.td.X)
+        means = rs.rand(gmm.n_components, gmm.num_feat_full)
+        covariances = rs.rand(gmm.n_components)
+        
+        logdet_test = gmm._compute_logdet_array(covariances, 'spherical')
+        logdet_true = gmm.num_feat_comp * np.log(covariances)
+        logdet_true = np.tile(logdet_true, (gmm.num_samp, 1))
+        self.assertArrayEqual(logdet_test, logdet_true)
+
     def test__compute_logdet_array(self):
+        """ Test spherical and diagonal on hard-coded results. """
         gmm = GaussianMixture(n_components = 3, 
                         num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
                         num_samp = 4, transform = 'dct', 
@@ -74,19 +163,24 @@ class TestGaussianMixture(unittest.TestCase):
         cov_type = 'spherical'
         rs = np.random.RandomState(10)
         gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
-                num_feat_comp = 4, num_feat_shared = 4, num_samp = 4, transform = None,
+                num_feat_comp = 3, num_feat_shared = 3, num_samp = 4, transform = None,
                 mask = None, D_indices = None, covariance_type = cov_type,
                 random_state = rs)
         gmm.fit_sparsifier(X = self.td.X)
-        means = rs.rand(gmm.n_components, gmm.num_feat_comp)
+        means = rs.rand(gmm.n_components, gmm.num_feat_full)
         covariances = rs.rand(gmm.n_components)
         log_prob_test = gmm._compute_log_prob(means, covariances, cov_type)
-        precisions = _compute_precision_cholesky(covariances, cov_type)
-        log_prob_true = _estimate_log_gaussian_prob(gmm.RHDX, 
-            means, precisions, cov_type) 
-        print(log_prob_test)
-        print(log_prob_true)
-        print(log_prob_test/log_prob_true)
+        
+        log_prob_true = np.zeros((gmm.num_samp, gmm.n_components))
+        for data_ind in range(gmm.num_samp):
+            for comp_ind in range(gmm.n_components):
+                true_const = gmm.num_feat_comp * np.log(2*np.pi)
+                true_logdet = gmm.num_feat_comp * np.log(covariances[comp_ind])
+                true_mahadist = 1/covariances[comp_ind] * \
+                    np.linalg.norm(gmm.RHDX[data_ind] - 
+                        means[comp_ind][gmm.mask[data_ind]])**2
+                log_prob_true[data_ind, comp_ind] = -.5*(true_const + \
+                    true_logdet + true_mahadist)
         self.assertArrayEqual(log_prob_test, log_prob_true)
 
     def test__compute_log_prob_diagonal_no_compression(self):
@@ -184,30 +278,34 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertArrayEqual(log_resp_true, log_resp_test)
 
     # test failing
-    def _test__estimate_log_prob_resp_spherical_shared_compression(self):
+    def test__estimate_log_prob_resp_spherical_shared_compression(self):
+        rs = np.random.RandomState(11)
         cov_type = 'spherical'
         gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
                 num_feat_comp = 3, num_feat_shared = 3, num_samp = 4, transform = None,
-                mask = None, D_indices = None, covariance_type = cov_type)
+                mask = None, D_indices = None, covariance_type = cov_type,
+                random_state = rs)
         gmm.fit_sparsifier(X = self.td.X)
-        means = np.random.rand(gmm.n_components, gmm.num_feat_comp)
-        covariances = np.random.rand(gmm.n_components)
-        weights = np.random.rand(gmm.n_components)
+        means = rs.rand(gmm.n_components, gmm.num_feat_full)
+        covariances = rs.rand(gmm.n_components)
+        weights = rs.rand(gmm.n_components)
         weights /= weights.sum()
         log_prob_test, log_resp_test, log_prob_norm_test = gmm._estimate_log_prob_resp(
             weights, means, covariances, cov_type)
         # find skl's values, pretty ugly to do. 
         precisions = _compute_precision_cholesky(covariances, cov_type)
         gmm_skl = GMSKL(n_components = 3, covariance_type = cov_type)
-        gmm_skl.means_ = means
+        # we need the mask to be shared so that we can use mask[0] on all means
+        gmm_skl.means_ = means[:, gmm.mask[0]]
         gmm_skl.precisions_cholesky_ = precisions
         gmm_skl.weights_ = weights
         gmm_skl.covariance_type_ = cov_type
-        log_prob_norm_true, log_resp_true = gmm_skl._estimate_log_prob_resp(self.td.RHDX)
+        log_prob_norm_true, log_resp_true = gmm_skl._estimate_log_prob_resp(gmm.RHDX)
         # if anything is bad later this overwrite with mean seems suspect:
         log_prob_norm_true = log_prob_norm_true.mean() 
         # now get the log_prob from another function
-        log_prob_true = _estimate_log_gaussian_prob(self.td.RHDX, means, precisions, cov_type) 
+        log_prob_true = _estimate_log_gaussian_prob(gmm.RHDX, gmm_skl.means_, 
+                        precisions, cov_type) 
         # run the tests
         self.assertArrayEqual(log_prob_test, log_prob_true)
         self.assertArrayEqual(log_prob_norm_true, log_prob_norm_test)
