@@ -38,7 +38,7 @@ class GaussianMixture(Sparsifier):
         self.weights_ = results[best_run_index]['weights']
         self.log_prob_norm_ = results[best_run_index]['log_prob_norm']
         self.counter = results[best_run_index]['counter']
-        if self.predict_training_data == True:
+        if self.predict_training_data:
             self.labels_predicted = results[best_run_index]['labels_predicted']
 
 
@@ -69,6 +69,30 @@ class GaussianMixture(Sparsifier):
                 self.means_, self.covariances_, self.covariance_type )
         return np.argmax(logresp, axis=1) 
 
+    def _initialize_means(self, means_init):
+        """ The ::means_init param will be one of the following three:
+                None
+                n_components X num_feat_full array of initial means
+                n_components X num_feat_full X n_init array of initial means
+
+        The _initialize_parameters function cannot handle the third case. 
+        This function checks if we are in the third case, and if so will 
+        instead pass the [:,:,i]th component, and properly increment a counter
+        so that the next time it gets called it gets the next one. This is not
+        the best way to structure the code, but I'm out of time and need this 
+        functionality. 
+        """
+        if means_init is None or means_init.ndim == 2:
+            means_init_this_run = means_init
+        elif means_init.ndim == 3:
+            if self.means_init_counter > self.n_init:
+                raise Exception('Number of mean inits must equal n_init.')
+            means_init_this_run = means_init[self.means_init_counter]
+            self.means_init_counter += 1
+        else:
+            raise Exception('means_init must be 2d array, 3d array, or None.')
+        return means_init_this_run
+
 
     def _initialize_parameters(self, init_params, means_init, covariance_type):
         """ Initialize the parameters. Sets self.weights_, self.means_, and 
@@ -86,11 +110,11 @@ class GaussianMixture(Sparsifier):
 
         covariance_type : {'spherical', 'diag'}
         """
-        resp = self._init_resp(init_params, means_init) 
+        means_init_this_run = self._initialize_means(means_init)
+        resp = self._init_resp(init_params, means_init_this_run) 
         self.weights_, self.means_, self.covariances_ = \
                 self._estimate_gaussian_parameters(resp, covariance_type)
         self.log_prob_norm_ = -np.finfo(float).max
-
 
     def _init_resp(self, init_params, means_init):
         if means_init is None:
@@ -226,5 +250,6 @@ class GaussianMixture(Sparsifier):
         self.covariance_type = covariance_type
         self.reg_covar = reg_covar
         self.predict_training_data = predict_training_data
+        self.means_init_counter = 0
         super(GaussianMixture, self).__init__(**kwargs)
 

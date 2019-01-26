@@ -129,18 +129,11 @@ class KMeans(Sparsifier):
 
     def _compute_cluster_centers(self):
         """ Compute the means of each cluster."""
-        #TODO: replace this with call to C function
-        cluster_centers_ = np.zeros((self.n_components, self.num_feat_full), dtype = np.float64)
-        counters = np.zeros_like(cluster_centers_, dtype = int)
-        for n in range(self.num_samp):
-            x = self.RHDX[n]
-            l = self.labels_[n]
-            cluster_centers_[l][self.mask[n]] += x
-            counters[l][self.mask[n]] += 1
-        for k in range(self.n_components):
-            nonzeros = np.where(cluster_centers_[k]!=0)[0]
-            cluster_centers_[k][nonzeros] *= 1 / counters[k][nonzeros]
+        resp = np.zeros((self.num_samp, self.n_components), dtype = float)
+        resp[np.arange(self.num_samp), self.labels_] = 1
+        cluster_centers_ = self.weighted_means(resp)
         return cluster_centers_
+
 
     def _fit_single_trial(self):
         """ Initialize and run a single trial."""
