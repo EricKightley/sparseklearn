@@ -79,7 +79,7 @@ class KMeans(Sparsifier):
                 labels_ = self.labels_
                 best_counter = self.counter
 
-            self.cluster_centers_ =cluster_centers_
+            self.cluster_centers_ = cluster_centers_
             self.labels_ = labels_
             self.inertia_ = best_inertia
             self.counter = best_counter
