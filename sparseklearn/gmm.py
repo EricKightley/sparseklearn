@@ -44,8 +44,7 @@ class GaussianMixture(Sparsifier):
 
     def fit_single_trial(self):
         self.converged = False
-        self._initialize_parameters(self.init_params, 
-                self.means_init, self.covariance_type)
+        self._initialize_parameters()
         counter = 0
         log_prob_norm = -np.finfo(float).max
         while not self.converged and counter < self.max_iter:
@@ -69,32 +68,74 @@ class GaussianMixture(Sparsifier):
                 self.means_, self.covariances_, self.covariance_type )
         return np.argmax(logresp, axis=1) 
 
-    def _initialize_means(self, means_init):
+    def _initialize_means(self):
         """ The ::means_init param will be one of the following three:
                 None
                 n_components X num_feat_full array of initial means
                 n_components X num_feat_full X n_init array of initial means
 
-        The _initialize_parameters function cannot handle the third case. 
-        This function checks if we are in the third case, and if so will 
-        instead pass the [:,:,i]th component, and properly increment a counter
-        so that the next time it gets called it gets the next one. This is not
-        the best way to structure the code, but I'm out of time and need this 
-        functionality. 
+        This function chooses random means in the first case (according to
+        init params), passes the means_init back in the second, and increments
+        to the next set of means in the third. 
+
         """
-        if means_init is None or means_init.ndim == 2:
-            means_init_this_run = means_init
-        elif means_init.ndim == 3:
+        if self.means_init is None:
+            if self.init_params == "kmpp":
+                means_init_this_run, _ = self._pick_K_dense_datapoints_kmpp(self.n_components)
+            elif self.init_params == "random":
+                means_init_this_run, _ = self._pick_K_dense_datapoints_random(self.n_components)
+            else:
+                raise Exception('init_params must be "kmpp" or "random".')
+        elif self.means_init.ndim == 2:
+            means_init_this_run = self.means_init
+        elif self.means_init.ndim == 3:
             if self.means_init_counter > self.n_init:
                 raise Exception('Number of mean inits must equal n_init.')
-            means_init_this_run = means_init[self.means_init_counter]
+            means_init_this_run = self.means_init[self.means_init_counter]
             self.means_init_counter += 1
         else:
             raise Exception('means_init must be 2d array, 3d array, or None.')
         return means_init_this_run
 
+    def _initialize_covariances(self, means_init):
+        """ Requires that _initialize_means has been run because that function
+        sets self.means_init_counter. """
+        if self.covariances_init is None:
+            resp_bootstrapped = self._init_resp_from_means(means_init)
+            _, _, covariances_bootstrapped = \
+                self._estimate_gaussian_parameters(resp_bootstrapped, self.covariance_type)
+            covariances_init_this_run = covariances_bootstrapped
+        # in either of these two cases there is a single covar init
+        elif (self.covariances_init.ndim == 1 and self.covariance_type == 'spherical') \
+            or (self.covariances_init.ndim == 2 and self.covariance_type == 'diag'):
+            covariances_init_this_run = self.covariances_init
+        # in either of these two cases there are multiple covar inits.
+        elif (self.covariances_init.ndim == 2 and self.covariance_type == 'spherical') \
+            or (self.covariances_init.ndim == 3 and self.covariance_type == 'diag'):
+            # means_init_counter has been incremented already. 
+            covariances_init_this_run = self.covariances_init[self.means_init_counter-1]
+        else:
+            raise Exception('Covariances init of wrong form.')
+        return covariances_init_this_run
 
-    def _initialize_parameters(self, init_params, means_init, covariance_type):
+    def _initialize_weights(self, means_init):
+        """ Requires that _initialize_means has been run because that function
+        sets self.means_init_counter. """
+        if self.weights_init is None:
+            resp_bootstrapped = self._init_resp_from_means(means_init)
+            weights_bootstrapped, _, _ = \
+                self._estimate_gaussian_parameters(resp_bootstrapped, self.covariance_type)
+            weights_init_this_run = weights_bootstrapped
+        elif self.weights_init.ndim == 1:
+            weights_init_this_run = self.weights_init
+        elif self.weights_init.ndim == 2:
+            # means_init_counter has been incremented already. 
+            weights_init_this_run = self.weights_init[self.means_init_counter-1]
+        else:
+            raise Exception('weights init of wrong form.')
+        return weights_init_this_run/weights_init_this_run.sum()
+
+    def _initialize_parameters(self):
         """ Initialize the parameters. Sets self.weights_, self.means_, and 
         self.covariances_. Initializes resp using means_init, or if this is
         None, using the method prescribed by init_params. resp is then used
@@ -110,13 +151,12 @@ class GaussianMixture(Sparsifier):
 
         covariance_type : {'spherical', 'diag'}
         """
-        means_init_this_run = self._initialize_means(means_init)
-        resp = self._init_resp(init_params, means_init_this_run) 
-        self.weights_, self.means_, self.covariances_ = \
-                self._estimate_gaussian_parameters(resp, covariance_type)
+        self.means_ = self._initialize_means()
+        self.covariances_ = self._initialize_covariances(self.means_)
+        self.weights_ = self._initialize_weights(self.means_)
         self.log_prob_norm_ = -np.finfo(float).max
 
-    def _init_resp(self, init_params, means_init):
+    def _init_resp(self, init_params, weights_init, means_init, covariances_init):
         if means_init is None:
             if init_params == "kmpp":
                 means, _ = self._pick_K_dense_datapoints_kmpp(self.n_components)
@@ -124,7 +164,10 @@ class GaussianMixture(Sparsifier):
                 means, _ = self._pick_K_dense_datapoints_random(self.n_components)
         elif means_init is not None:
             means = means_init
-        resp = self._init_resp_from_means(means)
+        if covariances_init is not None:
+            print('do this')
+        else:
+            resp = self._init_resp_from_means(means)
         return resp
 
 
@@ -236,6 +279,8 @@ class GaussianMixture(Sparsifier):
             reg_covar = 1e-06, max_iter = 100, n_init = 1, 
             init_params = 'kmpp', 
             means_init = None, 
+            covariances_init = None,
+            weights_init = None,
             n_passes = 1,
             predict_training_data = False,
             **kwargs):
@@ -247,9 +292,13 @@ class GaussianMixture(Sparsifier):
         self.n_init = n_init
         self.max_iter = max_iter
         self.means_init = means_init
+        self.covariances_init = covariances_init
+        self.weights_init = weights_init
         self.covariance_type = covariance_type
         self.reg_covar = reg_covar
         self.predict_training_data = predict_training_data
         self.means_init_counter = 0
+        self.covariances_init_counter = 0
+        self.weights_init_counter = 0
         super(GaussianMixture, self).__init__(**kwargs)
 

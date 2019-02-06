@@ -59,8 +59,10 @@ class DataGenerator():
 
         self.N = 4
         self.Q = 3
+        self.Qs = 1
         self.P = 5
         self.K = 3
+        self.transform = 'dct'
 
         # hard-coded correct answers reused between tests
 

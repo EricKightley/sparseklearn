@@ -35,6 +35,17 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertEqual(self.td.Q, gmm.num_feat_comp)
         self.assertEqual(self.td.P, gmm.num_feat_full)
 
+    def instantiate_standard_gmm(self, random_state):
+        gmm = GaussianMixture(n_components = self.td.K, 
+                        num_feat_full = self.td.P, 
+                        num_feat_comp = self.td.Q, 
+                        num_feat_shared = self.td.Qs,
+                        num_samp = self.td.N, 
+                        transform = self.td.transform, 
+                        D_indices = self.td.D_indices, 
+                        mask = self.td.mask,
+                        random_state = random_state)
+        return gmm
 
     ###########################################################################
     ###########################################################################
@@ -403,6 +414,214 @@ class TestGaussianMixture(unittest.TestCase):
     ###########################################################################
     ###########################################################################
 
+    def test__initialize_means_case1(self):
+        """ means_init is a 2D array.
+        """
+        random_state = np.random.RandomState(12)
+        means_init_true = random_state.rand(self.td.K, self.td.P)
+        gmm = GaussianMixture(n_components = self.td.K, 
+                        num_feat_full = self.td.P, 
+                        num_feat_comp = self.td.Q, 
+                        num_feat_shared = self.td.Qs,
+                        num_samp = self.td.N, 
+                        transform = self.td.transform, 
+                        D_indices = self.td.D_indices, 
+                        mask = self.td.mask,
+                        means_init = means_init_true,
+                        random_state = random_state)
+        gmm.fit_sparsifier(X=self.td.X)
+        means_init_test = gmm._initialize_means() 
+        self.assertArrayEqual(means_init_test, means_init_true)
+
+    def test__initialize_means_case2(self):
+        """ means_init is a 3D array.
+        """
+        random_state = np.random.RandomState(12)
+        n_init = 3
+        means_init_true = random_state.rand(n_init, self.td.K, self.td.P)
+        gmm = GaussianMixture(n_components = self.td.K, 
+                        num_feat_full = self.td.P, 
+                        num_feat_comp = self.td.Q, 
+                        num_feat_shared = self.td.Qs,
+                        num_samp = self.td.N, 
+                        transform = self.td.transform, 
+                        D_indices = self.td.D_indices, 
+                        mask = self.td.mask,
+                        means_init = means_init_true,
+                        n_init = n_init,
+                        random_state = random_state)
+        gmm.fit_sparsifier(X=self.td.X)
+        # first one is discarded for this test
+        _ = gmm._initialize_means()
+        # this should recover the second one
+        means_init_test = gmm._initialize_means()
+        self.assertArrayEqual(means_init_test, means_init_true[1])
+
+    def test__initialize_means_case3(self):
+        """ means_init is None, init_params is 'kmpp'.
+        Only checks that the initialized means are of the correct shape.
+        """
+        random_state = np.random.RandomState(12)
+        gmm = GaussianMixture(n_components = self.td.K, 
+                        num_feat_full = self.td.P, 
+                        num_feat_comp = self.td.Q, 
+                        num_feat_shared = self.td.Qs,
+                        num_samp = self.td.N, 
+                        transform = self.td.transform, 
+                        D_indices = self.td.D_indices, 
+                        mask = self.td.mask,
+                        means_init = None,
+                        init_params = 'kmpp',
+                        random_state = random_state)
+        gmm.fit_sparsifier(X=self.td.X)
+        means_init_shape_test = gmm._initialize_means().shape
+        means_init_shape_true = np.array([self.td.K, self.td.P])
+        self.assertArrayEqual(means_init_shape_test, means_init_shape_true)
+
+    def test__initialize_means_case4(self):
+        """ means_init is None, init_params is 'random'.
+        Only checks that the initialized means are of the correct shape.
+        """
+        random_state = np.random.RandomState(12)
+        gmm = GaussianMixture(n_components = self.td.K, 
+                        num_feat_full = self.td.P, 
+                        num_feat_comp = self.td.Q, 
+                        num_feat_shared = self.td.Qs,
+                        num_samp = self.td.N, 
+                        transform = self.td.transform, 
+                        D_indices = self.td.D_indices, 
+                        mask = self.td.mask,
+                        means_init = None,
+                        init_params = 'random',
+                        random_state = random_state)
+        gmm.fit_sparsifier(X=self.td.X)
+        means_init_shape_test = gmm._initialize_means().shape
+        means_init_shape_true = np.array([self.td.K, self.td.P])
+        self.assertArrayEqual(means_init_shape_test, means_init_shape_true)
+
+    def test__initialize_covariances_case1(self):
+        """ spherical covariance, 1 init. 
+        """
+        random_state = np.random.RandomState(12)
+        means_init_true = random_state.rand(self.td.K, self.td.P)
+        covariances_init_true = random_state.rand(self.td.K)
+        gmm = GaussianMixture(n_components = self.td.K, 
+                        num_feat_full = self.td.P, 
+                        num_feat_comp = self.td.Q, 
+                        num_feat_shared = self.td.Qs,
+                        num_samp = self.td.N, 
+                        transform = self.td.transform, 
+                        D_indices = self.td.D_indices, 
+                        mask = self.td.mask,
+                        means_init = means_init_true,
+                        covariances_init = covariances_init_true,
+                        covariance_type = 'spherical',
+                        random_state = random_state)
+        gmm.fit_sparsifier(X=self.td.X)
+        means_init = gmm._initialize_means()
+        covariances_init_test = gmm._initialize_covariances(means_init)
+        self.assertArrayEqual(covariances_init_test, covariances_init_true)
+
+    def test__initialize_covariances_case2(self):
+        """ diagonal covariance, 1 init. 
+        """
+        random_state = np.random.RandomState(12)
+        means_init_true = random_state.rand(self.td.K, self.td.P)
+        covariances_init_true = random_state.rand(self.td.K, self.td.P)
+        gmm = GaussianMixture(n_components = self.td.K, 
+                        num_feat_full = self.td.P, 
+                        num_feat_comp = self.td.Q, 
+                        num_feat_shared = self.td.Qs,
+                        num_samp = self.td.N, 
+                        transform = self.td.transform, 
+                        D_indices = self.td.D_indices, 
+                        mask = self.td.mask,
+                        means_init = means_init_true,
+                        covariances_init = covariances_init_true,
+                        covariance_type = 'diag',
+                        random_state = random_state)
+        gmm.fit_sparsifier(X=self.td.X)
+        means_init = gmm._initialize_means()
+        covariances_init_test = gmm._initialize_covariances(means_init)
+        self.assertArrayEqual(covariances_init_test, covariances_init_true)
+
+    def test__initialize_covariances_case3(self):
+        """ No covariances given, just check shape.
+        """
+        random_state = np.random.RandomState(12)
+        means_init_true = random_state.rand(self.td.K, self.td.P)
+        gmm = GaussianMixture(n_components = self.td.K, 
+                        num_feat_full = self.td.P, 
+                        num_feat_comp = self.td.Q, 
+                        num_feat_shared = self.td.Qs,
+                        num_samp = self.td.N, 
+                        transform = self.td.transform, 
+                        D_indices = self.td.D_indices, 
+                        mask = self.td.mask,
+                        means_init = means_init_true,
+                        covariances_init = None,
+                        covariance_type = 'diag',
+                        random_state = random_state)
+        gmm.fit_sparsifier(X=self.td.X)
+        means_init = gmm._initialize_means()
+        covariances_init_test = gmm._initialize_covariances(means_init)
+        true_shape = np.array((self.td.K, self.td.P))
+        self.assertArrayEqual(covariances_init_test.shape, true_shape)
+
+    def test__initialize_covariances_case4(self):
+        """ diagonal covariance, multi-init. 
+        """
+        random_state = np.random.RandomState(12)
+        n_init = 3
+        means_init_true = random_state.rand(n_init, self.td.K, self.td.P)
+        covariances_init_true = random_state.rand(n_init, self.td.K, self.td.P)
+        gmm = GaussianMixture(n_components = self.td.K, 
+                        num_feat_full = self.td.P, 
+                        num_feat_comp = self.td.Q, 
+                        num_feat_shared = self.td.Qs,
+                        num_samp = self.td.N, 
+                        transform = self.td.transform, 
+                        D_indices = self.td.D_indices, 
+                        mask = self.td.mask,
+                        means_init = means_init_true,
+                        covariances_init = covariances_init_true,
+                        covariance_type = 'diag',
+                        n_init = n_init,
+                        random_state = random_state)
+        gmm.fit_sparsifier(X=self.td.X)
+        # init means twice to cycle covariances
+        _ = gmm._initialize_means()
+        means_init = gmm._initialize_means()
+        covariances_init_test = gmm._initialize_covariances(means_init)
+        self.assertArrayEqual(covariances_init_test, covariances_init_true[1])
+
+    def test__initialize_weights_case3(self):
+        """ multi-init
+        """
+        random_state = np.random.RandomState(12)
+        n_init = 3
+        means_init_true = random_state.rand(n_init, self.td.K, self.td.P)
+        weights_init_true = random_state.rand(n_init, self.td.K)
+        weights_init_true /= weights_init_true.sum(axis=1)[:,np.newaxis]
+        gmm = GaussianMixture(n_components = self.td.K, 
+                        num_feat_full = self.td.P, 
+                        num_feat_comp = self.td.Q, 
+                        num_feat_shared = self.td.Qs,
+                        num_samp = self.td.N, 
+                        transform = self.td.transform, 
+                        D_indices = self.td.D_indices, 
+                        mask = self.td.mask,
+                        means_init = means_init_true,
+                        weights_init = weights_init_true,
+                        n_init = n_init,
+                        covariance_type = 'diag',
+                        random_state = random_state)
+        gmm.fit_sparsifier(X=self.td.X)
+        # init means twice to cycle covariances
+        _ = gmm._initialize_means()
+        means_init = gmm._initialize_means()
+        weights_init_test = gmm._initialize_weights(means_init)
+        self.assertArrayEqual(weights_init_test, weights_init_true[1])
 
     def test__init_resp_from_means(self):
         gmm = GaussianMixture(n_components = 3, 
@@ -415,61 +634,6 @@ class TestGaussianMixture(unittest.TestCase):
                                  [1, 0, 0],
                                  [0, 1, 0],
                                  [0, 1, 0]], dtype = int)
-        self.assertArrayEqual(resp_test, resp_correct)
-
-
-    def test__init_resp_kmpp(self):
-        """ Does not compare against true result, instead checks that
-        responsibility matrix is of correct form and has rows of all
-        zeros with a single one.
-        """
-        init_params = 'kmpp'
-        means_init = None
-        gmm = GaussianMixture(n_components = 3, 
-            num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-            num_samp = 4, transform = 'dct', 
-            D_indices = self.td.D_indices, mask = self.td.mask,
-            init_params = init_params)
-        gmm.fit_sparsifier(HDX=self.td.HDX)
-        resp = gmm._init_resp(init_params, means_init)
-        # check shape
-        self.assertArrayEqual(resp.shape, [gmm.num_samp, gmm.n_components])
-        # check number of nonzeros
-        nonzeros_per_row_test = (np.abs(resp)>0).sum(axis=1)
-        nonzeros_per_row_correct = np.ones(gmm.num_samp)
-        self.assertArrayEqual(nonzeros_per_row_test, 
-                              nonzeros_per_row_correct)
-        # check row sums
-        rowsum_test = resp.sum(axis=1)
-        rowsum_correct = np.ones(gmm.num_samp)
-        self.assertArrayEqual(rowsum_test, rowsum_correct)
-
-    def test__init_resp_random(self):
-        """ Does not compare against true result, instead checks that
-        responsibility matrix is of correct form and has rows of all
-        zeros with a single non-zero.
-        """
-        init_params = 'random'
-        means_init = None
-        gmm = GaussianMixture(n_components = 3, 
-            num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-            num_samp = 4, transform = 'dct', 
-            D_indices = self.td.D_indices, mask = self.td.mask,
-            init_params = init_params)
-        gmm.fit_sparsifier(HDX=self.td.HDX)
-        resp = gmm._init_resp(init_params, means_init)
-        # check shape
-        self.assertArrayEqual(resp.shape, [gmm.num_samp, gmm.n_components])
-        # check number of nonzeros
-        nonzeros_per_row_test = (np.abs(resp)>0).sum(axis=1)
-        nonzeros_per_row_correct = np.ones(gmm.num_samp)
-        self.assertArrayEqual(nonzeros_per_row_test, 
-                              nonzeros_per_row_correct)
-        # check row sums
-        rowsum_test = resp.sum(axis=1)
-        rowsum_correct = np.ones(gmm.num_samp)
-        self.assertArrayEqual(rowsum_test, rowsum_correct)
-
 
     def test__initialize_parameters(self):
         """ Only tests if it runs. """
@@ -482,8 +646,7 @@ class TestGaussianMixture(unittest.TestCase):
             init_params = init_params,
             means_init = means_init)
         gmm.fit_sparsifier(HDX=self.td.HDX)
-        gmm._initialize_parameters(gmm.init_params, gmm.means_init, 
-                                   gmm.covariance_type)
+        gmm._initialize_parameters()
 
     ###########################################################################
     ###########################################################################
