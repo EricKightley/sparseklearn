@@ -9,7 +9,6 @@ setup(name='sparseklearn',
       packages=['sparseklearn'],
       install_requires=[
           'scipy',
-          'h5py',
           'numpy',
           'scikit-learn',
       ],

@@ -3,9 +3,13 @@ import numpy as np
 from numpy.ctypeslib import ndpointer
 import ctypes as ct
 
-dist = ct.CDLL('/home/eric/Dropbox/EricStephenShare/sparseklearn/sparseklearn/source/libdistances.so')
-mom = ct.CDLL('/home/eric/Dropbox/EricStephenShare/sparseklearn/sparseklearn/source/libmoments.so')
-aux = ct.CDLL('/home/eric/Dropbox/EricStephenShare/sparseklearn/sparseklearn/source/libauxiliary.so')
+local_path = os.path.dirname(__file__)
+dist = ct.CDLL(local_path + os.path.sep + 'source' + os.path.sep +
+               'libdistances.so')
+mom = ct.CDLL(local_path + os.path.sep + 'source' + os.path.sep +
+              'libmoments.so')
+aux = ct.CDLL(local_path + os.path.sep + 'source' + os.path.sep +
+              'libauxiliary.so')
 
 ################################################################################
 ## dist_both_comp
@@ -19,8 +23,8 @@ dist.dist_both_comp.argtypes = [
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def dist_both_comp(comp_sample_1, 
-                            comp_sample_2, 
+def dist_both_comp(comp_sample_1,
+                            comp_sample_2,
                             mask_1,
                             mask_2,
                             num_feat_comp,
@@ -44,8 +48,8 @@ dist.dist_one_comp_one_full.argtypes = [
     ct.c_int64,                                   #num_feat_comp
     ct.c_int64]                                   #num_feat_full
 
-def dist_one_comp_one_full(comp_sample, 
-                                     full_sample, 
+def dist_one_comp_one_full(comp_sample,
+                                     full_sample,
                                      mask,
                                      num_feat_comp,
                                      num_feat_full):

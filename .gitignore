@@ -4,6 +4,7 @@
 *.csv
 *.swp
 *.so
+*.dSYM/
 *.pyc
 *.pk
 /dist/
