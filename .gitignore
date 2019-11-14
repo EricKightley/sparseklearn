@@ -13,7 +13,9 @@
 /temp_backup/
 /*.egg-info
 _build
+/build/
 _static
 _templates
+sparseklearn/source/.DS_Store
 
 

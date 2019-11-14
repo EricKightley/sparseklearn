@@ -1,4 +1,7 @@
 from setuptools import setup
+import subprocess
+
+subprocess.call(['make', '-C', 'sparseklearn/source'])
 
 setup(name='sparseklearn',
       version='0.1.3',
@@ -7,6 +10,8 @@ setup(name='sparseklearn',
       author_email='kightley.1@gmail.com',
       license='MIT',
       packages=['sparseklearn'],
+      package_data={'sparseklearn': ['libauxiliary.so', 'libdistances.so', 'libmoments.so']},
+      include_package_data=True,
       install_requires=[
           'scipy',
           'numpy',
