@@ -4,7 +4,7 @@ import subprocess
 subprocess.call(['make', '-C', 'sparseklearn/source'])
 
 setup(name='sparseklearn',
-      version='0.1.3',
+      version='0.1.4',
       url='http://github.com/EricKightley/sparseklearn',
       author='Eric Kightley',
       author_email='kightley.1@gmail.com',
