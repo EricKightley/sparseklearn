@@ -3,8 +3,8 @@ from sys import float_info
 from .sparsifier import Sparsifier
 from .kmeans import KMeans
 from scipy.special import logsumexp
-from .fastLA import logdet_cov_diag
 
+from sparseklearn.fastLA import logdet_cov_diag
 
 class GaussianMixture(Sparsifier):
 
@@ -49,7 +49,7 @@ class GaussianMixture(Sparsifier):
         log_prob_norm = -np.finfo(float).max
         while not self.converged and counter < self.max_iter:
             # E-step
-            log_prob, log_resp, log_prob_norm = self._estimate_log_prob_resp(self.weights_, 
+            log_prob, log_resp, log_prob_norm = self._estimate_log_prob_resp(self.weights_,
                     self.means_, self.covariances_, self.covariance_type)
             # M-step
             self.weights_, self.means_, self.covariances_ = self._estimate_gaussian_parameters(
@@ -61,12 +61,12 @@ class GaussianMixture(Sparsifier):
         return [log_prob_norm, counter]
 
     def predict(self, X):
-        """ Predict class for each example in X. Assumes X is preconditioned 
-        and subsampled if necessary. 
+        """ Predict class for each example in X. Assumes X is preconditioned
+        and subsampled if necessary.
         """
-        _, logresp, _ = self._estimate_log_prob_resp(self.weights_, 
+        _, logresp, _ = self._estimate_log_prob_resp(self.weights_,
                 self.means_, self.covariances_, self.covariance_type )
-        return np.argmax(logresp, axis=1) 
+        return np.argmax(logresp, axis=1)
 
     def _initialize_means(self):
         """ The ::means_init param will be one of the following three:
@@ -76,7 +76,7 @@ class GaussianMixture(Sparsifier):
 
         This function chooses random means in the first case (according to
         init params), passes the means_init back in the second, and increments
-        to the next set of means in the third. 
+        to the next set of means in the third.
 
         """
         if self.means_init is None:
@@ -112,7 +112,7 @@ class GaussianMixture(Sparsifier):
         # in either of these two cases there are multiple covar inits.
         elif (self.covariances_init.ndim == 2 and self.covariance_type == 'spherical') \
             or (self.covariances_init.ndim == 3 and self.covariance_type == 'diag'):
-            # means_init_counter has been incremented already. 
+            # means_init_counter has been incremented already.
             covariances_init_this_run = self.covariances_init[self.means_init_counter-1]
         else:
             raise Exception('Covariances init of wrong form.')
@@ -129,18 +129,18 @@ class GaussianMixture(Sparsifier):
         elif self.weights_init.ndim == 1:
             weights_init_this_run = self.weights_init
         elif self.weights_init.ndim == 2:
-            # means_init_counter has been incremented already. 
+            # means_init_counter has been incremented already.
             weights_init_this_run = self.weights_init[self.means_init_counter-1]
         else:
             raise Exception('weights init of wrong form.')
         return weights_init_this_run/weights_init_this_run.sum()
 
     def _initialize_parameters(self):
-        """ Initialize the parameters. Sets self.weights_, self.means_, and 
+        """ Initialize the parameters. Sets self.weights_, self.means_, and
         self.covariances_. Initializes resp using means_init, or if this is
         None, using the method prescribed by init_params. resp is then used
         to intialize the parameters. Also sets self.log_prob_norm_ to max
-        float. 
+        float.
 
         Parameters
         ----------
@@ -172,7 +172,7 @@ class GaussianMixture(Sparsifier):
 
 
     def _init_resp_from_means(self, means_init):
-        """ Initialize the responsibility matrix from dense means by doing hard 
+        """ Initialize the responsibility matrix from dense means by doing hard
         assignment.
 
         Parameters
@@ -223,7 +223,7 @@ class GaussianMixture(Sparsifier):
         return logdetS
 
     def _compute_log_prob(self, means, covariances, covariance_type):
-        maha_dist_squared = self.pairwise_mahalanobis_distances(means, 
+        maha_dist_squared = self.pairwise_mahalanobis_distances(means,
                                 covariances, covariance_type)**2
         # undo the rescaling due to compression (this is just how the pdf worked out)
         maha_dist_squared *= self.num_feat_comp / self.num_feat_full
@@ -237,7 +237,7 @@ class GaussianMixture(Sparsifier):
         log_resp = np.log(weights) + log_prob - lse[:, np.newaxis]
         log_prob_norm = np.mean(lse)
         return [log_resp, log_prob_norm]
-        
+
     # M-step
     def _estimate_gaussian_parameters(self, resp, covariance_type):
         weights = self._estimate_gaussian_weights(resp)
@@ -254,14 +254,14 @@ class GaussianMixture(Sparsifier):
         return [means, covariances]
 
     def _estimate_gaussian_weights(self, resp):
-        """ 
+        """
         Note: sklearn returns the counts instead of weights, i.e., no
-        division by self.num_samp. 
+        division by self.num_samp.
         """
         rk = np.sum(resp, axis=0) + 10 * np.finfo(resp.dtype).eps
         weights = rk/self.num_samp
         return weights
-        
+
     def _convergence_check(self, log_prob_norm):
         with np.errstate(over='raise'):
             try:
@@ -276,9 +276,9 @@ class GaussianMixture(Sparsifier):
         return converged
 
     def __init__(self, n_components = 1, covariance_type = 'spherical', tol = 0.001,
-            reg_covar = 1e-06, max_iter = 100, n_init = 1, 
-            init_params = 'kmpp', 
-            means_init = None, 
+            reg_covar = 1e-06, max_iter = 100, n_init = 1,
+            init_params = 'kmpp',
+            means_init = None,
             covariances_init = None,
             weights_init = None,
             n_passes = 1,
@@ -301,4 +301,3 @@ class GaussianMixture(Sparsifier):
         self.covariances_init_counter = 0
         self.weights_init_counter = 0
         super(GaussianMixture, self).__init__(**kwargs)
-

@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from sparseklearn import Sparsifier
 
-from generate_test_data import DataGenerator
+from tests import DataGenerator
 
 class TestSparsifier(unittest.TestCase):
 
@@ -12,14 +12,14 @@ class TestSparsifier(unittest.TestCase):
     def setUp(self):
         self.td = DataGenerator()
         sparsifier = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices,
                          mask = self.td.mask)
         sparsifier.fit_sparsifier(X = self.td.X)
         self.sparsifier = sparsifier
 
     def test__generate_D_indices(self):
         spa = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices,
                          mask = self.td.mask)
         np.random.seed(0)
         result = spa._generate_D_indices()
@@ -28,30 +28,30 @@ class TestSparsifier(unittest.TestCase):
 
     def test_apply_HD(self):
         spa = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices,
                          mask = self.td.mask)
         result = spa.apply_HD(self.td.X)
         self.assertArrayEqual(self.td.HDX, result)
 
     def test_invert_HD(self):
         spa = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices,
                          mask = self.td.mask)
         result = spa.invert_HD(self.td.HDX)
         self.assertArrayEqual(self.td.X, result)
 
     def test_fit_all_passed(self):
         spa = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices,
                          mask = self.td.mask)
         spa.fit_sparsifier(X=self.td.X, HDX = self.td.HDX, RHDX = self.td.RHDX)
         self.assertArrayEqual(self.td.X, spa.X)
         self.assertArrayEqual(self.td.HDX, spa.HDX)
         self.assertArrayEqual(self.td.RHDX, spa.RHDX)
-        
+
     def test_fit_just_X_passed(self):
         spa = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices,
                          mask = self.td.mask)
         spa.fit_sparsifier(X=self.td.X)
         self.assertArrayEqual(self.td.X, spa.X)
@@ -96,7 +96,7 @@ class TestSparsifier(unittest.TestCase):
 
     def test_pairwise_mahalanobis_distances(self):
         result_spherical = self.sparsifier.pairwise_mahalanobis_distances(\
-            self.td.U, self.td.spherical_covariances, 'spherical') 
+            self.td.U, self.td.spherical_covariances, 'spherical')
         result_diagonal = self.sparsifier.pairwise_mahalanobis_distances(\
             self.td.U, self.td.diagonal_covariances, 'diag')
         correct_spherical = self.td.correct_pairwise_mahalanobis_distances_spherical
@@ -107,10 +107,10 @@ class TestSparsifier(unittest.TestCase):
     def test__pick_K_dense_datapoints_kmpp(self):
         """ This test makes sure that the values found and returned are indeed
         rows from HDX, but does NOT test that the kmpp probability distribution
-        is correct. To test this requires a rewrite of this function in 
+        is correct. To test this requires a rewrite of this function in
         Sparsifier. """
         spa = Sparsifier(num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices, 
+                         num_samp = 4, transform = 'dct', D_indices = self.td.D_indices,
                          mask = self.td.mask)
         spa.fit_sparsifier(X=self.td.X)
         K = 3
@@ -119,7 +119,3 @@ class TestSparsifier(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-
-
-

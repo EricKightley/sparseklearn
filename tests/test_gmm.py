@@ -6,7 +6,7 @@ from sklearn.mixture.gaussian_mixture import _estimate_gaussian_parameters
 from sklearn.mixture import GaussianMixture as GMSKL
 from sparseklearn import GaussianMixture
 
-from generate_test_data import DataGenerator
+from tests import DataGenerator
 
 class TestGaussianMixture(unittest.TestCase):
 
@@ -15,16 +15,16 @@ class TestGaussianMixture(unittest.TestCase):
 
     def setUp(self):
         self.td = DataGenerator()
-        #gmm = GaussianMixture(n_components = 3, 
+        #gmm = GaussianMixture(n_components = 3,
         #                num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-        #                num_samp = 4, transform = 'dct', 
+        #                num_samp = 4, transform = 'dct',
         #                D_indices = self.td.D_indices, mask = self.td.mask)
         #self.gmm = gmm
 
     def test_fit_sparsifier(self):
-        gmm = GaussianMixture(n_components = 3, 
+        gmm = GaussianMixture(n_components = 3,
                         num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-                        num_samp = 4, transform = 'dct', 
+                        num_samp = 4, transform = 'dct',
                         D_indices = self.td.D_indices, mask = self.td.mask)
         gmm.fit_sparsifier(X = self.td.X)
         self.assertArrayEqual(self.td.RHDX, gmm.RHDX)
@@ -36,13 +36,13 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertEqual(self.td.P, gmm.num_feat_full)
 
     def instantiate_standard_gmm(self, random_state):
-        gmm = GaussianMixture(n_components = self.td.K, 
-                        num_feat_full = self.td.P, 
-                        num_feat_comp = self.td.Q, 
+        gmm = GaussianMixture(n_components = self.td.K,
+                        num_feat_full = self.td.P,
+                        num_feat_comp = self.td.Q,
                         num_feat_shared = self.td.Qs,
-                        num_samp = self.td.N, 
-                        transform = self.td.transform, 
-                        D_indices = self.td.D_indices, 
+                        num_samp = self.td.N,
+                        transform = self.td.transform,
+                        D_indices = self.td.D_indices,
                         mask = self.td.mask,
                         random_state = random_state)
         return gmm
@@ -62,7 +62,7 @@ class TestGaussianMixture(unittest.TestCase):
 
         cov_type = 'spherical'
         rs = np.random.RandomState(10)
-        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5,
                 num_feat_comp = 3, num_feat_shared = 2, num_samp = 4, transform = None,
                 mask = None, D_indices = None, covariance_type = cov_type,
                 random_state = rs)
@@ -73,12 +73,12 @@ class TestGaussianMixture(unittest.TestCase):
             cov_type)**2
         #undo the rescaling due to compression
         mahadist_test *= gmm.num_feat_comp/gmm.num_feat_full
-       
+
         mahadist_true = np.zeros_like(mahadist_test)
         for data_ind in range(gmm.num_samp):
             for comp_ind in range(gmm.n_components):
                 mahadist_true[data_ind, comp_ind] = 1/covariances[comp_ind] * \
-                    np.linalg.norm(gmm.RHDX[data_ind] - 
+                    np.linalg.norm(gmm.RHDX[data_ind] -
                         means[comp_ind][gmm.mask[data_ind]])**2
 
         self.assertArrayEqual(mahadist_test, mahadist_true)
@@ -88,13 +88,13 @@ class TestGaussianMixture(unittest.TestCase):
         further into the C library to find the error, I want to make sure that
         the results I think it should give are right. One way to gather
         evidence in favor of this conclusion is to use the result in the
-        computation of the log probability (this is what led me here in the 
-        first place). This test does so, and consequently doesn't actually 
+        computation of the log probability (this is what led me here in the
+        first place). This test does so, and consequently doesn't actually
         test any of the code in gmm.py. For this to work the mask must be
         entirely shared. """
         cov_type = 'spherical'
         rs = np.random.RandomState(10)
-        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5,
                 num_feat_comp = 3, num_feat_shared = 3, num_samp = 4, transform = None,
                 mask = None, D_indices = None, covariance_type = cov_type,
                 random_state = rs)
@@ -103,19 +103,19 @@ class TestGaussianMixture(unittest.TestCase):
         covariances = rs.rand(gmm.n_components)
         precisions = _compute_precision_cholesky(covariances, cov_type)
 
-        # this is where we need the mask to be shared, so that all mask rows 
+        # this is where we need the mask to be shared, so that all mask rows
         # equal mask[0]
         masked_means = means[:, gmm.mask[0]]
-        log_prob_true = _estimate_log_gaussian_prob(gmm.RHDX, masked_means, 
-                precisions, cov_type) 
-        
+        log_prob_true = _estimate_log_gaussian_prob(gmm.RHDX, masked_means,
+                precisions, cov_type)
+
         log_prob_test = np.zeros((gmm.num_samp, gmm.n_components))
         for data_ind in range(gmm.num_samp):
             for comp_ind in range(gmm.n_components):
                 test_const = gmm.num_feat_comp * np.log(2*np.pi)
                 test_logdet = gmm.num_feat_comp * np.log(covariances[comp_ind])
                 test_mahadist = 1/covariances[comp_ind] * \
-                    np.linalg.norm(gmm.RHDX[data_ind] - 
+                    np.linalg.norm(gmm.RHDX[data_ind] -
                         means[comp_ind][gmm.mask[data_ind]])**2
                 log_prob_test[data_ind, comp_ind] = -.5*(test_const + \
                     test_logdet + test_mahadist)
@@ -123,19 +123,19 @@ class TestGaussianMixture(unittest.TestCase):
 
 
     def test__compute_logdet_array_spherical(self):
-        """ Test spherical logdet under compression on an example 
+        """ Test spherical logdet under compression on an example
         computed here. Redundant with test__compute_logdet_array below but was
         implemented to confirm that test is correct. """
         cov_type = 'spherical'
         rs = np.random.RandomState(10)
-        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5,
                 num_feat_comp = 3, num_feat_shared = 2, num_samp = 4, transform = None,
                 mask = None, D_indices = None, covariance_type = cov_type,
                 random_state = rs)
         gmm.fit_sparsifier(X = self.td.X)
         means = rs.rand(gmm.n_components, gmm.num_feat_full)
         covariances = rs.rand(gmm.n_components)
-        
+
         logdet_test = gmm._compute_logdet_array(covariances, 'spherical')
         logdet_true = gmm.num_feat_comp * np.log(covariances)
         logdet_true = np.tile(logdet_true, (gmm.num_samp, 1))
@@ -143,9 +143,9 @@ class TestGaussianMixture(unittest.TestCase):
 
     def test__compute_logdet_array(self):
         """ Test spherical and diagonal on hard-coded results. """
-        gmm = GaussianMixture(n_components = 3, 
+        gmm = GaussianMixture(n_components = 3,
                         num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-                        num_samp = 4, transform = 'dct', 
+                        num_samp = 4, transform = 'dct',
                         D_indices = self.td.D_indices, mask = self.td.mask)
         logdet_spherical = gmm._compute_logdet_array(self.td.spherical_covariances, 'spherical')
         logdet_diag = gmm._compute_logdet_array(self.td.diagonal_covariances, 'diag')
@@ -153,11 +153,11 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertArrayEqual(self.td.correct_logdet_diag, logdet_diag)
 
     def test__compute_log_prob_spherical_no_compression(self):
-        """ Compare the log_prob computation to that of sklearn with no 
-        compression. Implemented as a precursor to testing it with 
+        """ Compare the log_prob computation to that of sklearn with no
+        compression. Implemented as a precursor to testing it with
         compression, to follow. Spherical covariances. """
         cov_type = 'spherical'
-        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5,
                 num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
                 mask = None, D_indices = None, covariance_type = cov_type)
         gmm.fit_sparsifier(X = self.td.X)
@@ -165,7 +165,7 @@ class TestGaussianMixture(unittest.TestCase):
         covariances = np.random.rand(gmm.n_components)
         log_prob_test = gmm._compute_log_prob(means, covariances, cov_type)
         precisions = _compute_precision_cholesky(covariances, cov_type)
-        log_prob_true = _estimate_log_gaussian_prob(self.td.X, means, precisions, cov_type) 
+        log_prob_true = _estimate_log_gaussian_prob(self.td.X, means, precisions, cov_type)
         self.assertArrayEqual(log_prob_test, log_prob_true)
 
     def test__compute_log_prob_spherical_shared_compression(self):
@@ -173,7 +173,7 @@ class TestGaussianMixture(unittest.TestCase):
         shared compression. Spherical covariances. """
         cov_type = 'spherical'
         rs = np.random.RandomState(10)
-        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5,
                 num_feat_comp = 3, num_feat_shared = 3, num_samp = 4, transform = None,
                 mask = None, D_indices = None, covariance_type = cov_type,
                 random_state = rs)
@@ -181,25 +181,25 @@ class TestGaussianMixture(unittest.TestCase):
         means = rs.rand(gmm.n_components, gmm.num_feat_full)
         covariances = rs.rand(gmm.n_components)
         log_prob_test = gmm._compute_log_prob(means, covariances, cov_type)
-        
+
         log_prob_true = np.zeros((gmm.num_samp, gmm.n_components))
         for data_ind in range(gmm.num_samp):
             for comp_ind in range(gmm.n_components):
                 true_const = gmm.num_feat_comp * np.log(2*np.pi)
                 true_logdet = gmm.num_feat_comp * np.log(covariances[comp_ind])
                 true_mahadist = 1/covariances[comp_ind] * \
-                    np.linalg.norm(gmm.RHDX[data_ind] - 
+                    np.linalg.norm(gmm.RHDX[data_ind] -
                         means[comp_ind][gmm.mask[data_ind]])**2
                 log_prob_true[data_ind, comp_ind] = -.5*(true_const + \
                     true_logdet + true_mahadist)
         self.assertArrayEqual(log_prob_test, log_prob_true)
 
     def test__compute_log_prob_diagonal_no_compression(self):
-        """ Compare the log_prob computation to that of sklearn with no 
-        compression. Implemented as a precursor to testing it with 
+        """ Compare the log_prob computation to that of sklearn with no
+        compression. Implemented as a precursor to testing it with
         compression, to follow. Diagonal covariances. """
         cov_type = 'diag'
-        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5,
                 num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
                 mask = None, D_indices = None, covariance_type = cov_type)
         gmm.fit_sparsifier(X = self.td.X)
@@ -207,32 +207,32 @@ class TestGaussianMixture(unittest.TestCase):
         covariances = np.random.rand(gmm.n_components, gmm.num_feat_comp)
         log_prob_test = gmm._compute_log_prob(means, covariances, cov_type)
         precisions = _compute_precision_cholesky(covariances, cov_type)
-        log_prob_true = _estimate_log_gaussian_prob(self.td.X, means, precisions, cov_type) 
+        log_prob_true = _estimate_log_gaussian_prob(self.td.X, means, precisions, cov_type)
         self.assertArrayEqual(log_prob_test, log_prob_true)
 
     def test__compute_log_prob(self):
-        """ This test should probably get implemented eventually. It corresponds 
-        to testing the wrapper around fastLA.pairwise_mahalanobis_distances and 
+        """ This test should probably get implemented eventually. It corresponds
+        to testing the wrapper around fastLA.pairwise_mahalanobis_distances and
         gmm._compute_logdet_array. Each of these has tests for spherical and
         diagonal cases with sparsification.
-        
+
         Currently we have tests of:
 
             - component functions in _compute_log_prob
-              includes diag and spherical on compressed data with 
+              includes diag and spherical on compressed data with
               sparsification
             - _compute_log_prob on dense data
               tests against sklearn
-        
+
         I can't currently think of a way to implement a test for this that isn't
         a trivial replication of those earlier tests.
-        
+
         """
         #TODO
 
     def test__estimate_log_prob_resp_spherical_no_compression(self):
         cov_type = 'spherical'
-        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5,
                 num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
                 mask = None, D_indices = None, covariance_type = cov_type)
         gmm.fit_sparsifier(X = self.td.X)
@@ -242,7 +242,7 @@ class TestGaussianMixture(unittest.TestCase):
         weights /= weights.sum()
         log_prob_test, log_resp_test, log_prob_norm_test = gmm._estimate_log_prob_resp(
             weights, means, covariances, cov_type)
-        # find skl's values, pretty ugly to do. 
+        # find skl's values, pretty ugly to do.
         precisions = _compute_precision_cholesky(covariances, cov_type)
         gmm_skl = GMSKL(n_components = 3, covariance_type = cov_type)
         gmm_skl.means_ = means
@@ -251,9 +251,9 @@ class TestGaussianMixture(unittest.TestCase):
         gmm_skl.covariance_type_ = cov_type
         log_prob_norm_true, log_resp_true = gmm_skl._estimate_log_prob_resp(self.td.X)
         # if anything is bad later this overwrite with mean seems suspect:
-        log_prob_norm_true = log_prob_norm_true.mean() 
+        log_prob_norm_true = log_prob_norm_true.mean()
         # now get the log_prob from another function
-        log_prob_true = _estimate_log_gaussian_prob(self.td.X, means, precisions, cov_type) 
+        log_prob_true = _estimate_log_gaussian_prob(self.td.X, means, precisions, cov_type)
         # run the tests
         self.assertArrayEqual(log_prob_test, log_prob_true)
         self.assertArrayEqual(log_prob_norm_true, log_prob_norm_test)
@@ -261,7 +261,7 @@ class TestGaussianMixture(unittest.TestCase):
 
     def test__estimate_log_prob_resp_diagonal_no_compression(self):
         cov_type = 'diag'
-        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5,
                 num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
                 mask = None, D_indices = None, covariance_type = cov_type)
         gmm.fit_sparsifier(X = self.td.X)
@@ -271,7 +271,7 @@ class TestGaussianMixture(unittest.TestCase):
         weights /= weights.sum()
         log_prob_test, log_resp_test, log_prob_norm_test = gmm._estimate_log_prob_resp(
             weights, means, covariances, cov_type)
-        # find skl's values, pretty ugly to do. 
+        # find skl's values, pretty ugly to do.
         precisions = _compute_precision_cholesky(covariances, cov_type)
         gmm_skl = GMSKL(n_components = 3, covariance_type = cov_type)
         gmm_skl.means_ = means
@@ -280,9 +280,9 @@ class TestGaussianMixture(unittest.TestCase):
         gmm_skl.covariance_type_ = cov_type
         log_prob_norm_true, log_resp_true = gmm_skl._estimate_log_prob_resp(self.td.X)
         # if anything is bad later this overwrite with mean seems suspect:
-        log_prob_norm_true = log_prob_norm_true.mean() 
+        log_prob_norm_true = log_prob_norm_true.mean()
         # now get the log_prob from another function
-        log_prob_true = _estimate_log_gaussian_prob(self.td.X, means, precisions, cov_type) 
+        log_prob_true = _estimate_log_gaussian_prob(self.td.X, means, precisions, cov_type)
         # run the tests
         self.assertArrayEqual(log_prob_test, log_prob_true)
         self.assertArrayEqual(log_prob_norm_true, log_prob_norm_test)
@@ -292,7 +292,7 @@ class TestGaussianMixture(unittest.TestCase):
     def test__estimate_log_prob_resp_spherical_shared_compression(self):
         rs = np.random.RandomState(11)
         cov_type = 'spherical'
-        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5,
                 num_feat_comp = 3, num_feat_shared = 3, num_samp = 4, transform = None,
                 mask = None, D_indices = None, covariance_type = cov_type,
                 random_state = rs)
@@ -303,7 +303,7 @@ class TestGaussianMixture(unittest.TestCase):
         weights /= weights.sum()
         log_prob_test, log_resp_test, log_prob_norm_test = gmm._estimate_log_prob_resp(
             weights, means, covariances, cov_type)
-        # find skl's values, pretty ugly to do. 
+        # find skl's values, pretty ugly to do.
         precisions = _compute_precision_cholesky(covariances, cov_type)
         gmm_skl = GMSKL(n_components = 3, covariance_type = cov_type)
         # we need the mask to be shared so that we can use mask[0] on all means
@@ -313,10 +313,10 @@ class TestGaussianMixture(unittest.TestCase):
         gmm_skl.covariance_type_ = cov_type
         log_prob_norm_true, log_resp_true = gmm_skl._estimate_log_prob_resp(gmm.RHDX)
         # if anything is bad later this overwrite with mean seems suspect:
-        log_prob_norm_true = log_prob_norm_true.mean() 
+        log_prob_norm_true = log_prob_norm_true.mean()
         # now get the log_prob from another function
-        log_prob_true = _estimate_log_gaussian_prob(gmm.RHDX, gmm_skl.means_, 
-                        precisions, cov_type) 
+        log_prob_true = _estimate_log_gaussian_prob(gmm.RHDX, gmm_skl.means_,
+                        precisions, cov_type)
         # run the tests
         self.assertArrayEqual(log_prob_test, log_prob_true)
         self.assertArrayEqual(log_prob_norm_true, log_prob_norm_test)
@@ -330,21 +330,21 @@ class TestGaussianMixture(unittest.TestCase):
 
     def test__estimate_gaussian_parameters_spherical_no_compression(self):
         """ Test _estiamte_gaussian_parameters against sklearn's
-        implementation. Spherical covariances, no compression. 
+        implementation. Spherical covariances, no compression.
         """
         cov_type = 'spherical'
         reg_covar = 1e-6
-        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5,
                 num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
-                mask = None, D_indices = None, covariance_type = cov_type, 
+                mask = None, D_indices = None, covariance_type = cov_type,
                 reg_covar = reg_covar)
         gmm.fit_sparsifier(X = self.td.X)
         resp = np.random.rand(gmm.num_samp, gmm.n_components)
         weights_test, means_test, covariances_test = gmm._estimate_gaussian_parameters(resp, cov_type)
         # skl
         counts_true, means_true, covariances_true = _estimate_gaussian_parameters(
-                self.td.X, resp, reg_covar, cov_type) 
-        # skl returns counts instead of weights. 
+                self.td.X, resp, reg_covar, cov_type)
+        # skl returns counts instead of weights.
         weights_true = counts_true / gmm.num_samp
 
         self.assertArrayEqual(weights_test, weights_true)
@@ -353,21 +353,21 @@ class TestGaussianMixture(unittest.TestCase):
 
     def test__estimate_gaussian_parameters_diagonal_no_compression(self):
         """ Test _estiamte_gaussian_parameters against sklearn's
-        implementation. Diagonal covariances, no compression. 
+        implementation. Diagonal covariances, no compression.
         """
         cov_type = 'diag'
         reg_covar = 1e-6
-        gmm = GaussianMixture(n_components = 3, num_feat_full = 5, 
+        gmm = GaussianMixture(n_components = 3, num_feat_full = 5,
                 num_feat_comp = 5, num_feat_shared = 5, num_samp = 4, transform = None,
-                mask = None, D_indices = None, covariance_type = cov_type, 
+                mask = None, D_indices = None, covariance_type = cov_type,
                 reg_covar = reg_covar)
         gmm.fit_sparsifier(X = self.td.X)
         resp = np.random.rand(gmm.num_samp, gmm.n_components)
         weights_test, means_test, covariances_test = gmm._estimate_gaussian_parameters(resp, cov_type)
         # skl
         counts_true, means_true, covariances_true = _estimate_gaussian_parameters(
-                self.td.X, resp, reg_covar, cov_type) 
-        # skl returns counts instead of weights. 
+                self.td.X, resp, reg_covar, cov_type)
+        # skl returns counts instead of weights.
         weights_true = counts_true / gmm.num_samp
 
         self.assertArrayEqual(weights_test, weights_true)
@@ -375,7 +375,7 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertArrayEqual(covariances_test, covariances_true)
 
     def test__estimate_gaussian_means_and_covariances_diagonal_no_compression(self):
-        """ Test _estimate_gaussian_means_and_covariances against hard-coded 
+        """ Test _estimate_gaussian_means_and_covariances against hard-coded
         example. Should be redundant with test__estimate_gaussian_parameters_*
         tests above, which test against sklearn's results. """
 
@@ -383,7 +383,7 @@ class TestGaussianMixture(unittest.TestCase):
                       [1,0,0,0],
                       [0,0,1,2]], dtype = np.float64)
         gmm = GaussianMixture(n_components = 2, num_feat_full = 4, num_feat_comp = 4,
-                              num_feat_shared = 4, num_samp = 3, transform = None, 
+                              num_feat_shared = 4, num_samp = 3, transform = None,
                               D_indices = None, mask = None, reg_covar = 0)
         gmm.fit_sparsifier(X = X)
         # note: columns should sum to 1, but don't have to because the weighted
@@ -402,7 +402,7 @@ class TestGaussianMixture(unittest.TestCase):
     def test__estimate_gaussian_weights(self):
         """ Weights are testsed in test__estimate_gaussian_parameters_* above.
         Should not need to implement this unless we want to further test on
-        compressed case. 
+        compressed case.
         """
         #TODO
         return 1
@@ -419,18 +419,18 @@ class TestGaussianMixture(unittest.TestCase):
         """
         random_state = np.random.RandomState(12)
         means_init_true = random_state.rand(self.td.K, self.td.P)
-        gmm = GaussianMixture(n_components = self.td.K, 
-                        num_feat_full = self.td.P, 
-                        num_feat_comp = self.td.Q, 
+        gmm = GaussianMixture(n_components = self.td.K,
+                        num_feat_full = self.td.P,
+                        num_feat_comp = self.td.Q,
                         num_feat_shared = self.td.Qs,
-                        num_samp = self.td.N, 
-                        transform = self.td.transform, 
-                        D_indices = self.td.D_indices, 
+                        num_samp = self.td.N,
+                        transform = self.td.transform,
+                        D_indices = self.td.D_indices,
                         mask = self.td.mask,
                         means_init = means_init_true,
                         random_state = random_state)
         gmm.fit_sparsifier(X=self.td.X)
-        means_init_test = gmm._initialize_means() 
+        means_init_test = gmm._initialize_means()
         self.assertArrayEqual(means_init_test, means_init_true)
 
     def test__initialize_means_case2(self):
@@ -439,13 +439,13 @@ class TestGaussianMixture(unittest.TestCase):
         random_state = np.random.RandomState(12)
         n_init = 3
         means_init_true = random_state.rand(n_init, self.td.K, self.td.P)
-        gmm = GaussianMixture(n_components = self.td.K, 
-                        num_feat_full = self.td.P, 
-                        num_feat_comp = self.td.Q, 
+        gmm = GaussianMixture(n_components = self.td.K,
+                        num_feat_full = self.td.P,
+                        num_feat_comp = self.td.Q,
                         num_feat_shared = self.td.Qs,
-                        num_samp = self.td.N, 
-                        transform = self.td.transform, 
-                        D_indices = self.td.D_indices, 
+                        num_samp = self.td.N,
+                        transform = self.td.transform,
+                        D_indices = self.td.D_indices,
                         mask = self.td.mask,
                         means_init = means_init_true,
                         n_init = n_init,
@@ -462,13 +462,13 @@ class TestGaussianMixture(unittest.TestCase):
         Only checks that the initialized means are of the correct shape.
         """
         random_state = np.random.RandomState(12)
-        gmm = GaussianMixture(n_components = self.td.K, 
-                        num_feat_full = self.td.P, 
-                        num_feat_comp = self.td.Q, 
+        gmm = GaussianMixture(n_components = self.td.K,
+                        num_feat_full = self.td.P,
+                        num_feat_comp = self.td.Q,
                         num_feat_shared = self.td.Qs,
-                        num_samp = self.td.N, 
-                        transform = self.td.transform, 
-                        D_indices = self.td.D_indices, 
+                        num_samp = self.td.N,
+                        transform = self.td.transform,
+                        D_indices = self.td.D_indices,
                         mask = self.td.mask,
                         means_init = None,
                         init_params = 'kmpp',
@@ -483,13 +483,13 @@ class TestGaussianMixture(unittest.TestCase):
         Only checks that the initialized means are of the correct shape.
         """
         random_state = np.random.RandomState(12)
-        gmm = GaussianMixture(n_components = self.td.K, 
-                        num_feat_full = self.td.P, 
-                        num_feat_comp = self.td.Q, 
+        gmm = GaussianMixture(n_components = self.td.K,
+                        num_feat_full = self.td.P,
+                        num_feat_comp = self.td.Q,
                         num_feat_shared = self.td.Qs,
-                        num_samp = self.td.N, 
-                        transform = self.td.transform, 
-                        D_indices = self.td.D_indices, 
+                        num_samp = self.td.N,
+                        transform = self.td.transform,
+                        D_indices = self.td.D_indices,
                         mask = self.td.mask,
                         means_init = None,
                         init_params = 'random',
@@ -500,18 +500,18 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertArrayEqual(means_init_shape_test, means_init_shape_true)
 
     def test__initialize_covariances_case1(self):
-        """ spherical covariance, 1 init. 
+        """ spherical covariance, 1 init.
         """
         random_state = np.random.RandomState(12)
         means_init_true = random_state.rand(self.td.K, self.td.P)
         covariances_init_true = random_state.rand(self.td.K)
-        gmm = GaussianMixture(n_components = self.td.K, 
-                        num_feat_full = self.td.P, 
-                        num_feat_comp = self.td.Q, 
+        gmm = GaussianMixture(n_components = self.td.K,
+                        num_feat_full = self.td.P,
+                        num_feat_comp = self.td.Q,
                         num_feat_shared = self.td.Qs,
-                        num_samp = self.td.N, 
-                        transform = self.td.transform, 
-                        D_indices = self.td.D_indices, 
+                        num_samp = self.td.N,
+                        transform = self.td.transform,
+                        D_indices = self.td.D_indices,
                         mask = self.td.mask,
                         means_init = means_init_true,
                         covariances_init = covariances_init_true,
@@ -523,18 +523,18 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertArrayEqual(covariances_init_test, covariances_init_true)
 
     def test__initialize_covariances_case2(self):
-        """ diagonal covariance, 1 init. 
+        """ diagonal covariance, 1 init.
         """
         random_state = np.random.RandomState(12)
         means_init_true = random_state.rand(self.td.K, self.td.P)
         covariances_init_true = random_state.rand(self.td.K, self.td.P)
-        gmm = GaussianMixture(n_components = self.td.K, 
-                        num_feat_full = self.td.P, 
-                        num_feat_comp = self.td.Q, 
+        gmm = GaussianMixture(n_components = self.td.K,
+                        num_feat_full = self.td.P,
+                        num_feat_comp = self.td.Q,
                         num_feat_shared = self.td.Qs,
-                        num_samp = self.td.N, 
-                        transform = self.td.transform, 
-                        D_indices = self.td.D_indices, 
+                        num_samp = self.td.N,
+                        transform = self.td.transform,
+                        D_indices = self.td.D_indices,
                         mask = self.td.mask,
                         means_init = means_init_true,
                         covariances_init = covariances_init_true,
@@ -550,13 +550,13 @@ class TestGaussianMixture(unittest.TestCase):
         """
         random_state = np.random.RandomState(12)
         means_init_true = random_state.rand(self.td.K, self.td.P)
-        gmm = GaussianMixture(n_components = self.td.K, 
-                        num_feat_full = self.td.P, 
-                        num_feat_comp = self.td.Q, 
+        gmm = GaussianMixture(n_components = self.td.K,
+                        num_feat_full = self.td.P,
+                        num_feat_comp = self.td.Q,
                         num_feat_shared = self.td.Qs,
-                        num_samp = self.td.N, 
-                        transform = self.td.transform, 
-                        D_indices = self.td.D_indices, 
+                        num_samp = self.td.N,
+                        transform = self.td.transform,
+                        D_indices = self.td.D_indices,
                         mask = self.td.mask,
                         means_init = means_init_true,
                         covariances_init = None,
@@ -569,19 +569,19 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertArrayEqual(covariances_init_test.shape, true_shape)
 
     def test__initialize_covariances_case4(self):
-        """ diagonal covariance, multi-init. 
+        """ diagonal covariance, multi-init.
         """
         random_state = np.random.RandomState(12)
         n_init = 3
         means_init_true = random_state.rand(n_init, self.td.K, self.td.P)
         covariances_init_true = random_state.rand(n_init, self.td.K, self.td.P)
-        gmm = GaussianMixture(n_components = self.td.K, 
-                        num_feat_full = self.td.P, 
-                        num_feat_comp = self.td.Q, 
+        gmm = GaussianMixture(n_components = self.td.K,
+                        num_feat_full = self.td.P,
+                        num_feat_comp = self.td.Q,
                         num_feat_shared = self.td.Qs,
-                        num_samp = self.td.N, 
-                        transform = self.td.transform, 
-                        D_indices = self.td.D_indices, 
+                        num_samp = self.td.N,
+                        transform = self.td.transform,
+                        D_indices = self.td.D_indices,
                         mask = self.td.mask,
                         means_init = means_init_true,
                         covariances_init = covariances_init_true,
@@ -603,13 +603,13 @@ class TestGaussianMixture(unittest.TestCase):
         means_init_true = random_state.rand(n_init, self.td.K, self.td.P)
         weights_init_true = random_state.rand(n_init, self.td.K)
         weights_init_true /= weights_init_true.sum(axis=1)[:,np.newaxis]
-        gmm = GaussianMixture(n_components = self.td.K, 
-                        num_feat_full = self.td.P, 
-                        num_feat_comp = self.td.Q, 
+        gmm = GaussianMixture(n_components = self.td.K,
+                        num_feat_full = self.td.P,
+                        num_feat_comp = self.td.Q,
                         num_feat_shared = self.td.Qs,
-                        num_samp = self.td.N, 
-                        transform = self.td.transform, 
-                        D_indices = self.td.D_indices, 
+                        num_samp = self.td.N,
+                        transform = self.td.transform,
+                        D_indices = self.td.D_indices,
                         mask = self.td.mask,
                         means_init = means_init_true,
                         weights_init = weights_init_true,
@@ -624,9 +624,9 @@ class TestGaussianMixture(unittest.TestCase):
         self.assertArrayEqual(weights_init_test, weights_init_true[1])
 
     def test__init_resp_from_means(self):
-        gmm = GaussianMixture(n_components = 3, 
+        gmm = GaussianMixture(n_components = 3,
                         num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-                        num_samp = 4, transform = 'dct', 
+                        num_samp = 4, transform = 'dct',
                         D_indices = self.td.D_indices, mask = self.td.mask)
         gmm.fit_sparsifier(X=self.td.X)
         resp_test = gmm._init_resp_from_means(self.td.U)
@@ -639,9 +639,9 @@ class TestGaussianMixture(unittest.TestCase):
         """ Only tests if it runs. """
         init_params = 'random'
         means_init = None
-        gmm = GaussianMixture(n_components = 3, 
+        gmm = GaussianMixture(n_components = 3,
             num_feat_full = 5, num_feat_comp = 3, num_feat_shared = 1,
-            num_samp = 4, transform = 'dct', 
+            num_samp = 4, transform = 'dct',
             D_indices = self.td.D_indices, mask = self.td.mask,
             init_params = init_params,
             means_init = means_init)
@@ -674,4 +674,3 @@ class TestGaussianMixture(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

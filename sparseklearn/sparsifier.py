@@ -6,13 +6,13 @@ from scipy.fftpack import dct, idct
 from numpy.ctypeslib import ndpointer
 import ctypes as ct
 
-from .fastLA import pairwise_l2_distances_with_self
-from .fastLA import pairwise_l2_distances_with_full
-from .fastLA import compute_weighted_first_moment_array
-from .fastLA import compute_weighted_first_and_second_moment_array
+from sparseklearn.fastLA import pairwise_l2_distances_with_self
+from sparseklearn.fastLA import pairwise_l2_distances_with_full
+from sparseklearn.fastLA import compute_weighted_first_moment_array
+from sparseklearn.fastLA import compute_weighted_first_and_second_moment_array
 
-from .fastLA import pairwise_mahalanobis_distances_spherical
-from .fastLA import pairwise_mahalanobis_distances_diagonal
+from sparseklearn.fastLA import pairwise_mahalanobis_distances_spherical
+from sparseklearn.fastLA import pairwise_mahalanobis_distances_diagonal
 
 class Sparsifier():
     """ Sparsifier.
