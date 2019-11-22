@@ -1,20 +1,29 @@
-from setuptools import setup
-import subprocess
+from setuptools import setup, Extension, find_packages
 
-subprocess.call(['make', '-C', 'sparseklearn/source'])
+fastLA_module = Extension(
+    'sparseklearn.fastLA._fastLA',
+    sources=[
+        'sparseklearn/fastLA/distances.c',
+        'sparseklearn/fastLA/moments.c',
+        'sparseklearn/fastLA/auxiliary.c'
+    ]
+)
 
-setup(name='sparseklearn',
-      version='0.1.4',
-      url='http://github.com/EricKightley/sparseklearn',
-      author='Eric Kightley',
-      author_email='kightley.1@gmail.com',
-      license='MIT',
-      packages=['sparseklearn'],
-      package_data={'sparseklearn': ['libauxiliary.so', 'libdistances.so', 'libmoments.so']},
-      include_package_data=True,
-      install_requires=[
-          'scipy',
-          'numpy',
-          'scikit-learn',
-      ],
-      zip_safe=False)
+setup(
+    name='sparseklearn',
+    version='0.1.4',
+    url='http://github.com/EricKightley/sparseklearn',
+    author='Eric Kightley',
+    author_email='kightley.1@gmail.com',
+    license='MIT',
+    ext_modules = [fastLA_module],
+    py_modules = ["fastLA"],
+    packages = find_packages(),
+    install_requires=[
+        'scipy',
+        'numpy',
+        'scikit-learn',
+        'pytest'
+    ],
+    zip_safe=False
+)
