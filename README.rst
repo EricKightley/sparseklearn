@@ -9,11 +9,12 @@ Dimensionality reduction for machine learning.
 Installation
 ------------
 Clone the repo, make a virtual environment, activate it, then:
-```
-python setup.py build_ext --inplace
-pip install .
-pytest
-```
+
+::
+    python setup.py build_ext --inplace
+    pip install .
+    pytest
+
 
 Overview
 --------
