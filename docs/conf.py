@@ -43,6 +43,7 @@ numpydoc_class_members_toctree = False
 
 # this does not fix the problem
 autodoc_mock_imports = ["sparseklearn", "fastLA"]
+master_doc = 'index'
 
 ## Include Python objects as they appear in source files
 ## Default: alphabetically ('alphabetical')
