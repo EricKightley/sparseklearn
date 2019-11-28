@@ -12,7 +12,7 @@
 #
 import os
 import sys
-#sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- Project information -----------------------------------------------------
@@ -40,6 +40,7 @@ extensions = [
     'sphinx.ext.autosummary',
 ]
 numpydoc_class_members_toctree = False
+autodoc_mock_imports = ["fastLA"]
 
 #, 'sphinx.ext.coverage', 'sphinx.ext.napoleon']
 
