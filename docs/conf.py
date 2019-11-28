@@ -40,9 +40,9 @@ extensions = [
     'sphinx.ext.autosummary',
 ]
 numpydoc_class_members_toctree = False
-autodoc_mock_imports = ["fastLA"]
 
-#, 'sphinx.ext.coverage', 'sphinx.ext.napoleon']
+# this does not fix the problem
+autodoc_mock_imports = ["sparseklearn", "fastLA"]
 
 ## Include Python objects as they appear in source files
 ## Default: alphabetically ('alphabetical')
