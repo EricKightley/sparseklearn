@@ -7,8 +7,89 @@ from scipy.special import logsumexp
 from sparseklearn.fastLA import logdet_cov_diag
 
 class GaussianMixture(Sparsifier):
+    """ Sparsified Gaussian mixture model.
+
+    Fit a Gaussian mixture model to sparsified data. Diagonal and spherical
+    covariances are supported.
+
+    Parameters
+    ----------
+    n_components : int, defaults to 3.
+        The number of components (clusters) to fit.
+
+    covariance_type : {'spherical', 'diag'}, defaults to 'spherical'.
+        The form of the covariance matrix.
+
+    tol : float, defaults to 1e-3.
+        The convergence threshold. EM iterations will stop
+        when the lower bound average gain is below this threshold.
+
+    reg_covar : float, defaults to 1e-6.
+        Non-negative regularization added to the diagonal of the covariance
+        to ensure it's positive.
+
+    max_iter : int, defaults to 100.
+        The number of EM iterations to perform.
+
+    n_init : int, defaults to 1.
+        The number of initializations to perform. The best results are kept.
+
+    init_params : {'kmpp', 'random'}, defaults to 'kmpp'.
+        The method used to initialize the weights, the means and the precisions.
+        If 'kmpp', the initial means are chosen using the k-means++ algorithm.
+        If 'random', initial means are chosen at random from the input data.
+
+    means_init : nd.array, shape (n_components, P), optional.
+        The user-provided initial means, defaults to None, in which case
+        the means are initialized using the `init_params` method. P is the
+        number of features in the full-dimensional space.
+
+    predict_training_data : bool, default to False.
+        Whether to predict labels for the training data.
+
+    Attributes
+    ----------
+    weights_ : nd.array, shape (n_components,)
+        The weight of each mixture component.
+
+    means_ : nd.array, shape (n_components, P)
+        The mean of each mixture component.
+
+    covariances_ : nd.array
+        The covariance of each mixture component.
+        The shape depends on covariance_type:
+        (n_components,) if `spherical` and (n_components, P) if `diag`.
+
+    converged_ : bool
+        True if fit() converged, False otherwise.
+
+    """
 
     def fit(self, X = None, HDX = None, RHDX = None, y = None):
+        """ Estimate model parameters using EM algorithm.
+
+        Fits the model ``n_init`` times and keeps the parameters with
+        which the model has the largest likelihood. Each trial
+        performs at most ``max_iter`` iterations of EM until covergence.
+        or a ``ConvergenceWarning`` is raised.
+
+        At least one of X, HDX, or RHDX must be passed.
+
+        Parameters
+        ----------
+
+        X : nd.array, shape (N, P), optional
+            defaults to None. Dense, raw data.
+
+        HDX : nd.array, shape (N, P), optional
+            defaults to None. Dense, transformed data.
+
+        RHDX : nd.array, shape (N, Q), optional
+            defaults to None. Subsampled, transformed data.
+
+        y : nd.array, shape (N,), optional
+            True labels.
+        """
 
         self.fit_sparsifier(X = X, HDX = HDX, RHDX = RHDX)
 
@@ -17,7 +98,7 @@ class GaussianMixture(Sparsifier):
 
         results = []
         for n in range(self.n_init):
-            log_prob_norm, counter = self.fit_single_trial()
+            log_prob_norm, counter = self._fit_single_trial()
             this_run = {'log_prob_norm' : log_prob_norm,
                         'counter' : counter,
                         'means' : self.means_,
@@ -42,7 +123,7 @@ class GaussianMixture(Sparsifier):
             self.labels_predicted = results[best_run_index]['labels_predicted']
 
 
-    def fit_single_trial(self):
+    def _fit_single_trial(self):
         self.converged = False
         self._initialize_parameters()
         counter = 0
@@ -61,15 +142,28 @@ class GaussianMixture(Sparsifier):
         return [log_prob_norm, counter]
 
     def predict(self, X):
-        """ Predict class for each example in X. Assumes X is preconditioned
-        and subsampled if necessary.
+        """  Predict the labels for the data samples in X using the
+        trained model.
+
+        Parameters
+        ----------
+        X : nd.array, shape (n_samples, Q)
+            Array of Q-dimensional data points. Each row
+            corresponds to a single data point. X is assumed to be
+            preconditioned and subsampled.
+
+        Returns
+        -------
+        labels : array, shape (n_samples,)
+            Component labels.
         """
+
         _, logresp, _ = self._estimate_log_prob_resp(self.weights_,
                 self.means_, self.covariances_, self.covariance_type )
         return np.argmax(logresp, axis=1)
 
     def _initialize_means(self):
-        """ The ::means_init param will be one of the following three:
+        """ The means_init param will be one of the following three:
                 None
                 n_components X num_feat_full array of initial means
                 n_components X num_feat_full X n_init array of initial means
@@ -275,20 +369,18 @@ class GaussianMixture(Sparsifier):
             converged = False
         return converged
 
-    def __init__(self, n_components = 1, covariance_type = 'spherical', tol = 0.001,
+    def __init__(self, n_components = 3, covariance_type = 'spherical', tol = 0.001,
             reg_covar = 1e-06, max_iter = 100, n_init = 1,
             init_params = 'kmpp',
             means_init = None,
             covariances_init = None,
             weights_init = None,
-            n_passes = 1,
             predict_training_data = False,
             **kwargs):
 
         self.init_params = init_params
         self.n_components = n_components
         self.tol = tol
-        self.n_passes = n_passes
         self.n_init = n_init
         self.max_iter = max_iter
         self.means_init = means_init

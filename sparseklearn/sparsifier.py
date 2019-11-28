@@ -18,11 +18,10 @@ class Sparsifier():
     """ Sparsifier.
 
     Compresses data through sparsification. Permits several operations on
-    sparisified data.
+    sparsified data.
 
     Parameters
     ----------
-
     num_feat_full : int
         Dimension of a full sample.
 
@@ -36,10 +35,8 @@ class Sparsifier():
         The preconditioning transform.
         Determines what form of H to use in the preconditioning transform HD.
         Any method other than None will also use the diagonal D matrix (which
-        can be set using the D_indices parameter). Must be one of::
-
-            'dct'  discrete cosine transform
-            None no transform
+        can be set using the D_indices parameter). The direct cosine transform
+        is currently the only method supported ('dct').
 
     mask : nd.array, shape (n_datapoints, dim_mask), optional
         defaults to None. The user-provided mask. If None, mask is
@@ -53,10 +50,8 @@ class Sparsifier():
         defaults to None. The user-provided diagonal of the preconditioning matrix D.
         If None, generated using the generate_D_indices method.
 
-
     Attributes
     ----------
-
     mask : nd.array, shape (num_samp, num_feat_comp)
         The mask used to sparsify the data. Array of integers, each row is the
         indices specifying which entries that sample were kept.
@@ -67,11 +62,9 @@ class Sparsifier():
 
     """
 
-    ###########################################################################
-    # Temp - set random seed
-
     def check_random_state(self, seed):
         """Turn seed into a np.random.RandomState instance
+
         Parameters
         ----------
         seed : None | int | instance of RandomState
@@ -289,7 +282,7 @@ class Sparsifier():
         Y is given.
 
         Parameters
-        ------
+        ----------
 
         Y : nd.array, shape (K, P), optional
             defaults to None. Full, transformed samples.
@@ -321,7 +314,7 @@ class Sparsifier():
         speed later - zeros in W are multiplied through.
 
         Parameters
-        ------
+        ----------
 
         W : nd.array, shape (N, K)
             Weights. Each row corresponds to a sample, each column to a set of
@@ -356,7 +349,7 @@ class Sparsifier():
         for speed later - zeros in W are multiplied through.
 
         Parameters
-        ------
+        ----------
 
         W : nd.array, shape (N, K)
             Weights. Each row corresponds to a sample, each column to a set of
@@ -402,17 +395,15 @@ class Sparsifier():
 
         means : nd.array, shape (K,P)
             The means with which to take the mahalanobis distances. Each row of
-            ::means is a single mean in P-dimensional space.
+            means is a single mean in P-dimensional space.
 
         covariances : nd.array, shape (K,P) or shape (P,).
             The non-zero entries of the covariance matrix. If
-            ::covariance_type is 'spherical', must be shape (P,). If
-            ::covariance_type is 'diag', must be shape (K,P)
+            covariance_type is 'spherical', must be shape (P,). If
+            covariance_type is 'diag', must be shape (K,P)
 
-        covariance_type : string. Must be one of
-
-            'spherical' (each component has its own single variance)
-            'diag' (each component has its own diagonal covariance matrix)
+        covariance_type : {'spherical', 'diag'}, string.
+            The form of the covariance matrix.
 
         Returns
         -------
