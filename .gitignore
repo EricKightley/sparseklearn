@@ -9,7 +9,6 @@
 *.pk
 /dist/
 /plots/
-/examples/
 /temp_backup/
 /*.egg-info
 _build
@@ -20,3 +19,4 @@ _build
 _static
 _templates
 sparseklearn/source/.DS_Store
+.ipynb_checkpoints/

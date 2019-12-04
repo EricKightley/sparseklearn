@@ -24,8 +24,6 @@ class TestSparsifier(unittest.TestCase):
                         D_indices = self.td.D_indices, mask = self.td.mask)
         kmeans.fit_sparsifier(X = self.td.X)
         self.assertArrayEqual(self.td.RHDX, kmeans.RHDX)
-        self.assertArrayEqual(self.td.HDX, kmeans.HDX)
-        self.assertArrayEqual(self.td.X, kmeans.X)
         self.assertArrayEqual(self.td.mask, kmeans.mask)
         self.assertEqual(self.td.N, kmeans.num_samp)
         self.assertEqual(self.td.Q, kmeans.num_feat_comp)

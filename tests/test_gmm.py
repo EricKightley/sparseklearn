@@ -28,8 +28,6 @@ class TestGaussianMixture(unittest.TestCase):
                         D_indices = self.td.D_indices, mask = self.td.mask)
         gmm.fit_sparsifier(X = self.td.X)
         self.assertArrayEqual(self.td.RHDX, gmm.RHDX)
-        self.assertArrayEqual(self.td.HDX, gmm.HDX)
-        self.assertArrayEqual(self.td.X, gmm.X)
         self.assertArrayEqual(self.td.mask, gmm.mask)
         self.assertEqual(self.td.N, gmm.num_samp)
         self.assertEqual(self.td.Q, gmm.num_feat_comp)

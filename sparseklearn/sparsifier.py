@@ -38,7 +38,7 @@ class Sparsifier():
         can be set using the D_indices parameter). The direct cosine transform
         is currently the only method supported ('dct').
 
-    mask : nd.array, shape (n_datapoints, dim_mask), optional
+    mask : np.ndarray, shape (n_datapoints, dim_mask), optional
         defaults to None. The user-provided mask. If None, mask is
         generated using the generate_mask method.
 
@@ -46,59 +46,41 @@ class Sparsifier():
         The minimum number of dimensions to be shared across all samples in the
         compressed data.
 
-    D_indices : nd.array, shape (n_datapoints,), optional
+    D_indices : np.ndarray, shape (n_datapoints,), optional
         defaults to None. The user-provided diagonal of the preconditioning matrix D.
         If None, generated using the generate_D_indices method.
 
     Attributes
     ----------
-    mask : nd.array, shape (num_samp, num_feat_comp)
+    mask : np.ndarray, shape (num_samp, num_feat_comp)
         The mask used to sparsify the data. Array of integers, each row is the
         indices specifying which entries that sample were kept.
 
-    D_indices : nd.array, shape (n_signflips,)
+    D_indices : np.ndarray, shape (n_signflips,)
         Defines the preconditioning matrix D. Array of integers,
         the indices of the preconditioning matrix D with sign -1.
 
     """
 
-    def check_random_state(self, seed):
-        """Turn seed into a np.random.RandomState instance
 
-        Parameters
-        ----------
-        seed : None | int | instance of RandomState
-            If seed is None, return the RandomState singleton used by np.random.
-            If seed is an int, return a new RandomState instance seeded with seed.
-            If seed is already a RandomState instance, return it.
-            Otherwise raise ValueError.
-        """
-        if seed is None or seed is np.random:
-            return np.random.mtrand._rand
-        if isinstance(seed, (numbers.Integral, np.integer)):
-            return np.random.RandomState(seed)
-        if isinstance(seed, np.random.RandomState):
-            return seed
-        raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
-                         ' instance' % seed)
 
     ###########################################################################
     # Preconditoning and mask generation
 
-    def _generate_D_indices(self):
+    def _generate_D_indices(self, transform):
         """ Randomly generate the D matrix in the HD transform. Store only the
         indices where D == -1. """
-        rng = self.check_random_state(self.random_state)
-        if self.transform in ['dct']:
+        rng = self.random_state
+        if transform in ['dct']:
             D_indices = np.array([i for i in range(self.num_feat_full)
                 if rng.choice([0,1])])
-        elif self.transform is None:
-            D_indices = np.array([])
+        elif transform is None:
+            D_indices = None
         return D_indices
 
     def _generate_mask(self):
         """Generate a sparsifying mask."""
-        rng = self.check_random_state(self.random_state)
+        rng = self.random_state
         # pick the shared indices
         all_indices = list(range(self.num_feat_full))
         rng.shuffle(all_indices)
@@ -121,31 +103,24 @@ class Sparsifier():
     ###########################################################################
     # Transform and masking tools
 
-    def apply_mask(self, X):
+    def apply_mask(self, X, mask):
         """ Apply the mask to X.
 
         Parameters
         ----------
 
-        X : nd.array, shape(n, P)
+        X : np.ndarray, shape(n, P)
+        mask : np.ndarray, shape(n, Q)
 
 
         Returns
         -------
 
-        RX : nd.array, shape(n, Q)
+        RX : np.ndarray, shape(n, Q)
             Masked X. The nth row of RX is X[n][mask[n]].
 
         """
-        if X.ndim == 2:
-            if X.shape[0] != self.mask.shape[0]:
-                raise Exception('Number of rows in mask must agree with number',
-                        'of rows in X')
-            X_masked = np.array([X[n][self.mask[n]] for n in range(self.mask.shape[0])])
-        elif X.ndim == 1:
-            X_masked = np.array([X[self.mask[n]] for n in range(self.mask.shape[0])])
-        else:
-            raise Exception('X must be 1 or 2-dimensional')
+        X_masked = np.array([X[n][self.mask[n]] for n in range(self.mask.shape[0])])
         return X_masked
 
     def apply_HD(self, X):
@@ -154,23 +129,25 @@ class Sparsifier():
         Parameters
         ----------
 
-        X : nd.array, shape (n, P)
+        X : np.ndarray, shape (n, P)
             The data to precondition. Each row is a datapoint.
 
 
         Returns
         -------
 
-        HDX : nd.array, shape (n, P)
+        HDX : np.ndarray, shape (n, P)
             The transformed data.
 
         """
         # copy it for now
         Y = np.copy(X)
         # apply D matrix
-        Y[:,self.D_indices] *= -1
+        if self.D_indices is not None:
+            Y[:,self.D_indices] *= -1
         # apply H matrix
-        Y = dct(Y, norm = 'ortho', axis = 1, overwrite_x = False)
+        if self.transform == 'dct':
+            Y = dct(Y, norm = 'ortho', axis = 1, overwrite_x = False)
         return Y
 
     def invert_HD(self, HDX):
@@ -179,14 +156,14 @@ class Sparsifier():
         Parameters
         ----------
 
-        HDX : nd.array, shape (n, P)
+        HDX : np.ndarray, shape (n, P)
             The preconditioned data. Each row is a datapoint.
 
 
         Returns
         -------
 
-        X : nd.array, shape (n, P)
+        X : np.ndarray, shape (n, P)
             The raw data.
 
         """
@@ -220,57 +197,71 @@ class Sparsifier():
                       shape = (self.num_feat_full,self.num_samp), dtype = bool)
         return mask_binary
 
-
-    ###########################################################################
-    # Fitting
-
-    def _set_HDX(self, transform, X, HDX, RHDX):
-        # TODO: Shouldn't be checking for transform here, that could break
-        # stuff later.
-        """ Wrapper to compute HDX from X or assign it if user-specified. """
-        if HDX is not None:
-            return HDX
-        elif (X is not None and transform == 'dct'):
-            return self.apply_HD(X)
-        elif (X is not None and transform is None):
-            return X
-
     def _set_RHDX(self, X, HDX, RHDX):
         """ Wrapper to compute RHDX from HDX or assign it if user-specified. """
         if RHDX is not None:
             return RHDX.astype(float)
         elif HDX is not None:
-            return self.apply_mask(HDX.astype(float))
+            return self.apply_mask(HDX.astype(float), self.mask)
         else:
-            return self.apply_mask(X.astype(float))
+            return self.apply_mask(X.astype(float), self.mask)
 
-    def fit_sparsifier(self, X = None, HDX = None, RHDX = None):
+    def _check_X(self, X):
+        if not isinstance(X, np.ndarray) or X.ndim != 2:
+            raise TypeError("X must be a 2D array.")
+        elif X.shape[0] != self.num_samp:
+            raise Exception(f"X must have num_samp = {self.num_samp} rows, but has {X.shape[0]}.")
+        elif X.shape[1] != self.num_feat_full:
+            raise Exception(f"X must have num_feat_full = {self.num_feat_full} columns, but has {X.shape[1]}.")
+
+    def _check_HDX(self, HDX):
+        if not isinstance(HDX, np.ndarray) or HDX.ndim != 2:
+            raise TypeError("HDX must be a 2D array.")
+        elif HDX.shape[0] != self.num_samp:
+            raise Exception(f"HDX must have num_samp = {self.num_samp} rows, but has {HDX.shape[0]}.")
+        elif HDX.shape[1] != self.num_feat_full:
+            raise Exception(f"HDX must have num_feat_full = {self.num_feat_full} columns, but has {HDX.shape[1]}.")
+
+    def _check_RHDX(self, RHDX):
+        if not isinstance(RHDX, np.ndarray) or RHDX.ndim != 2:
+            raise TypeError("RHDX must be a 2D array.")
+        elif RHDX.shape[0] != self.num_samp:
+            raise Exception(f"RHDX must have num_samp = {self.num_samp} rows, but has {RHDX.shape[0]}.")
+        elif RHDX.shape[1] != self.num_feat_comp:
+            raise Exception(f"RHDX must have num_feat_full = {self.num_feat_comp} columns, but has {RHDX.shape[1]}.")
+
+    def fit_sparsifier(self, X = None, HDX = None, RHDX = None,):
         """ Fit the sparsifier to specified data.
-        At least one of the parameters must be set.
+
+        Sets self.RHDX, the sumsampled, preconditioned data.
+        At least one of the parameters must be set. If RHDX is passed,
+        then X and HDX are ignored. If HDX is passed, then X is ignored.
 
         Parameters
         ----------
 
-        X : nd.array, shape (N, P), optional
-            defaults to None. Dense, raw data.
+        X : np.ndarray, shape (num_samp, num_feat_full), defaults to None.
+            Dense, raw data.
 
-        HDX : nd.array, shape (N, P), optional
-            defaults to None. Dense, transformed data.
+        HDX : np.ndarray, shape (num_samp, num_feat_full), defaults to None.
+            Dense, preconditioned data.
 
-        RHDX : nd.array, shape (N, Q), optional
-            defaults to None. Subsampled, transformed data.
+        RHDX : np.ndarray, shape (num_samp, num_feat_comp), defaults to None.
+            Subsampled, preconditioned data.
         """
 
-        # set D_indices
-        # self.D_indices = self._set_D(self.transform, self.D_indices, self.num_feat_full)
-        # set mask
-        # self.mask = self._set_mask(self.mask, self.num_feat_full, self.num_feat_comps, self.num_feat_compr, self.num_samp)
-        # compute HDX and RHDX
-        HDX = self._set_HDX(self.transform, X, HDX, RHDX)
-        RHDX = self._set_RHDX(X, HDX, RHDX)
-        # assign data
-        self.X = X
-        self.HDX = HDX
+
+        if HDX is None and RHDX is None:
+            self._check_X(X)
+            RHDX = self.apply_mask(self.apply_HD(X), self.mask)
+        elif HDX is not None and RHDX is None:
+            self._check_HDX(HDX)
+            RHDX = self.apply_mask(HDX, self.mask)
+        elif RHDX is not None:
+            self._check_RHDX(RHDX)
+        else:
+            raise Exception("Must pass at least one of H, HDX, or RHDX.")
+
         self.RHDX = RHDX
 
     ###########################################################################
@@ -284,13 +275,13 @@ class Sparsifier():
         Parameters
         ----------
 
-        Y : nd.array, shape (K, P), optional
+        Y : np.ndarray, shape (K, P), optional
             defaults to None. Full, transformed samples.
 
         Returns
         -------
 
-        distances : nd.array, shape(K or N, N)
+        distances : np.ndarray, shape(K or N, N)
             distances between each pair of samples (if Y is None) or distances
             between each sample and each row in Y.
 
@@ -316,7 +307,7 @@ class Sparsifier():
         Parameters
         ----------
 
-        W : nd.array, shape (N, K)
+        W : np.ndarray, shape (N, K)
             Weights. Each row corresponds to a sample, each column to a set of
             weights. The columns of W should sum to 1. There is no necessary
             correspondence between the columns of W.
@@ -324,7 +315,7 @@ class Sparsifier():
         Returns
         -------
 
-        means : nd.array, shape (K,P)
+        means : np.ndarray, shape (K,P)
             Weighted full means. Each row corresponds to a possible independent
             set of weights (for example, a binary W with K columns would give
             the means of K clusters).
@@ -351,7 +342,7 @@ class Sparsifier():
         Parameters
         ----------
 
-        W : nd.array, shape (N, K)
+        W : np.ndarray, shape (N, K)
             Weights. Each row corresponds to a sample, each column to a set of
             weights. The columns of W should sum to 1. There is no necessary
             correspondence between the columns of W.
@@ -359,12 +350,12 @@ class Sparsifier():
         Returns
         -------
 
-        means : nd.array, shape (K,P)
+        means : np.ndarray, shape (K,P)
             Weighted full means. Each row corresponds to a possible independent
             set of weights (for example, a binary W with K columns would give
             the means of K clusters).
 
-        variances : nd.array, shape (K,P)
+        variances : np.ndarray, shape (K,P)
             Weighted full variances. Each row corresponds to a possible independent
             set of weights (for example, a binary W with K columns would give
             the variances of K clusters).
@@ -393,11 +384,11 @@ class Sparsifier():
         Parameters
         ----------
 
-        means : nd.array, shape (K,P)
+        means : np.ndarray, shape (K,P)
             The means with which to take the mahalanobis distances. Each row of
             means is a single mean in P-dimensional space.
 
-        covariances : nd.array, shape (K,P) or shape (P,).
+        covariances : np.ndarray, shape (K,P) or shape (P,).
             The non-zero entries of the covariance matrix. If
             covariance_type is 'spherical', must be shape (P,). If
             covariance_type is 'diag', must be shape (K,P)
@@ -408,7 +399,7 @@ class Sparsifier():
         Returns
         -------
 
-        distances : nd.array, shape (N,K)
+        distances : np.ndarray, shape (N,K)
             The pairwise mahalanobis distances.
 
         """
@@ -455,27 +446,22 @@ class Sparsifier():
         Returns
         -------
 
-        datapoints : nd.array, shape (K,P)
+        datapoints : np.ndarray, shape (K,P)
             Each row is a point in dense space. If HDX is given,
             uses this. Otherwise, maps RHDX to dense space and fills in zeros.
 
-        datapoint_indices : nd.array, shape (K,)
+        datapoint_indices : np.ndarray, shape (K,)
             The indices of the datapoints in self.X.
         """
 
-        rng = self.check_random_state(self.random_state)
+        rng = self.random_state
         datapoint_indices = np.zeros(K, dtype = int)
         datapoints = np.zeros((K, self.num_feat_full))
 
         # pick the first one at random from the data
         datapoint_indices[0] = rng.choice(self.num_samp)
-        # ... loading the full datapoint, or ...
-        if self.HDX is not None:
-            datapoints[0] = self.HDX[datapoint_indices[0]]
-        # ... using the masked one
-        else:
-            datapoints[0][self.mask[datapoint_indices[0]]] = \
-                self.RHDX[datapoint_indices[0]]
+        datapoints[0][self.mask[datapoint_indices[0]]] = \
+            self.RHDX[datapoint_indices[0]]
 
         # initialize the previous distance counter to max float
         # (so it's guaranteed to be overwritten in the loop)
@@ -504,13 +490,8 @@ class Sparsifier():
                 available_indices = set(range(self.num_samp)).difference(set(datapoint_indices))
                 datapoint_indices[k] = np.random.choice(list(available_indices))
             # finally, assign the cluster, either by setting all P entires
-            # from the dense HDX ...
-            if self.HDX is not None:
-                datapoints[k] = self.HDX[datapoint_indices[k]]
-            # ... or by setting only M entries from the sparse RHDX
-            else:
-                datapoints[k][self.mask[datapoint_indices[k]]] = \
-                    self.RHDX[datapoint_indices[k]]
+            datapoints[k][self.mask[datapoint_indices[k]]] = \
+                self.RHDX[datapoint_indices[k]]
 
         return [datapoints, datapoint_indices]
 
@@ -520,41 +501,83 @@ class Sparsifier():
         it will choose from that; otherwise draws from RHDX and returns a dense
         vector (with zeros outside the mask). """
         # pick K data points at random uniformly
-        rng = self.check_random_state(self.random_state)
+        rng = self.random_state
         datapoint_indices = rng.choice(self.num_samp, K, replace = False)
         datapoint_indices.sort()
-        # assign the cluster_centers as dense members of HDX ...
-        if self.HDX is not None:
-            datapoints = np.array(self.HDX[datapoint_indices])
-        # or assign just the M entries specified by the mask
-        else:
-            datapoints = np.zeros((self.K,self.num_feat_full))
-            for k in range(K):
-                datapoints[k][mask[datapoint_indices[k]]] = \
-                        self.RHDX[datapoint_indices[k]]
+        datapoints = np.zeros((K,self.num_feat_full))
+        for k in range(K):
+            datapoints[k][self.mask[datapoint_indices[k]]] = \
+                    self.RHDX[datapoint_indices[k]]
         return [datapoints, datapoint_indices]
 
 
-    def __init__(self, num_feat_full, num_feat_comp, num_feat_shared, num_samp,
-                 D_indices, transform, mask, random_state = None):
 
-        self.num_feat_full = num_feat_full
-        self.num_feat_comp = num_feat_comp
-        self.num_feat_shared = num_feat_shared
-        self.num_samp = num_samp
+    def _initialize_num_feat_full(self, num_feat_full: int):
+        if isinstance(num_feat_full, numbers.Integral) and num_feat_full > 0:
+            self.num_feat_full = num_feat_full
+        else:
+            raise Exception(f"num_feat_full must be a positive integer, but is {num_feat_full}.")
+
+    def _initialize_num_samp(self, num_samp: int):
+        if isinstance(num_samp, numbers.Integral) and num_samp > 0:
+            self.num_samp = num_samp
+        else:
+            raise Exception(f"num_samp must be a positive integer, but is {num_samp}.")
+
+    def _initialize_num_feat_comp(self, num_feat_comp: int, num_feat_full: int):
+        if isinstance(num_feat_comp, numbers.Integral) and num_feat_comp <= num_feat_full:
+            self.num_feat_comp = num_feat_comp
+        else:
+            raise Exception(f"num_feat_comp must be None or an integer < num_feat_full = {num_feat_full}, but is {num_feat_comp}")
+
+    def _initialize_num_feat_shared(self, num_feat_shared: int, num_feat_full: int):
+        if isinstance(num_feat_shared, numbers.Integral) and num_feat_shared <= num_feat_full:
+            self.num_feat_shared = num_feat_shared
+        else:
+            raise Exception(f"num_feat_shared must be None or an integer < num_feat_full = {num_feat_full}, but is {num_feat_shared}")
+
+    def _initialize_D_indices(self, D_indices: np.ndarray, num_feat_full: int, transform):
+            if D_indices is None:
+                self.D_indices = self._generate_D_indices(transform)
+            elif isinstance(D_indices, np.ndarray):
+                #TODO: check max, min, len, unique, integral
+                self.D_indices = D_indices
+            else:
+                raise Exception(f"D_indices is type {type(num_feat_shared)}; must be array of integers or none.")
+
+    def _initialize_random_state(self, seed):
+        if seed is None or seed is np.random:
+            self.random_state =  np.random.mtrand._rand
+        elif isinstance(seed, (numbers.Integral, np.integer)):
+            self.random_state =  np.random.RandomState(seed)
+        elif isinstance(seed, np.random.RandomState):
+            self.random_state = seed
+        else:
+            raise ValueError(f"{seed} cannot be used to seed a numpy.random.RandomState")
+
+    def _initialize_transform(self, transform):
+        if transform not in [None, 'dct']:
+            raise Exception(f"Transform must be one of [None, 'dct'], but is {transform}.")
         self.transform = transform
-        self.random_state = random_state
 
-        #TODO implement default arguments for several of these
-
-        # assign mask
+    def _initialize_mask(self, mask: np.ndarray):
         if mask is None:
             self.mask = self._generate_mask()
-        else:
+        elif isinstance(mask, np.ndarray):
+            #TODO: check size, sorted, etc.
             self.mask = mask
-
-        # assign D_indices
-        if D_indices is None:
-            self.D_indices = self._generate_D_indices()
         else:
-            self.D_indices = D_indices
+            raise Exception(f"Mask must be None or array of integers; but is type {type(mask)}.")
+
+    def __init__(self, num_feat_full, num_feat_comp, num_samp,
+                 mask = None, transform = 'dct', D_indices = None, num_feat_shared = 0,
+                 random_state = None):
+
+        self._initialize_transform(transform)
+        self._initialize_num_feat_full(num_feat_full)
+        self._initialize_num_feat_comp(num_feat_comp, num_feat_full)
+        self._initialize_num_feat_shared(num_feat_shared, num_feat_full)
+        self._initialize_num_samp(num_samp)
+        self._initialize_random_state(random_state)
+        self._initialize_D_indices(D_indices, num_feat_full, transform)
+        self._initialize_mask(mask)
