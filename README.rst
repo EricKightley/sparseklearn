@@ -39,7 +39,7 @@ Test the installation by running the unit tests:
 Usage
 -----
 
-See :bash:`examples/` for usage examples. You will need Jupyterlab:
+See :code:`examples/` for usage examples. You will need Jupyterlab:
 
 .. code-block:: bash
 
