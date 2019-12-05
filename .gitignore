@@ -20,4 +20,6 @@ _static
 _templates
 sparseklearn/source/.DS_Store
 .ipynb_checkpoints/
+docs/doctrees/
+docs/html/
 .DS_Store
