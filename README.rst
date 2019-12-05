@@ -4,6 +4,11 @@ Sparseklearn
 
 Dimensionality reduction for unsupervised machine learning.
 
+Documentation
+------------
+
+Documentation is available at https://erickightley.github.io/sparseklearn/.
+
 Installation
 ------------
 Clone the repo, make a virtual environment, activate it, then:
