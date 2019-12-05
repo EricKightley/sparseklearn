@@ -3,6 +3,6 @@
 *.so
 *.dSYM/
 *.pyc
-/build/
+build/
 .ipynb_checkpoints/
 .DS_Store
