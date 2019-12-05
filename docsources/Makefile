@@ -22,4 +22,4 @@ help:
 github:
 	@make html
 	@cp -a ../docs/_build/html/. ../docs
-	@rm -r ../docs/_build/html
+	@make clean

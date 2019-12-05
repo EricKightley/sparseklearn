@@ -36,7 +36,7 @@
 <span id="gaussian-mixture-models"></span><h1>Gaussian Mixture Models<a class="headerlink" href="#module-sparseklearn.gmm" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="sparseklearn.gmm.GaussianMixture">
-<em class="property">class </em><code class="sig-prename descclassname">sparseklearn.gmm.</code><code class="sig-name descname">GaussianMixture</code><span class="sig-paren">(</span><em class="sig-param">n_components=3</em>, <em class="sig-param">covariance_type='spherical'</em>, <em class="sig-param">tol=0.001</em>, <em class="sig-param">reg_covar=1e-06</em>, <em class="sig-param">max_iter=100</em>, <em class="sig-param">n_init=1</em>, <em class="sig-param">init_params='kmpp'</em>, <em class="sig-param">means_init=None</em>, <em class="sig-param">covariances_init=None</em>, <em class="sig-param">weights_init=None</em>, <em class="sig-param">predict_training_data=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.gmm.GaussianMixture" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sparseklearn.gmm.</code><code class="sig-name descname">GaussianMixture</code><span class="sig-paren">(</span><em class="sig-param">n_components=3</em>, <em class="sig-param">covariance_type='spherical'</em>, <em class="sig-param">tol=0.001</em>, <em class="sig-param">reg_covar=1e-06</em>, <em class="sig-param">max_iter=100</em>, <em class="sig-param">n_init=1</em>, <em class="sig-param">init_params='kmpp'</em>, <em class="sig-param">means_init=None</em>, <em class="sig-param">covariances_init=None</em>, <em class="sig-param">weights_init=None</em>, <em class="sig-param">predict_training_data=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparseklearn/gmm.html#GaussianMixture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseklearn.gmm.GaussianMixture" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sparsified Gaussian mixture model.</p>
 <p>Fit a Gaussian mixture model to sparsified data. Diagonal and spherical
 covariances are supported.</p>
@@ -128,7 +128,7 @@ The shape depends on covariance_type:
 </table>
 <dl class="method">
 <dt id="sparseklearn.gmm.GaussianMixture.fit">
-<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X=None</em>, <em class="sig-param">HDX=None</em>, <em class="sig-param">RHDX=None</em>, <em class="sig-param">y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.gmm.GaussianMixture.fit" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X=None</em>, <em class="sig-param">HDX=None</em>, <em class="sig-param">RHDX=None</em>, <em class="sig-param">y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparseklearn/gmm.html#GaussianMixture.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseklearn.gmm.GaussianMixture.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimate model parameters using EM algorithm.</p>
 <p>Fits the model <code class="docutils literal notranslate"><span class="pre">n_init</span></code> times and keeps the parameters with
 which the model has the largest likelihood. Each trial
@@ -153,7 +153,7 @@ or a <code class="docutils literal notranslate"><span class="pre">ConvergenceWar
 
 <dl class="method">
 <dt id="sparseklearn.gmm.GaussianMixture.predict">
-<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.gmm.GaussianMixture.predict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparseklearn/gmm.html#GaussianMixture.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseklearn.gmm.GaussianMixture.predict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Predict the labels for the data samples in X using the
 trained model.</p>
 <dl class="field-list simple">

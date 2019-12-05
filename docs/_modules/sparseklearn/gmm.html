@@ -1,0 +1,498 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>sparseklearn.gmm &#8212; sparseklearn 0.1.4 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sparseklearn.gmm</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">sys</span> <span class="k">import</span> <span class="n">float_info</span>
+<span class="kn">from</span> <span class="nn">.sparsifier</span> <span class="k">import</span> <span class="n">Sparsifier</span>
+<span class="kn">from</span> <span class="nn">.kmeans</span> <span class="k">import</span> <span class="n">KMeans</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="k">import</span> <span class="n">logsumexp</span>
+
+<span class="kn">from</span> <span class="nn">sparseklearn.fastLA</span> <span class="k">import</span> <span class="n">logdet_cov_diag</span>
+
+<div class="viewcode-block" id="GaussianMixture"><a class="viewcode-back" href="../../gmm.html#sparseklearn.gmm.GaussianMixture">[docs]</a><span class="k">class</span> <span class="nc">GaussianMixture</span><span class="p">(</span><span class="n">Sparsifier</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Sparsified Gaussian mixture model.</span>
+
+<span class="sd">    Fit a Gaussian mixture model to sparsified data. Diagonal and spherical</span>
+<span class="sd">    covariances are supported.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_components : int, defaults to 3.</span>
+<span class="sd">        The number of components (clusters) to fit.</span>
+
+<span class="sd">    covariance_type : {&#39;spherical&#39;, &#39;diag&#39;}, defaults to &#39;spherical&#39;.</span>
+<span class="sd">        The form of the covariance matrix.</span>
+
+<span class="sd">    tol : float, defaults to 1e-3.</span>
+<span class="sd">        The convergence threshold. EM iterations will stop</span>
+<span class="sd">        when the lower bound average gain is below this threshold.</span>
+
+<span class="sd">    reg_covar : float, defaults to 1e-6.</span>
+<span class="sd">        Non-negative regularization added to the diagonal of the covariance</span>
+<span class="sd">        to ensure it&#39;s positive.</span>
+
+<span class="sd">    max_iter : int, defaults to 100.</span>
+<span class="sd">        The number of EM iterations to perform.</span>
+
+<span class="sd">    n_init : int, defaults to 1.</span>
+<span class="sd">        The number of initializations to perform. The best results are kept.</span>
+
+<span class="sd">    init_params : {&#39;kmpp&#39;, &#39;random&#39;}, defaults to &#39;kmpp&#39;.</span>
+<span class="sd">        The method used to initialize the weights, the means and the precisions.</span>
+<span class="sd">        If &#39;kmpp&#39;, the initial means are chosen using the k-means++ algorithm.</span>
+<span class="sd">        If &#39;random&#39;, initial means are chosen at random from the input data.</span>
+
+<span class="sd">    means_init : nd.array, shape (n_components, P), optional.</span>
+<span class="sd">        The user-provided initial means, defaults to None, in which case</span>
+<span class="sd">        the means are initialized using the `init_params` method. P is the</span>
+<span class="sd">        number of features in the full-dimensional space.</span>
+
+<span class="sd">    predict_training_data : bool, default to False.</span>
+<span class="sd">        Whether to predict labels for the training data.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    weights_ : nd.array, shape (n_components,)</span>
+<span class="sd">        The weight of each mixture component.</span>
+
+<span class="sd">    means_ : nd.array, shape (n_components, P)</span>
+<span class="sd">        The mean of each mixture component.</span>
+
+<span class="sd">    covariances_ : nd.array</span>
+<span class="sd">        The covariance of each mixture component.</span>
+<span class="sd">        The shape depends on covariance_type:</span>
+<span class="sd">        (n_components,) if `spherical` and (n_components, P) if `diag`.</span>
+
+<span class="sd">    converged_ : bool</span>
+<span class="sd">        True if fit() converged, False otherwise.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GaussianMixture.fit"><a class="viewcode-back" href="../../gmm.html#sparseklearn.gmm.GaussianMixture.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">HDX</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">RHDX</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Estimate model parameters using EM algorithm.</span>
+
+<span class="sd">        Fits the model ``n_init`` times and keeps the parameters with</span>
+<span class="sd">        which the model has the largest likelihood. Each trial</span>
+<span class="sd">        performs at most ``max_iter`` iterations of EM until covergence.</span>
+<span class="sd">        or a ``ConvergenceWarning`` is raised.</span>
+
+<span class="sd">        At least one of X, HDX, or RHDX must be passed.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        X : nd.array, shape (N, P), optional</span>
+<span class="sd">            defaults to None. Dense, raw data.</span>
+
+<span class="sd">        HDX : nd.array, shape (N, P), optional</span>
+<span class="sd">            defaults to None. Dense, transformed data.</span>
+
+<span class="sd">        RHDX : nd.array, shape (N, Q), optional</span>
+<span class="sd">            defaults to None. Subsampled, transformed data.</span>
+
+<span class="sd">        y : nd.array, shape (N,), optional</span>
+<span class="sd">            True labels.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_sparsifier</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">HDX</span> <span class="o">=</span> <span class="n">HDX</span><span class="p">,</span> <span class="n">RHDX</span> <span class="o">=</span> <span class="n">RHDX</span><span class="p">)</span>
+
+        <span class="c1">#best_lpn = -np.finfo(float).max</span>
+        <span class="c1">#best_means_ = None</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init</span><span class="p">):</span>
+            <span class="n">log_prob_norm</span><span class="p">,</span> <span class="n">counter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_single_trial</span><span class="p">()</span>
+            <span class="n">this_run</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;log_prob_norm&#39;</span> <span class="p">:</span> <span class="n">log_prob_norm</span><span class="p">,</span>
+                        <span class="s1">&#39;counter&#39;</span> <span class="p">:</span> <span class="n">counter</span><span class="p">,</span>
+                        <span class="s1">&#39;means&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">means_</span><span class="p">,</span>
+                        <span class="s1">&#39;covariances&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariances_</span><span class="p">,</span>
+                        <span class="s1">&#39;weights&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights_</span><span class="p">,</span>
+                        <span class="s1">&#39;converged&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">converged</span><span class="p">}</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict_training_data</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">this_run</span><span class="p">[</span><span class="s1">&#39;labels_predicted&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RHDX</span><span class="p">)</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">this_run</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="o">=</span> <span class="n">results</span>
+
+        <span class="c1"># choose the best ones</span>
+        <span class="n">best_run_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">([</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;log_prob_norm&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">results</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">converged</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">best_run_index</span><span class="p">][</span><span class="s1">&#39;converged&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">means_</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">best_run_index</span><span class="p">][</span><span class="s1">&#39;means&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covariances_</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">best_run_index</span><span class="p">][</span><span class="s1">&#39;covariances&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights_</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">best_run_index</span><span class="p">][</span><span class="s1">&#39;weights&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_prob_norm_</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">best_run_index</span><span class="p">][</span><span class="s1">&#39;log_prob_norm&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">best_run_index</span><span class="p">][</span><span class="s1">&#39;counter&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict_training_data</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">labels_predicted</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">best_run_index</span><span class="p">][</span><span class="s1">&#39;labels_predicted&#39;</span><span class="p">]</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_fit_single_trial</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">converged</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_parameters</span><span class="p">()</span>
+        <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">log_prob_norm</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">max</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">converged</span> <span class="ow">and</span> <span class="n">counter</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span><span class="p">:</span>
+            <span class="c1"># E-step</span>
+            <span class="n">log_prob</span><span class="p">,</span> <span class="n">log_resp</span><span class="p">,</span> <span class="n">log_prob_norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_estimate_log_prob_resp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights_</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">means_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariances_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance_type</span><span class="p">)</span>
+            <span class="c1"># M-step</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">weights_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">means_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariances_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_estimate_gaussian_parameters</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_resp</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance_type</span><span class="p">)</span>
+            <span class="c1"># convergence check</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">converged</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convergence_check</span><span class="p">(</span><span class="n">log_prob_norm</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_prob_norm_</span> <span class="o">=</span> <span class="n">log_prob_norm</span>
+            <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">log_prob_norm</span><span class="p">,</span> <span class="n">counter</span><span class="p">]</span>
+
+<div class="viewcode-block" id="GaussianMixture.predict"><a class="viewcode-back" href="../../gmm.html#sparseklearn.gmm.GaussianMixture.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Predict the labels for the data samples in X using the</span>
+<span class="sd">        trained model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : nd.array, shape (n_samples, Q)</span>
+<span class="sd">            Array of Q-dimensional data points. Each row</span>
+<span class="sd">            corresponds to a single data point. X is assumed to be</span>
+<span class="sd">            preconditioned and subsampled.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        labels : array, shape (n_samples,)</span>
+<span class="sd">            Component labels.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">logresp</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_estimate_log_prob_resp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights_</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">means_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariances_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance_type</span> <span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">logresp</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_initialize_means</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; The means_init param will be one of the following three:</span>
+<span class="sd">                None</span>
+<span class="sd">                n_components X num_feat_full array of initial means</span>
+<span class="sd">                n_components X num_feat_full X n_init array of initial means</span>
+
+<span class="sd">        This function chooses random means in the first case (according to</span>
+<span class="sd">        init params), passes the means_init back in the second, and increments</span>
+<span class="sd">        to the next set of means in the third.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">means_init</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_params</span> <span class="o">==</span> <span class="s2">&quot;kmpp&quot;</span><span class="p">:</span>
+                <span class="n">means_init_this_run</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pick_K_dense_datapoints_kmpp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_components</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_params</span> <span class="o">==</span> <span class="s2">&quot;random&quot;</span><span class="p">:</span>
+                <span class="n">means_init_this_run</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pick_K_dense_datapoints_random</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_components</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;init_params must be &quot;kmpp&quot; or &quot;random&quot;.&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">means_init</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">means_init_this_run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">means_init</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">means_init</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">means_init_counter</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_init</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Number of mean inits must equal n_init.&#39;</span><span class="p">)</span>
+            <span class="n">means_init_this_run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">means_init</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">means_init_counter</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">means_init_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;means_init must be 2d array, 3d array, or None.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">means_init_this_run</span>
+
+    <span class="k">def</span> <span class="nf">_initialize_covariances</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">means_init</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Requires that _initialize_means has been run because that function</span>
+<span class="sd">        sets self.means_init_counter. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariances_init</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">resp_bootstrapped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_resp_from_means</span><span class="p">(</span><span class="n">means_init</span><span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">covariances_bootstrapped</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">_estimate_gaussian_parameters</span><span class="p">(</span><span class="n">resp_bootstrapped</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance_type</span><span class="p">)</span>
+            <span class="n">covariances_init_this_run</span> <span class="o">=</span> <span class="n">covariances_bootstrapped</span>
+        <span class="c1"># in either of these two cases there is a single covar init</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covariances_init</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance_type</span> <span class="o">==</span> <span class="s1">&#39;spherical&#39;</span><span class="p">)</span> \
+            <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covariances_init</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance_type</span> <span class="o">==</span> <span class="s1">&#39;diag&#39;</span><span class="p">):</span>
+            <span class="n">covariances_init_this_run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariances_init</span>
+        <span class="c1"># in either of these two cases there are multiple covar inits.</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covariances_init</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance_type</span> <span class="o">==</span> <span class="s1">&#39;spherical&#39;</span><span class="p">)</span> \
+            <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covariances_init</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance_type</span> <span class="o">==</span> <span class="s1">&#39;diag&#39;</span><span class="p">):</span>
+            <span class="c1"># means_init_counter has been incremented already.</span>
+            <span class="n">covariances_init_this_run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariances_init</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">means_init_counter</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Covariances init of wrong form.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">covariances_init_this_run</span>
+
+    <span class="k">def</span> <span class="nf">_initialize_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">means_init</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Requires that _initialize_means has been run because that function</span>
+<span class="sd">        sets self.means_init_counter. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights_init</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">resp_bootstrapped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_resp_from_means</span><span class="p">(</span><span class="n">means_init</span><span class="p">)</span>
+            <span class="n">weights_bootstrapped</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">_estimate_gaussian_parameters</span><span class="p">(</span><span class="n">resp_bootstrapped</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance_type</span><span class="p">)</span>
+            <span class="n">weights_init_this_run</span> <span class="o">=</span> <span class="n">weights_bootstrapped</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights_init</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">weights_init_this_run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights_init</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights_init</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># means_init_counter has been incremented already.</span>
+            <span class="n">weights_init_this_run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights_init</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">means_init_counter</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;weights init of wrong form.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">weights_init_this_run</span><span class="o">/</span><span class="n">weights_init_this_run</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_initialize_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialize the parameters. Sets self.weights_, self.means_, and</span>
+<span class="sd">        self.covariances_. Initializes resp using means_init, or if this is</span>
+<span class="sd">        None, using the method prescribed by init_params. resp is then used</span>
+<span class="sd">        to intialize the parameters. Also sets self.log_prob_norm_ to max</span>
+<span class="sd">        float.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        init_params : {&#39;kmpp&#39;, &#39;random&#39;}</span>
+
+<span class="sd">        means_init : nd.array or None</span>
+
+<span class="sd">        covariance_type : {&#39;spherical&#39;, &#39;diag&#39;}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">means_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_means</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covariances_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_covariances</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">means_</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_weights</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">means_</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_prob_norm_</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">max</span>
+
+    <span class="k">def</span> <span class="nf">_init_resp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_params</span><span class="p">,</span> <span class="n">weights_init</span><span class="p">,</span> <span class="n">means_init</span><span class="p">,</span> <span class="n">covariances_init</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">means_init</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">init_params</span> <span class="o">==</span> <span class="s2">&quot;kmpp&quot;</span><span class="p">:</span>
+                <span class="n">means</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pick_K_dense_datapoints_kmpp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_components</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">init_params</span> <span class="o">==</span> <span class="s2">&quot;random&quot;</span><span class="p">:</span>
+                <span class="n">means</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pick_K_dense_datapoints_random</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_components</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">means_init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">means</span> <span class="o">=</span> <span class="n">means_init</span>
+        <span class="k">if</span> <span class="n">covariances_init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;do this&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_resp_from_means</span><span class="p">(</span><span class="n">means</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resp</span>
+
+
+    <span class="k">def</span> <span class="nf">_init_resp_from_means</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">means_init</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialize the responsibility matrix from dense means by doing hard</span>
+<span class="sd">        assignment.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        means : nd.array, shape (K,P)</span>
+<span class="sd">            The dense, transformed array of initial means (from random sampling</span>
+<span class="sd">            or kmpp).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        resp : nd.array, shape (N,K)</span>
+<span class="sd">            The responsibility matrix.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">distances</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pairwise_distances</span><span class="p">(</span><span class="n">means_init</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_components</span><span class="p">))</span>
+        <span class="n">closest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">resp</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samp</span><span class="p">),</span> <span class="n">closest</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">resp</span>
+
+
+    <span class="c1"># parameter and responsibiltiy computation</span>
+
+    <span class="c1"># E-step</span>
+    <span class="k">def</span> <span class="nf">_estimate_log_prob_resp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">covariances</span><span class="p">,</span> <span class="n">covariance_type</span><span class="p">):</span>
+        <span class="n">log_prob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_log_prob</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">covariances</span><span class="p">,</span> <span class="n">covariance_type</span><span class="p">)</span>
+        <span class="n">log_resp</span><span class="p">,</span> <span class="n">log_prob_norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_log_resp</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">log_prob</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">log_prob</span><span class="p">,</span> <span class="n">log_resp</span><span class="p">,</span> <span class="n">log_prob_norm</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_compute_logdet_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">covariances</span><span class="p">,</span> <span class="n">covariance_type</span><span class="p">):</span>
+        <span class="c1">#TODO: consider moving the diag part to sparsifier for consistency</span>
+        <span class="k">if</span> <span class="n">covariance_type</span> <span class="o">==</span> <span class="s1">&#39;spherical&#39;</span><span class="p">:</span>
+            <span class="n">logdet_vector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_feat_comp</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">covariances</span><span class="p">)</span>
+            <span class="n">logdetS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">logdet_vector</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samp</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">covariance_type</span> <span class="o">==</span> <span class="s1">&#39;diag&#39;</span><span class="p">:</span>
+            <span class="n">logdetS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_components</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="n">logdet_cov_diag</span><span class="p">(</span><span class="n">logdetS</span><span class="p">,</span>
+                            <span class="n">covariances</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">num_samp</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">n_components</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">num_feat_comp</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">num_feat_full</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;covariance_type </span><span class="si">{}</span><span class="s1"> not implemented&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">covariance_type</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">logdetS</span>
+
+    <span class="k">def</span> <span class="nf">_compute_log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">covariances</span><span class="p">,</span> <span class="n">covariance_type</span><span class="p">):</span>
+        <span class="n">maha_dist_squared</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pairwise_mahalanobis_distances</span><span class="p">(</span><span class="n">means</span><span class="p">,</span>
+                                <span class="n">covariances</span><span class="p">,</span> <span class="n">covariance_type</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="c1"># undo the rescaling due to compression (this is just how the pdf worked out)</span>
+        <span class="n">maha_dist_squared</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_feat_comp</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_feat_full</span>
+        <span class="n">logconst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_feat_comp</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="n">logdetS</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_logdet_array</span><span class="p">(</span><span class="n">covariances</span><span class="p">,</span> <span class="n">covariance_type</span><span class="p">)</span>
+        <span class="n">log_prob</span> <span class="o">=</span> <span class="o">-.</span><span class="mi">5</span> <span class="o">*</span> <span class="p">(</span><span class="n">logconst</span> <span class="o">+</span> <span class="n">maha_dist_squared</span> <span class="o">+</span> <span class="n">logdetS</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">log_prob</span>
+
+    <span class="k">def</span> <span class="nf">_compute_log_resp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">log_prob</span><span class="p">):</span>
+        <span class="n">lse</span> <span class="o">=</span> <span class="n">logsumexp</span><span class="p">(</span><span class="n">log_prob</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">weights</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">log_resp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_prob</span> <span class="o">-</span> <span class="n">lse</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+        <span class="n">log_prob_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">lse</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">log_resp</span><span class="p">,</span> <span class="n">log_prob_norm</span><span class="p">]</span>
+
+    <span class="c1"># M-step</span>
+    <span class="k">def</span> <span class="nf">_estimate_gaussian_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resp</span><span class="p">,</span> <span class="n">covariance_type</span><span class="p">):</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_estimate_gaussian_weights</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>
+        <span class="n">means</span><span class="p">,</span> <span class="n">covariances</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_estimate_gaussian_means_and_covariances</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">covariance_type</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">weights</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">covariances</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_estimate_gaussian_means_and_covariances</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resp</span><span class="p">,</span> <span class="n">covariance_type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">covariance_type</span> <span class="o">==</span> <span class="s1">&#39;diag&#39;</span><span class="p">:</span>
+            <span class="n">means</span><span class="p">,</span> <span class="n">covariances</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_means_and_variances</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">covariance_type</span> <span class="o">==</span> <span class="s1">&#39;spherical&#39;</span><span class="p">:</span>
+            <span class="n">means</span><span class="p">,</span> <span class="n">covariances</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_means_and_variances</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>
+            <span class="n">covariances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">covariances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">covariances</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg_covar</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">means</span><span class="p">,</span> <span class="n">covariances</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_estimate_gaussian_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Note: sklearn returns the counts instead of weights, i.e., no</span>
+<span class="sd">        division by self.num_samp.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">rk</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samp</span>
+        <span class="k">return</span> <span class="n">weights</span>
+
+    <span class="k">def</span> <span class="nf">_convergence_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_prob_norm</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">over</span><span class="o">=</span><span class="s1">&#39;raise&#39;</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">log_prob_norm</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob_norm_</span><span class="p">)</span><span class="o">/</span><span class="n">log_prob_norm</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">FloatingPointError</span><span class="p">:</span>
+                <span class="c1">#overflow from initializing self.log_prob_norm_ to -max float</span>
+                <span class="n">diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_prob_norm_</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">:</span>
+            <span class="n">converged</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">converged</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">converged</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_components</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">covariance_type</span> <span class="o">=</span> <span class="s1">&#39;spherical&#39;</span><span class="p">,</span> <span class="n">tol</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+            <span class="n">reg_covar</span> <span class="o">=</span> <span class="mf">1e-06</span><span class="p">,</span> <span class="n">max_iter</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">n_init</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">init_params</span> <span class="o">=</span> <span class="s1">&#39;kmpp&#39;</span><span class="p">,</span>
+            <span class="n">means_init</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">covariances_init</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">weights_init</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">predict_training_data</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_params</span> <span class="o">=</span> <span class="n">init_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_components</span> <span class="o">=</span> <span class="n">n_components</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tol</span> <span class="o">=</span> <span class="n">tol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_init</span> <span class="o">=</span> <span class="n">n_init</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span> <span class="o">=</span> <span class="n">max_iter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">means_init</span> <span class="o">=</span> <span class="n">means_init</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covariances_init</span> <span class="o">=</span> <span class="n">covariances_init</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights_init</span> <span class="o">=</span> <span class="n">weights_init</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covariance_type</span> <span class="o">=</span> <span class="n">covariance_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reg_covar</span> <span class="o">=</span> <span class="n">reg_covar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">predict_training_data</span> <span class="o">=</span> <span class="n">predict_training_data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">means_init_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covariances_init_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights_init_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GaussianMixture</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">sparseklearn</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sparsifier.html">The Sparsifier Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gmm.html">Gaussian Mixture Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kmeans.html">K-Means</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Kightley.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

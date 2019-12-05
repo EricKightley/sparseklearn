@@ -36,7 +36,7 @@
 <span id="the-sparsifier-object"></span><h1>The Sparsifier Object<a class="headerlink" href="#module-sparseklearn.sparsifier" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="sparseklearn.sparsifier.Sparsifier">
-<em class="property">class </em><code class="sig-prename descclassname">sparseklearn.sparsifier.</code><code class="sig-name descname">Sparsifier</code><span class="sig-paren">(</span><em class="sig-param">num_feat_full</em>, <em class="sig-param">num_feat_comp</em>, <em class="sig-param">num_samp</em>, <em class="sig-param">mask=None</em>, <em class="sig-param">transform='dct'</em>, <em class="sig-param">D_indices=None</em>, <em class="sig-param">num_feat_shared=0</em>, <em class="sig-param">random_state=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sparseklearn.sparsifier.</code><code class="sig-name descname">Sparsifier</code><span class="sig-paren">(</span><em class="sig-param">num_feat_full</em>, <em class="sig-param">num_feat_comp</em>, <em class="sig-param">num_samp</em>, <em class="sig-param">mask=None</em>, <em class="sig-param">transform='dct'</em>, <em class="sig-param">D_indices=None</em>, <em class="sig-param">num_feat_shared=0</em>, <em class="sig-param">random_state=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparseklearn/sparsifier.html#Sparsifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sparsifier.</p>
 <p>Compresses data through sparsification. Permits several operations on
 sparsified data.</p>
@@ -115,7 +115,7 @@ the indices of the preconditioning matrix D with sign -1.</p>
 </table>
 <dl class="method">
 <dt id="sparseklearn.sparsifier.Sparsifier.apply_mask">
-<code class="sig-name descname">apply_mask</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X</em>, <em class="sig-param">mask</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.apply_mask" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">apply_mask</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X</em>, <em class="sig-param">mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparseklearn/sparsifier.html#Sparsifier.apply_mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.apply_mask" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply the mask to X.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -135,7 +135,7 @@ the indices of the preconditioning matrix D with sign -1.</p>
 
 <dl class="method">
 <dt id="sparseklearn.sparsifier.Sparsifier.apply_HD">
-<code class="sig-name descname">apply_HD</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.apply_HD" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">apply_HD</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparseklearn/sparsifier.html#Sparsifier.apply_HD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.apply_HD" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply the preconditioning transform to X.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -155,7 +155,7 @@ the indices of the preconditioning matrix D with sign -1.</p>
 
 <dl class="method">
 <dt id="sparseklearn.sparsifier.Sparsifier.invert_HD">
-<code class="sig-name descname">invert_HD</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">HDX</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.invert_HD" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">invert_HD</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">HDX</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparseklearn/sparsifier.html#Sparsifier.invert_HD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.invert_HD" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply the inverse of HD to HDX.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -175,7 +175,7 @@ the indices of the preconditioning matrix D with sign -1.</p>
 
 <dl class="method">
 <dt id="sparseklearn.sparsifier.Sparsifier.invert_mask_bool">
-<code class="sig-name descname">invert_mask_bool</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.invert_mask_bool" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">invert_mask_bool</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparseklearn/sparsifier.html#Sparsifier.invert_mask_bool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.invert_mask_bool" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the mask inverse.</p>
 <p>The mask is an array indicating which dimensions are kept for each
 data point. The inverse mask is an array indicating which datapoints
@@ -196,7 +196,7 @@ in other words, 1 if i is in the list mask[j].</p>
 
 <dl class="method">
 <dt id="sparseklearn.sparsifier.Sparsifier.fit_sparsifier">
-<code class="sig-name descname">fit_sparsifier</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X=None</em>, <em class="sig-param">HDX=None</em>, <em class="sig-param">RHDX=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.fit_sparsifier" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">fit_sparsifier</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X=None</em>, <em class="sig-param">HDX=None</em>, <em class="sig-param">RHDX=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparseklearn/sparsifier.html#Sparsifier.fit_sparsifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.fit_sparsifier" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit the sparsifier to specified data.</p>
 <p>Sets self.RHDX, the sumsampled, preconditioned data.
 At least one of the parameters must be set. If RHDX is passed,
@@ -217,7 +217,7 @@ then X and HDX are ignored. If HDX is passed, then X is ignored.</p>
 
 <dl class="method">
 <dt id="sparseklearn.sparsifier.Sparsifier.pairwise_distances">
-<code class="sig-name descname">pairwise_distances</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">Y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.pairwise_distances" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">pairwise_distances</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">Y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparseklearn/sparsifier.html#Sparsifier.pairwise_distances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.pairwise_distances" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the pairwise distance between each sparsified sample,
 or between each sparsified sample and each full sample in Y if
 Y is given.</p>
@@ -240,7 +240,7 @@ between each sample and each row in Y.</p>
 
 <dl class="method">
 <dt id="sparseklearn.sparsifier.Sparsifier.weighted_means">
-<code class="sig-name descname">weighted_means</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">W</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.weighted_means" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">weighted_means</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">W</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparseklearn/sparsifier.html#Sparsifier.weighted_means"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.weighted_means" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes weighted full means of sparsified samples. Currently this
 is also used to compute hard assignments but should be updated for
 speed later - zeros in W are multiplied through.</p>
@@ -266,7 +266,7 @@ the means of K clusters).</p>
 
 <dl class="method">
 <dt id="sparseklearn.sparsifier.Sparsifier.weighted_means_and_variances">
-<code class="sig-name descname">weighted_means_and_variances</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">W</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.weighted_means_and_variances" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">weighted_means_and_variances</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">W</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparseklearn/sparsifier.html#Sparsifier.weighted_means_and_variances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.weighted_means_and_variances" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes weighted full means and variances of sparsified samples.
 Currently also used to compute hard assignments but should be updated
 for speed later - zeros in W are multiplied through.</p>
@@ -296,7 +296,7 @@ the variances of K clusters).</p>
 
 <dl class="method">
 <dt id="sparseklearn.sparsifier.Sparsifier.pairwise_mahalanobis_distances">
-<code class="sig-name descname">pairwise_mahalanobis_distances</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">means</em>, <em class="sig-param">covariances</em>, <em class="sig-param">covariance_type</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.pairwise_mahalanobis_distances" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">pairwise_mahalanobis_distances</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">means</em>, <em class="sig-param">covariances</em>, <em class="sig-param">covariance_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparseklearn/sparsifier.html#Sparsifier.pairwise_mahalanobis_distances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.pairwise_mahalanobis_distances" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the mahalanobis distance between each compressed sample and
 each full mean (each row of means).</p>
 <dl class="field-list simple">
