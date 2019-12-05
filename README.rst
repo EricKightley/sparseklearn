@@ -4,6 +4,17 @@ Sparseklearn
 
 Dimensionality reduction for unsupervised machine learning.
 
+Overview
+--------
+
+**Sparseklearn** is a Python package of machine learning algorithms
+based on dimensionality reduction via random projections.
+By working on compressed data,
+Sparseklearn performs standard machine learning tasks
+more efficiently and uses less memory. Its algorithms are all
+*one-pass*, meaning that they only need to access the raw data
+once, and are applicable to streaming data.
+
 Documentation
 ------------
 
@@ -11,6 +22,7 @@ Documentation is available at https://erickightley.github.io/sparseklearn/.
 
 Installation
 ------------
+
 Clone the repo, make a virtual environment, activate it, then:
 
 .. code-block:: bash
@@ -24,13 +36,13 @@ Test the installation by running the unit tests:
 
     pytest
 
-Overview
---------
+Usage
+-----
 
-**Sparseklearn** is a Python package of machine learning algorithms
-based on dimensionality reduction via random projections.
-By working on compressed data,
-Sparseklearn performs standard machine learning tasks
-more efficiently and uses less memory. Its algorithms are all
-*one-pass*, meaning that they only need to access the raw data
-once, and are applicable to streaming data.
+See `examples/` for usage examples. You will need Jupyterlab:
+
+.. code-block:: bash
+
+    cd examples
+    pip install -r requirements.txt
+    jupyter lab
