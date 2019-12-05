@@ -1,0 +1,400 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>The Sparsifier Object &#8212; sparseklearn 0.1.4 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Gaussian Mixture Models" href="gmm.html" />
+    <link rel="prev" title="Welcome to sparseklearn’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-sparseklearn.sparsifier">
+<span id="the-sparsifier-object"></span><h1>The Sparsifier Object<a class="headerlink" href="#module-sparseklearn.sparsifier" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="sparseklearn.sparsifier.Sparsifier">
+<em class="property">class </em><code class="sig-prename descclassname">sparseklearn.sparsifier.</code><code class="sig-name descname">Sparsifier</code><span class="sig-paren">(</span><em class="sig-param">num_feat_full</em>, <em class="sig-param">num_feat_comp</em>, <em class="sig-param">num_samp</em>, <em class="sig-param">mask=None</em>, <em class="sig-param">transform='dct'</em>, <em class="sig-param">D_indices=None</em>, <em class="sig-param">num_feat_shared=0</em>, <em class="sig-param">random_state=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sparsifier.</p>
+<p>Compresses data through sparsification. Permits several operations on
+sparsified data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>num_feat_full</strong><span class="classifier">int</span></dt><dd><p>Dimension of a full sample.</p>
+</dd>
+<dt><strong>num_feat_comp</strong><span class="classifier">int</span></dt><dd><p>The number of dimensions to keep in the compressed data.</p>
+</dd>
+<dt><strong>num_samp</strong><span class="classifier">int</span></dt><dd><p>The number of samples in the dataset.</p>
+</dd>
+<dt><strong>transform</strong><span class="classifier">{‘dct’, None}, defaults to ‘dct’.</span></dt><dd><p>The preconditioning transform.
+Determines what form of H to use in the preconditioning transform HD.
+Any method other than None will also use the diagonal D matrix (which
+can be set using the D_indices parameter). The direct cosine transform
+is currently the only method supported (‘dct’).</p>
+</dd>
+<dt><strong>mask</strong><span class="classifier">np.ndarray, shape (n_datapoints, dim_mask), optional</span></dt><dd><p>defaults to None. The user-provided mask. If None, mask is
+generated using the generate_mask method.</p>
+</dd>
+<dt><strong>num_feat_shared</strong><span class="classifier">int, defaults to 0.</span></dt><dd><p>The minimum number of dimensions to be shared across all samples in the
+compressed data.</p>
+</dd>
+<dt><strong>D_indices</strong><span class="classifier">np.ndarray, shape (n_datapoints,), optional</span></dt><dd><p>defaults to None. The user-provided diagonal of the preconditioning matrix D.
+If None, generated using the generate_D_indices method.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Attributes</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>mask</strong><span class="classifier">np.ndarray, shape (num_samp, num_feat_comp)</span></dt><dd><p>The mask used to sparsify the data. Array of integers, each row is the
+indices specifying which entries that sample were kept.</p>
+</dd>
+<dt><strong>D_indices</strong><span class="classifier">np.ndarray, shape (n_signflips,)</span></dt><dd><p>Defines the preconditioning matrix D. Array of integers,
+the indices of the preconditioning matrix D with sign -1.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sparseklearn.sparsifier.Sparsifier.apply_HD" title="sparseklearn.sparsifier.Sparsifier.apply_HD"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_HD</span></code></a>(self, X)</p></td>
+<td><p>Apply the preconditioning transform to X.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sparseklearn.sparsifier.Sparsifier.apply_mask" title="sparseklearn.sparsifier.Sparsifier.apply_mask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_mask</span></code></a>(self, X, mask)</p></td>
+<td><p>Apply the mask to X.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sparseklearn.sparsifier.Sparsifier.fit_sparsifier" title="sparseklearn.sparsifier.Sparsifier.fit_sparsifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_sparsifier</span></code></a>(self[, X, HDX, RHDX])</p></td>
+<td><p>Fit the sparsifier to specified data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sparseklearn.sparsifier.Sparsifier.invert_HD" title="sparseklearn.sparsifier.Sparsifier.invert_HD"><code class="xref py py-obj docutils literal notranslate"><span class="pre">invert_HD</span></code></a>(self, HDX)</p></td>
+<td><p>Apply the inverse of HD to HDX.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sparseklearn.sparsifier.Sparsifier.invert_mask_bool" title="sparseklearn.sparsifier.Sparsifier.invert_mask_bool"><code class="xref py py-obj docutils literal notranslate"><span class="pre">invert_mask_bool</span></code></a>(self)</p></td>
+<td><p>Compute the mask inverse.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sparseklearn.sparsifier.Sparsifier.pairwise_distances" title="sparseklearn.sparsifier.Sparsifier.pairwise_distances"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pairwise_distances</span></code></a>(self[, Y])</p></td>
+<td><p>Computes the pairwise distance between each sparsified sample, or between each sparsified sample and each full sample in Y if Y is given.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sparseklearn.sparsifier.Sparsifier.pairwise_mahalanobis_distances" title="sparseklearn.sparsifier.Sparsifier.pairwise_mahalanobis_distances"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pairwise_mahalanobis_distances</span></code></a>(self, means, …)</p></td>
+<td><p>Computes the mahalanobis distance between each compressed sample and each full mean (each row of means).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sparseklearn.sparsifier.Sparsifier.weighted_means" title="sparseklearn.sparsifier.Sparsifier.weighted_means"><code class="xref py py-obj docutils literal notranslate"><span class="pre">weighted_means</span></code></a>(self, W)</p></td>
+<td><p>Computes weighted full means of sparsified samples.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sparseklearn.sparsifier.Sparsifier.weighted_means_and_variances" title="sparseklearn.sparsifier.Sparsifier.weighted_means_and_variances"><code class="xref py py-obj docutils literal notranslate"><span class="pre">weighted_means_and_variances</span></code></a>(self, W)</p></td>
+<td><p>Computes weighted full means and variances of sparsified samples.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="sparseklearn.sparsifier.Sparsifier.apply_mask">
+<code class="sig-name descname">apply_mask</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X</em>, <em class="sig-param">mask</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.apply_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the mask to X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X</strong><span class="classifier">np.ndarray, shape(n, P)</span></dt><dd></dd>
+<dt><strong>mask</strong><span class="classifier">np.ndarray, shape(n, Q)</span></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>RX</strong><span class="classifier">np.ndarray, shape(n, Q)</span></dt><dd><p>Masked X. The nth row of RX is X[n][mask[n]].</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparseklearn.sparsifier.Sparsifier.apply_HD">
+<code class="sig-name descname">apply_HD</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.apply_HD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the preconditioning transform to X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X</strong><span class="classifier">np.ndarray, shape (n, P)</span></dt><dd><p>The data to precondition. Each row is a datapoint.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>HDX</strong><span class="classifier">np.ndarray, shape (n, P)</span></dt><dd><p>The transformed data.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparseklearn.sparsifier.Sparsifier.invert_HD">
+<code class="sig-name descname">invert_HD</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">HDX</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.invert_HD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the inverse of HD to HDX.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>HDX</strong><span class="classifier">np.ndarray, shape (n, P)</span></dt><dd><p>The preconditioned data. Each row is a datapoint.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>X</strong><span class="classifier">np.ndarray, shape (n, P)</span></dt><dd><p>The raw data.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparseklearn.sparsifier.Sparsifier.invert_mask_bool">
+<code class="sig-name descname">invert_mask_bool</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.invert_mask_bool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the mask inverse.</p>
+<p>The mask is an array indicating which dimensions are kept for each
+data point. The inverse mask is an array indicating which datapoints
+keep this dimension, for each dimension. For computational efficiency,
+the inverse mask is given as a sparse boolean array whereas the mask
+is a (smaller) dense integer array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>mask_inverse</strong><span class="classifier">sparse.csr_matrix, bool, shape (P,N)</span></dt><dd><p>The mask inverse. The ij entry is 1 if the jth datapoint
+keeps the ith dimension under the mask, and 0 otherwise;
+in other words, 1 if i is in the list mask[j].</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparseklearn.sparsifier.Sparsifier.fit_sparsifier">
+<code class="sig-name descname">fit_sparsifier</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X=None</em>, <em class="sig-param">HDX=None</em>, <em class="sig-param">RHDX=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.fit_sparsifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the sparsifier to specified data.</p>
+<p>Sets self.RHDX, the sumsampled, preconditioned data.
+At least one of the parameters must be set. If RHDX is passed,
+then X and HDX are ignored. If HDX is passed, then X is ignored.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X</strong><span class="classifier">np.ndarray, shape (num_samp, num_feat_full), defaults to None.</span></dt><dd><p>Dense, raw data.</p>
+</dd>
+<dt><strong>HDX</strong><span class="classifier">np.ndarray, shape (num_samp, num_feat_full), defaults to None.</span></dt><dd><p>Dense, preconditioned data.</p>
+</dd>
+<dt><strong>RHDX</strong><span class="classifier">np.ndarray, shape (num_samp, num_feat_comp), defaults to None.</span></dt><dd><p>Subsampled, preconditioned data.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparseklearn.sparsifier.Sparsifier.pairwise_distances">
+<code class="sig-name descname">pairwise_distances</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">Y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.pairwise_distances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the pairwise distance between each sparsified sample,
+or between each sparsified sample and each full sample in Y if
+Y is given.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>Y</strong><span class="classifier">np.ndarray, shape (K, P), optional</span></dt><dd><p>defaults to None. Full, transformed samples.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>distances</strong><span class="classifier">np.ndarray, shape(K or N, N)</span></dt><dd><p>distances between each pair of samples (if Y is None) or distances
+between each sample and each row in Y.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparseklearn.sparsifier.Sparsifier.weighted_means">
+<code class="sig-name descname">weighted_means</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">W</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.weighted_means" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes weighted full means of sparsified samples. Currently this
+is also used to compute hard assignments but should be updated for
+speed later - zeros in W are multiplied through.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>W</strong><span class="classifier">np.ndarray, shape (N, K)</span></dt><dd><p>Weights. Each row corresponds to a sample, each column to a set of
+weights. The columns of W should sum to 1. There is no necessary
+correspondence between the columns of W.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>means</strong><span class="classifier">np.ndarray, shape (K,P)</span></dt><dd><p>Weighted full means. Each row corresponds to a possible independent
+set of weights (for example, a binary W with K columns would give
+the means of K clusters).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparseklearn.sparsifier.Sparsifier.weighted_means_and_variances">
+<code class="sig-name descname">weighted_means_and_variances</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">W</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.weighted_means_and_variances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes weighted full means and variances of sparsified samples.
+Currently also used to compute hard assignments but should be updated
+for speed later - zeros in W are multiplied through.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>W</strong><span class="classifier">np.ndarray, shape (N, K)</span></dt><dd><p>Weights. Each row corresponds to a sample, each column to a set of
+weights. The columns of W should sum to 1. There is no necessary
+correspondence between the columns of W.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>means</strong><span class="classifier">np.ndarray, shape (K,P)</span></dt><dd><p>Weighted full means. Each row corresponds to a possible independent
+set of weights (for example, a binary W with K columns would give
+the means of K clusters).</p>
+</dd>
+<dt><strong>variances</strong><span class="classifier">np.ndarray, shape (K,P)</span></dt><dd><p>Weighted full variances. Each row corresponds to a possible independent
+set of weights (for example, a binary W with K columns would give
+the variances of K clusters).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparseklearn.sparsifier.Sparsifier.pairwise_mahalanobis_distances">
+<code class="sig-name descname">pairwise_mahalanobis_distances</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">means</em>, <em class="sig-param">covariances</em>, <em class="sig-param">covariance_type</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.sparsifier.Sparsifier.pairwise_mahalanobis_distances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the mahalanobis distance between each compressed sample and
+each full mean (each row of means).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>means</strong><span class="classifier">np.ndarray, shape (K,P)</span></dt><dd><p>The means with which to take the mahalanobis distances. Each row of
+means is a single mean in P-dimensional space.</p>
+</dd>
+<dt><strong>covariances</strong><span class="classifier">np.ndarray, shape (K,P) or shape (P,).</span></dt><dd><p>The non-zero entries of the covariance matrix. If
+covariance_type is ‘spherical’, must be shape (P,). If
+covariance_type is ‘diag’, must be shape (K,P)</p>
+</dd>
+<dt><strong>covariance_type</strong><span class="classifier">{‘spherical’, ‘diag’}, string.</span></dt><dd><p>The form of the covariance matrix.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>distances</strong><span class="classifier">np.ndarray, shape (N,K)</span></dt><dd><p>The pairwise mahalanobis distances.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">sparseklearn</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The Sparsifier Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gmm.html">Gaussian Mixture Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="kmeans.html">K-Means</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to sparseklearn’s documentation!</a></li>
+      <li>Next: <a href="gmm.html" title="next chapter">Gaussian Mixture Models</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Kightley.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/sparsifier.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

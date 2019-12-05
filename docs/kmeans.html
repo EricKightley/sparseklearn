@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>K-Means &#8212; sparseklearn 0.1.4 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Gaussian Mixture Models" href="gmm.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-sparseklearn.kmeans">
+<span id="k-means"></span><h1>K-Means<a class="headerlink" href="#module-sparseklearn.kmeans" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="sparseklearn.kmeans.KMeans">
+<em class="property">class </em><code class="sig-prename descclassname">sparseklearn.kmeans.</code><code class="sig-name descname">KMeans</code><span class="sig-paren">(</span><em class="sig-param">n_components=8</em>, <em class="sig-param">init='kmpp'</em>, <em class="sig-param">tol=0.0001</em>, <em class="sig-param">n_init=10</em>, <em class="sig-param">n_passes=1</em>, <em class="sig-param">max_iter=300</em>, <em class="sig-param">means_init_array=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.kmeans.KMeans" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sparsified K-Means clustering.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>n_components</strong><span class="classifier">int, default: 8</span></dt><dd><p>The number of clusters.</p>
+</dd>
+<dt><strong>init</strong><span class="classifier">{ndarray, ‘kmpp’, ‘random’}, default: ‘kmpp’</span></dt><dd><p>Initialization method:</p>
+<p>ndarray : shape (n_components, P). Initial cluster centers, must be 
+transformed already.</p>
+<p>‘kmpp’: picks initial cluster centers from the data with
+probability proportional to the distance of each datapoint to the
+current initial means. More expensive but better convergence.
+These will be drawn from HDX if the sparsifier has access to it,
+otherwise they come from RHDX.</p>
+<p>‘random’: picks iniitial cluster centers uniformly at random from
+the datapoints.These will be drawn from HDX if the sparsifier has access 
+to it, otherwise they come from RHDX.</p>
+</dd>
+<dt><strong>n_init</strong><span class="classifier">int, default: 10</span></dt><dd><p>Number of times to run k-means on new initializations. The best results
+are kept.</p>
+</dd>
+<dt><strong>max_iter</strong><span class="classifier">int, default: 300</span></dt><dd><p>Maximum number of iterations for each run.</p>
+</dd>
+<dt><strong>tol</strong><span class="classifier">float, default: 1e-4</span></dt><dd><p>Relative tolerance with regards to inertia for convergence.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Attributes</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>cluster_centers_</strong><span class="classifier">nd.array, shape (n_components, P)</span></dt><dd><p>Coordinates of cluster centers</p>
+</dd>
+<dt><strong>labels_</strong><span class="classifier">np.array, shape (N,)</span></dt><dd><p>Labels of each point</p>
+</dd>
+<dt><strong>intertia_</strong><span class="classifier">float</span></dt><dd><p>Sum of squared distances of samples to their cluster center.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_HD</span></code>(self, X)</p></td>
+<td><p>Apply the preconditioning transform to X.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_mask</span></code>(self, X, mask)</p></td>
+<td><p>Apply the mask to X.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sparseklearn.kmeans.KMeans.fit" title="sparseklearn.kmeans.KMeans.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(self[, X, HDX, RHDX])</p></td>
+<td><p>Compute k-means clustering and assign labels to datapoints.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_sparsifier</span></code>(self[, X, HDX, RHDX])</p></td>
+<td><p>Fit the sparsifier to specified data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">invert_HD</span></code>(self, HDX)</p></td>
+<td><p>Apply the inverse of HD to HDX.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">invert_mask_bool</span></code>(self)</p></td>
+<td><p>Compute the mask inverse.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pairwise_distances</span></code>(self[, Y])</p></td>
+<td><p>Computes the pairwise distance between each sparsified sample, or between each sparsified sample and each full sample in Y if Y is given.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pairwise_mahalanobis_distances</span></code>(self, means, …)</p></td>
+<td><p>Computes the mahalanobis distance between each compressed sample and each full mean (each row of means).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">weighted_means</span></code>(self, W)</p></td>
+<td><p>Computes weighted full means of sparsified samples.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">weighted_means_and_variances</span></code>(self, W)</p></td>
+<td><p>Computes weighted full means and variances of sparsified samples.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="sparseklearn.kmeans.KMeans.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X=None</em>, <em class="sig-param">HDX=None</em>, <em class="sig-param">RHDX=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.kmeans.KMeans.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute k-means clustering and assign labels to datapoints.
+At least one of the parameters must be set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X</strong><span class="classifier">nd.array, shape (N, P), optional</span></dt><dd><p>defaults to None. Dense, raw data.</p>
+</dd>
+<dt><strong>HDX</strong><span class="classifier">nd.array, shape (N, P), optional</span></dt><dd><p>defaults to None. Dense, transformed data.</p>
+</dd>
+<dt><strong>RHDX</strong><span class="classifier">nd.array, shape (N, Q), optional</span></dt><dd><p>defaults to None. Subsampled, transformed data.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">sparseklearn</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="sparsifier.html">The Sparsifier Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gmm.html">Gaussian Mixture Models</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">K-Means</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="gmm.html" title="previous chapter">Gaussian Mixture Models</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Kightley.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/kmeans.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

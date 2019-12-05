@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Gaussian Mixture Models &#8212; sparseklearn 0.1.4 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="K-Means" href="kmeans.html" />
+    <link rel="prev" title="The Sparsifier Object" href="sparsifier.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-sparseklearn.gmm">
+<span id="gaussian-mixture-models"></span><h1>Gaussian Mixture Models<a class="headerlink" href="#module-sparseklearn.gmm" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="sparseklearn.gmm.GaussianMixture">
+<em class="property">class </em><code class="sig-prename descclassname">sparseklearn.gmm.</code><code class="sig-name descname">GaussianMixture</code><span class="sig-paren">(</span><em class="sig-param">n_components=3</em>, <em class="sig-param">covariance_type='spherical'</em>, <em class="sig-param">tol=0.001</em>, <em class="sig-param">reg_covar=1e-06</em>, <em class="sig-param">max_iter=100</em>, <em class="sig-param">n_init=1</em>, <em class="sig-param">init_params='kmpp'</em>, <em class="sig-param">means_init=None</em>, <em class="sig-param">covariances_init=None</em>, <em class="sig-param">weights_init=None</em>, <em class="sig-param">predict_training_data=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.gmm.GaussianMixture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sparsified Gaussian mixture model.</p>
+<p>Fit a Gaussian mixture model to sparsified data. Diagonal and spherical
+covariances are supported.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>n_components</strong><span class="classifier">int, defaults to 3.</span></dt><dd><p>The number of components (clusters) to fit.</p>
+</dd>
+<dt><strong>covariance_type</strong><span class="classifier">{‘spherical’, ‘diag’}, defaults to ‘spherical’.</span></dt><dd><p>The form of the covariance matrix.</p>
+</dd>
+<dt><strong>tol</strong><span class="classifier">float, defaults to 1e-3.</span></dt><dd><p>The convergence threshold. EM iterations will stop
+when the lower bound average gain is below this threshold.</p>
+</dd>
+<dt><strong>reg_covar</strong><span class="classifier">float, defaults to 1e-6.</span></dt><dd><p>Non-negative regularization added to the diagonal of the covariance
+to ensure it’s positive.</p>
+</dd>
+<dt><strong>max_iter</strong><span class="classifier">int, defaults to 100.</span></dt><dd><p>The number of EM iterations to perform.</p>
+</dd>
+<dt><strong>n_init</strong><span class="classifier">int, defaults to 1.</span></dt><dd><p>The number of initializations to perform. The best results are kept.</p>
+</dd>
+<dt><strong>init_params</strong><span class="classifier">{‘kmpp’, ‘random’}, defaults to ‘kmpp’.</span></dt><dd><p>The method used to initialize the weights, the means and the precisions.
+If ‘kmpp’, the initial means are chosen using the k-means++ algorithm.
+If ‘random’, initial means are chosen at random from the input data.</p>
+</dd>
+<dt><strong>means_init</strong><span class="classifier">nd.array, shape (n_components, P), optional.</span></dt><dd><p>The user-provided initial means, defaults to None, in which case
+the means are initialized using the <cite>init_params</cite> method. P is the
+number of features in the full-dimensional space.</p>
+</dd>
+<dt><strong>predict_training_data</strong><span class="classifier">bool, default to False.</span></dt><dd><p>Whether to predict labels for the training data.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Attributes</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>weights_</strong><span class="classifier">nd.array, shape (n_components,)</span></dt><dd><p>The weight of each mixture component.</p>
+</dd>
+<dt><strong>means_</strong><span class="classifier">nd.array, shape (n_components, P)</span></dt><dd><p>The mean of each mixture component.</p>
+</dd>
+<dt><strong>covariances_</strong><span class="classifier">nd.array</span></dt><dd><p>The covariance of each mixture component.
+The shape depends on covariance_type:
+(n_components,) if <cite>spherical</cite> and (n_components, P) if <cite>diag</cite>.</p>
+</dd>
+<dt><strong>converged_</strong><span class="classifier">bool</span></dt><dd><p>True if fit() converged, False otherwise.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_HD</span></code>(self, X)</p></td>
+<td><p>Apply the preconditioning transform to X.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_mask</span></code>(self, X, mask)</p></td>
+<td><p>Apply the mask to X.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sparseklearn.gmm.GaussianMixture.fit" title="sparseklearn.gmm.GaussianMixture.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(self[, X, HDX, RHDX, y])</p></td>
+<td><p>Estimate model parameters using EM algorithm.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_sparsifier</span></code>(self[, X, HDX, RHDX])</p></td>
+<td><p>Fit the sparsifier to specified data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">invert_HD</span></code>(self, HDX)</p></td>
+<td><p>Apply the inverse of HD to HDX.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">invert_mask_bool</span></code>(self)</p></td>
+<td><p>Compute the mask inverse.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pairwise_distances</span></code>(self[, Y])</p></td>
+<td><p>Computes the pairwise distance between each sparsified sample, or between each sparsified sample and each full sample in Y if Y is given.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pairwise_mahalanobis_distances</span></code>(self, means, …)</p></td>
+<td><p>Computes the mahalanobis distance between each compressed sample and each full mean (each row of means).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sparseklearn.gmm.GaussianMixture.predict" title="sparseklearn.gmm.GaussianMixture.predict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">predict</span></code></a>(self, X)</p></td>
+<td><p>Predict the labels for the data samples in X using the trained model.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">weighted_means</span></code>(self, W)</p></td>
+<td><p>Computes weighted full means of sparsified samples.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">weighted_means_and_variances</span></code>(self, W)</p></td>
+<td><p>Computes weighted full means and variances of sparsified samples.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="sparseklearn.gmm.GaussianMixture.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X=None</em>, <em class="sig-param">HDX=None</em>, <em class="sig-param">RHDX=None</em>, <em class="sig-param">y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.gmm.GaussianMixture.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimate model parameters using EM algorithm.</p>
+<p>Fits the model <code class="docutils literal notranslate"><span class="pre">n_init</span></code> times and keeps the parameters with
+which the model has the largest likelihood. Each trial
+performs at most <code class="docutils literal notranslate"><span class="pre">max_iter</span></code> iterations of EM until covergence.
+or a <code class="docutils literal notranslate"><span class="pre">ConvergenceWarning</span></code> is raised.</p>
+<p>At least one of X, HDX, or RHDX must be passed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X</strong><span class="classifier">nd.array, shape (N, P), optional</span></dt><dd><p>defaults to None. Dense, raw data.</p>
+</dd>
+<dt><strong>HDX</strong><span class="classifier">nd.array, shape (N, P), optional</span></dt><dd><p>defaults to None. Dense, transformed data.</p>
+</dd>
+<dt><strong>RHDX</strong><span class="classifier">nd.array, shape (N, Q), optional</span></dt><dd><p>defaults to None. Subsampled, transformed data.</p>
+</dd>
+<dt><strong>y</strong><span class="classifier">nd.array, shape (N,), optional</span></dt><dd><p>True labels.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparseklearn.gmm.GaussianMixture.predict">
+<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">X</em><span class="sig-paren">)</span><a class="headerlink" href="#sparseklearn.gmm.GaussianMixture.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predict the labels for the data samples in X using the
+trained model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X</strong><span class="classifier">nd.array, shape (n_samples, Q)</span></dt><dd><p>Array of Q-dimensional data points. Each row
+corresponds to a single data point. X is assumed to be
+preconditioned and subsampled.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>labels</strong><span class="classifier">array, shape (n_samples,)</span></dt><dd><p>Component labels.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">sparseklearn</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="sparsifier.html">The Sparsifier Object</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Gaussian Mixture Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="kmeans.html">K-Means</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="sparsifier.html" title="previous chapter">The Sparsifier Object</a></li>
+      <li>Next: <a href="kmeans.html" title="next chapter">K-Means</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Kightley.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/gmm.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
