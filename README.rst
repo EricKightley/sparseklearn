@@ -4,6 +4,11 @@ Sparseklearn
 
 Dimensionality reduction for unsupervised machine learning.
 
+Documentation
+-------------
+
+Documentation is available at https://erickightley.github.io/sparseklearn/.
+
 .. inclusion-marker-do-not-remove
 
 Overview
@@ -20,11 +25,6 @@ algorithms described in our papers on sparsified `k-means and PCA
 <https://arxiv.org/pdf/1511.00152.pdf>`_ and on
 `Gaussian mixtures
 <https://arxiv.org/abs/1903.04056v2>`_.
-
-Documentation
--------------
-
-Documentation is available at https://erickightley.github.io/sparseklearn/.
 
 Installation
 ------------
