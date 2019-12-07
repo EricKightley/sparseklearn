@@ -33,6 +33,45 @@
             
   <div class="section" id="welcome-to-sparseklearn-s-documentation">
 <h1>Welcome to sparseklearn’s documentation!<a class="headerlink" href="#welcome-to-sparseklearn-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p><strong>Sparseklearn</strong> is a Python package of machine learning algorithms
+based on dimensionality reduction via random projections.
+By working on compressed data,
+<strong>Sparseklearn</strong> performs standard machine learning tasks
+more efficiently and uses less memory. Its algorithms are all
+<em>one-pass</em>, meaning that they only need to access the raw data
+once. <strong>Sparseklearn</strong> implements
+algorithms described in our papers on sparsified <a class="reference external" href="https://arxiv.org/pdf/1511.00152.pdf">k-means and PCA</a> and on
+<a class="reference external" href="https://arxiv.org/abs/1903.04056v2">Gaussian mixtures</a>.</p>
+</div>
+<div class="section" id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
+<p>Documentation is available at <a class="reference external" href="https://erickightley.github.io/sparseklearn/">https://erickightley.github.io/sparseklearn/</a>.</p>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>It is highly recommended that you install this package in a
+<a class="reference external" href="https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/">virtual environment</a>.
+With the virtual environment active, build the C extensions and install the
+package:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup.py build_ext --inplace
+pip install .
+</pre></div>
+</div>
+<p>To test the installation, run the unit tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest
+</pre></div>
+</div>
+</div>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<p>See <code class="code docutils literal notranslate"><span class="pre">examples/</span></code> for notebooks of usage examples. You will need Jupyterlab:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> examples
+pip install -r requirements.txt
+jupyter lab
+</pre></div>
+</div>
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
@@ -40,6 +79,7 @@
 <li class="toctree-l1"><a class="reference internal" href="gmm.html">Gaussian Mixture Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="kmeans.html">K-Means</a></li>
 </ul>
+</div>
 </div>
 </div>
 <div class="section" id="indices-and-tables">
